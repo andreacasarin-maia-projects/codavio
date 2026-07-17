@@ -29,19 +29,19 @@ Model routing:
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
 - Review and ship are separate gates. Ship never performs opportunistic refactors.
 
-## Install into a project
+## Install globally
 
 ```bash
 git clone https://github.com/andreacasarin-maia-projects/ai-dev-workflow.git
 cd ai-dev-workflow
-./scripts/install.sh /path/to/your/project
+./scripts/install.sh
 ```
 
-The installer copies `.opencode/{agents,commands,skills}` and creates `.ai/work/`. It does not modify the project's `AGENTS.md`. Existing workflow files are not overwritten unless `--force` is supplied.
+The installer symlinks this repository's agents, commands, testing policy, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. Repository edits reach every project through those links; restart OpenCode to reload them.
 
-`templates/AGENTS.global.md` contains optional host-wide engineering guidance. Review and merge it into `~/.config/opencode/AGENTS.md` separately; the installer never changes global OpenCode configuration.
+Existing files are preserved by default. `./scripts/install.sh --force` moves each conflict to a sibling `.backup` path before linking.
 
-Then run OpenCode inside the target project:
+Run OpenCode inside any Git project:
 
 ```text
 /analyze <request>
@@ -67,6 +67,8 @@ Only multi-session or planned work needs a file:
 
 It contains the approved definition, task checklist, current state, verification, and open review findings. It is rewritten and compacted, never used as an append-only transcript.
 
+The workflow creates `.ai/work/` on demand under the active Git worktree. Global installation never creates runtime project state.
+
 Quick changes usually need no work file. A bug fix only gets one if it becomes multi-session or expands beyond a bounded fix. Git, the regression test, and the PR remain the durable history.
 
 ## Worktrees
@@ -85,7 +87,7 @@ python3 scripts/validate.py
 
 ## Status
 
-Initial OpenCode implementation. Deliberately small: no plugin, daemon, hidden state machine, or cross-harness installer yet.
+Initial OpenCode implementation. Deliberately small: no plugin, daemon, or hidden state machine.
 
 ## License
 

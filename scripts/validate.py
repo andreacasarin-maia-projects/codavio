@@ -75,8 +75,11 @@ for path in skills:
 
 if not (ROOT / "templates/AGENTS.global.md").is_file():
     ERRORS.append("missing global AGENTS template")
-if not (ROOT / "scripts/install.sh").is_file():
+installer = ROOT / "scripts/install.sh"
+if not installer.is_file():
     ERRORS.append("missing installer")
+elif ".ai/work" in installer.read_text(encoding="utf-8"):
+    ERRORS.append("global installer must not create project runtime state")
 
 if ERRORS:
     for error in ERRORS:
