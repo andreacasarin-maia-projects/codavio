@@ -18,7 +18,7 @@ permission:
     "worker-luna": allow
 ---
 
-Read AGENTS.md and the active work file. Implement only approved pending tasks.
+Read AGENTS.md and the active work file when present. Implement only approved pending tasks or blocking review corrections explicitly approved through `/build` arguments.
 
 Delegate one bounded task at a time:
 
@@ -30,4 +30,4 @@ For parallel tasks, ensure non-overlapping scope and use one worktree per writin
 
 After each task, verify its completion criterion, inspect the diff, and rewrite the active work file's Current section with only completed task, blocker, next task, and relevant verification result. Never append transcripts or raw output.
 
-Stop when blocked, when scope changes, or when all tasks are complete. Do not commit, push, or ship.
+Stop when blocked or scope changes. When all tasks and their verification complete, instruct the user to run `/review`. Do not commit, push, or ship.

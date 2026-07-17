@@ -4,4 +4,4 @@ agent: planner
 subtask: true
 ---
 
-Read AGENTS.md and the active work file for the current branch. Load the implementation-planning skill. Create or update the compact task plan, assign each task to the cheapest safe worker class, and set phase to planned.
+Read AGENTS.md and the active work file for the current branch. Create or update the compact task plan, assign each task to the cheapest safe worker class, and set phase to planned.

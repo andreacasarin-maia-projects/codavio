@@ -5,7 +5,7 @@ A lean, adaptive development workflow for OpenCode. One entry point classifies w
 ## Workflow
 
 ```text
-/define
+/analyze
   ├─ QUICK   → worker → verify → /review → /ship
   ├─ BUGFIX  → reproduce → regression test → fix → /review → /ship
   └─ FEATURE → /plan → /build → /review → /ship
@@ -37,19 +37,21 @@ cd ai-dev-workflow
 ./scripts/install.sh /path/to/your/project
 ```
 
-The installer copies `.opencode/`, creates `.ai/work/`, and adds a small workflow section to `AGENTS.md`. Existing workflow files are not overwritten unless `--force` is supplied.
+The installer copies `.opencode/{agents,commands,skills}` and creates `.ai/work/`. It does not modify the project's `AGENTS.md`. Existing workflow files are not overwritten unless `--force` is supplied.
+
+`templates/AGENTS.global.md` contains optional host-wide engineering guidance. Review and merge it into `~/.config/opencode/AGENTS.md` separately; the installer never changes global OpenCode configuration.
 
 Then run OpenCode inside the target project:
 
 ```text
-/define <request>
+/analyze <request>
 ```
 
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `/define` | Brainstorm, identify trade-offs, classify the route, and ask for approval |
+| `/analyze` | Brainstorm, identify trade-offs, classify the route, and ask for approval |
 | `/plan` | Turn an approved feature definition into bounded tasks |
 | `/build` | Delegate pending tasks to cheap workers and keep active state compact |
 | `/review` | Read-only implementation and risk review |

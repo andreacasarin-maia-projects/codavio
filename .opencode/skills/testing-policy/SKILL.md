@@ -10,6 +10,7 @@ description: Load when planning, implementing, reviewing, verifying, or shipping
 - Prefer integration tests for service behavior, persistence, APIs, queues, and component boundaries.
 - Prefer end-to-end tests for important user or operational flows.
 - Add unit tests only for unusually complex isolated logic where they materially improve diagnosis or safety.
+- Prefer real collaborators and boundaries. Mock only external systems or nondeterminism that would otherwise make tests slow, flaky, or unsafe.
 - Do not impose TDD on feature development.
 - Do not add tests for purely mechanical changes unless behavior or risk warrants them.
 

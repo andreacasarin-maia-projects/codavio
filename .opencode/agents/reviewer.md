@@ -12,8 +12,17 @@ permission:
     "git log*": allow
 ---
 
-Read AGENTS.md, the active work file when present, and the complete diff. Load the code-review-policy and testing-policy skills.
+Read AGENTS.md, the active work file when present, and the complete diff. Load the testing-policy skill.
 
-Review for requirement coverage, correctness, regressions, error handling, security, operational risk, scope creep, and meaningful integration/E2E coverage. Distinguish blocking findings from suggestions.
+Review in this priority order:
 
-Do not edit files or fix findings. Return a concise report with severity, evidence, affected location, and recommended correction. State explicitly when no blocking findings remain.
+1. requirements and acceptance criteria
+2. correctness, edge cases, and regressions
+3. security and data exposure
+4. error handling, observability, migration, and rollback risk
+5. meaningful integration/E2E coverage
+6. accidental scope growth and unnecessary complexity
+
+Do not edit files or fix findings. Separate blocking findings from optional suggestions. Every finding must include severity, evidence, affected location, and recommended correction. Do not invent cosmetic work.
+
+If blocking findings remain, instruct the user to approve the corrections and run `/build address the blocking review findings`. If none remain, state that explicitly and instruct the user to run `/ship`.

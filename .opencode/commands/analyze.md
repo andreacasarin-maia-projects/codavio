@@ -1,5 +1,5 @@
 ---
-description: Define, analyze, and route a change as QUICK, BUGFIX, or FEATURE
+description: Analyze and route a change as QUICK, BUGFIX, or FEATURE
 agent: analyst
 ---
 

@@ -35,13 +35,16 @@ agents = sorted((ROOT / ".opencode/agents").glob("*.md"))
 commands = sorted((ROOT / ".opencode/commands").glob("*.md"))
 skills = sorted((ROOT / ".opencode/skills").glob("*/SKILL.md"))
 
-expected_commands = {"define", "plan", "build", "review", "ship"}
+expected_commands = {"analyze", "plan", "build", "review", "ship"}
 expected_agents = {"analyst", "planner", "builder", "worker-mini", "worker-luna", "reviewer", "shipper"}
+expected_skills = {"testing-policy"}
 
 if {p.stem for p in commands} != expected_commands:
     ERRORS.append("commands do not match expected workflow")
 if {p.stem for p in agents} != expected_agents:
     ERRORS.append("agents do not match expected workflow")
+if {p.parent.name for p in skills} != expected_skills:
+    ERRORS.append("skills do not match expected workflow")
 
 agent_names = {p.stem for p in agents}
 for path in agents:
@@ -70,8 +73,8 @@ for path in skills:
     if data.get("name") != path.parent.name:
         ERRORS.append(f"{path.relative_to(ROOT)}: skill name/path mismatch")
 
-if not (ROOT / "templates/AGENTS.workflow.md").is_file():
-    ERRORS.append("missing AGENTS workflow template")
+if not (ROOT / "templates/AGENTS.global.md").is_file():
+    ERRORS.append("missing global AGENTS template")
 if not (ROOT / "scripts/install.sh").is_file():
     ERRORS.append("missing installer")
 
@@ -80,4 +83,4 @@ if ERRORS:
         print(f"ERROR: {error}", file=sys.stderr)
     raise SystemExit(1)
 
-print(f"OK: {len(commands)} commands, {len(agents)} agents, {len(skills)} skills")
+print(f"OK: {len(commands)} commands, {len(agents)} agents, {len(skills)} skill")

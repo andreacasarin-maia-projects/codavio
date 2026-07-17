@@ -39,14 +39,5 @@ copy_tree "$ROOT/.opencode/skills" "$TARGET/.opencode/skills"
 
 touch "$TARGET/.ai/work/.gitkeep"
 
-AGENTS="$TARGET/AGENTS.md"
-MARKER="## AI development workflow"
-if [[ ! -f "$AGENTS" ]]; then
-  cp "$ROOT/templates/AGENTS.workflow.md" "$AGENTS"
-elif ! grep -Fq "$MARKER" "$AGENTS"; then
-  printf '\n' >> "$AGENTS"
-  cat "$ROOT/templates/AGENTS.workflow.md" >> "$AGENTS"
-fi
-
 printf 'Installed AI Dev Workflow into %s\n' "$TARGET"
-printf 'Start with: /define <request>\n'
+printf 'Start with: /analyze <request>\n'

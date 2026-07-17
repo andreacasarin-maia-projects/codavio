@@ -45,4 +45,6 @@ After approval:
 - BUGFIX: reproduce first, create a failing regression test at integration/E2E level where practical, then delegate the minimal fix. Promote to FEATURE if scope expands.
 - FEATURE: create or update `.ai/work/<branch-slug>.md` with the approved definition and phase `defined`; instruct the user to run `/plan`.
 
+After a QUICK or BUGFIX worker succeeds, inspect the result, summarize actual verification, and instruct the user to run `/review`. Do not advance when implementation or verification failed.
+
 Use a worktree for FEATURE, risky work, parallel writers, or isolation from unrelated dirty changes. Do not create one for a low-risk quick change in a clean repository.
