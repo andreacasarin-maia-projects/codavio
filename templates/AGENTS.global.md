@@ -28,9 +28,19 @@
 
 - Define observable completion criteria before implementation.
 - Tie each non-trivial step to concrete verification.
-- For bugs, reproduce the failure, add failing regression coverage, apply the smallest root-cause fix, then run relevant broader checks.
+- For bugs, reproduce the failure, apply the smallest root-cause fix, and add automated regression coverage when the repository already has a suitable test suite.
 - For refactors, establish relevant checks before changing behavior-preserving code and rerun them afterward.
 - Continue until completion criteria pass or a concrete blocker requires user input.
+
+## Verification
+
+- Every change requires evidence proportionate to its behavior and risk.
+- Treat repository-defined checks and CI requirements as authoritative.
+- Choose the strongest practical verification: integration or end-to-end tests, focused tests, build/type/lint/schema checks, dry runs, plans, smoke tests, or concrete manual verification.
+- Add or change automated tests only when the repository already has a suitable test suite. Never introduce a test framework or harness solely to validate the change.
+- For bug fixes without a suitable test suite, document the limitation, strongest existing alternative verification, and residual risk.
+- Report only checks actually performed and distinguish automated results from inspection or manual verification.
+- Do not ship when required checks fail or no credible verification is possible.
 
 ## Instruction Priority
 

@@ -97,7 +97,6 @@ link_path() {
 visit_paths() {
   local action="$1"
   local source
-  local skill_file
 
   for source in "$ROOT/.opencode/agents/"*.md; do
     "$action" "$source" "$TARGET/agents/$(basename "$source")"
@@ -107,25 +106,37 @@ visit_paths() {
     "$action" "$source" "$TARGET/commands/$(basename "$source")"
   done
 
-  for skill_file in "$ROOT/.opencode/skills/"*/SKILL.md; do
-    source="$(dirname "$skill_file")"
-    "$action" "$source" "$TARGET/skills/$(basename "$source")"
-  done
-
   "$action" "$ROOT/templates/AGENTS.global.md" "$TARGET/AGENTS.md"
+}
+
+remove_obsolete_link() {
+  local source="$1"
+  local destination="$2"
+
+  if same_link "$source" "$destination"; then
+    rm "$destination"
+  fi
 }
 
 check_directory "$TARGET"
 check_directory "$TARGET/agents"
 check_directory "$TARGET/commands"
-check_directory "$TARGET/skills"
 visit_paths check_path
 
 prepare_directory "$TARGET"
 prepare_directory "$TARGET/agents"
 prepare_directory "$TARGET/commands"
-prepare_directory "$TARGET/skills"
 visit_paths link_path
+remove_obsolete_link "$ROOT/.opencode/agents/builder.md" "$TARGET/agents/builder.md"
+remove_obsolete_link "$ROOT/.opencode/agents/planner.md" "$TARGET/agents/planner.md"
+remove_obsolete_link "$ROOT/.opencode/agents/explore.md" "$TARGET/agents/explore.md"
+remove_obsolete_link "$ROOT/.opencode/agents/worker-mini.md" "$TARGET/agents/worker-mini.md"
+remove_obsolete_link "$ROOT/.opencode/agents/worker-luna.md" "$TARGET/agents/worker-luna.md"
+remove_obsolete_link "$ROOT/.opencode/commands/build.md" "$TARGET/commands/build.md"
+remove_obsolete_link "$ROOT/.opencode/commands/plan.md" "$TARGET/commands/plan.md"
+remove_obsolete_link "$ROOT/.opencode/commands/review.md" "$TARGET/commands/review.md"
+remove_obsolete_link "$ROOT/.opencode/commands/ship.md" "$TARGET/commands/ship.md"
+remove_obsolete_link "$ROOT/.opencode/skills/testing-policy" "$TARGET/skills/testing-policy"
 
 printf 'Linked AI Dev Workflow into %s\n' "$TARGET"
 printf 'Start with: /analyze <request>\n'

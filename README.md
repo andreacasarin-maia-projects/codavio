@@ -1,33 +1,38 @@
 # AI Dev Workflow
 
-A lean, adaptive development workflow for OpenCode. One entry point classifies work as a quick change, bug fix, or planned feature, then routes it to model-specific agents.
+A lean, adaptive development workflow for OpenCode. One orchestrator guides work from analysis through approved shipping using model-specific subagents.
 
 ## Workflow
 
 ```text
 /analyze
-  ├─ QUICK   → worker → verify → /review → /ship
-  ├─ BUGFIX  → reproduce → regression test → fix → /review → /ship
-  └─ FEATURE → /plan → /build → /review → /ship
+  → explore and consult analyst when needed
+  → discuss and approve material decisions
+  → define and plan with approval gates
+  → delegate parallel-safe implementation
+  → verify and run independent review
+  → request shipping approval
+  → delegate commit and push
 ```
 
 Model routing:
 
 | Role | Model |
 |---|---|
-| Analysis and hard escalation | `openai/gpt-5.6-sol` |
-| Planning and review | `openai/gpt-5.6-terra` |
-| Normal implementation and shipping | `openai/gpt-5.6-luna` |
-| Mechanical tasks | `openai/gpt-5.4-mini` |
+| Orchestration and review | `openai/gpt-5.6-terra` |
+| Architecture and hard analysis | `openai/gpt-5.6-sol` |
+| Senior implementation | `openai/gpt-5.6-luna` |
+| Exploration, junior implementation, and shipping | `openai/gpt-5.4-mini` |
 
 ## Principles
 
 - Progressive ceremony: small changes stay small.
-- Integration/E2E tests by default; unit tests only for unusually complex isolated logic.
-- Every bug fix adds an automated regression test at the most useful level.
-- Worktrees for features, risky work, dirty repositories, or parallel writers—not for every typo.
+- The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
+- Every change gets verification proportionate to its behavior and risk.
+- Bug fixes add regression coverage only within an existing suitable test suite; otherwise they use and document the strongest existing verification.
+- Worktrees isolate features, risky work, or unrelated dirty changes; parallel writers require explicit disjoint ownership.
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
-- Review and ship are separate gates. Ship never performs opportunistic refactors.
+- Review and shipping remain independent least-privilege subagent gates.
 
 ## Install globally
 
@@ -37,9 +42,9 @@ cd ai-dev-workflow
 ./scripts/install.sh
 ```
 
-The installer symlinks this repository's agents, commands, testing policy, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. Repository edits reach every project through those links; restart OpenCode to reload them.
+The installer symlinks this repository's agents, commands, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. Repository edits reach every project through those links; restart OpenCode to reload them.
 
-Existing files are preserved by default. `./scripts/install.sh --force` moves each conflict to a sibling `.backup` path before linking.
+Unrelated existing files are preserved. Obsolete workflow-owned symlinks are removed automatically. `./scripts/install.sh --force` moves other conflicts to a sibling `.backup` path before linking.
 
 Run OpenCode inside any Git project:
 
@@ -51,11 +56,7 @@ Run OpenCode inside any Git project:
 
 | Command | Purpose |
 |---|---|
-| `/analyze` | Brainstorm, identify trade-offs, classify the route, and ask for approval |
-| `/plan` | Turn an approved feature definition into bounded tasks |
-| `/build` | Delegate pending tasks to cheap workers and keep active state compact |
-| `/review` | Read-only implementation and risk review |
-| `/ship` | Verify preconditions, commit, and push |
+| `/analyze` | Orchestrate analysis, decisions, planning, implementation, review, and approved shipping |
 
 ## Persistent context
 
@@ -69,14 +70,14 @@ It contains the approved definition, task checklist, current state, verification
 
 The workflow creates `.ai/work/` on demand under the active Git worktree. Global installation never creates runtime project state.
 
-Quick changes usually need no work file. A bug fix only gets one if it becomes multi-session or expands beyond a bounded fix. Git, the regression test, and the PR remain the durable history.
+Quick changes usually need no work file. A bug fix only gets one if it becomes multi-session or expands beyond a bounded fix. Git, verification evidence, and the PR remain the durable history.
 
 ## Worktrees
 
 - QUICK: current branch if clean and low risk.
 - BUGFIX: current branch if clean and bounded.
 - FEATURE: isolated branch and worktree.
-- Parallel writers: one worktree per worker.
+- Parallel writers: shared worktree only for explicit disjoint paths without repository-wide side effects.
 - Dirty repository with unrelated changes: stop for confirmation or isolate from clean `HEAD`.
 
 ## Validation

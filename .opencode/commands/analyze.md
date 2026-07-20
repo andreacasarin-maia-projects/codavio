@@ -1,10 +1,10 @@
 ---
-description: Analyze and route a change as QUICK, BUGFIX, or FEATURE
-agent: analyst
+description: Orchestrate a change from analysis through approved shipping
+agent: orchestrator
 ---
 
 Analyze this request:
 
 $ARGUMENTS
 
-Follow the adaptive routing workflow. Brainstorm with me where needed, present the compact routing decision, and wait for approval before implementation or planning.
+Follow the adaptive end-to-end workflow. Explore, define, plan when needed, delegate implementation and verification, run independent review, handle approved correction loops, and require explicit approval before delegating commit and push.

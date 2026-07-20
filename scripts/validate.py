@@ -35,16 +35,24 @@ agents = sorted((ROOT / ".opencode/agents").glob("*.md"))
 commands = sorted((ROOT / ".opencode/commands").glob("*.md"))
 skills = sorted((ROOT / ".opencode/skills").glob("*/SKILL.md"))
 
-expected_commands = {"analyze", "plan", "build", "review", "ship"}
-expected_agents = {"analyst", "planner", "builder", "worker-mini", "worker-luna", "reviewer", "shipper"}
-expected_skills = {"testing-policy"}
+expected_commands = {"analyze"}
+expected_agents = {"orchestrator", "analyst", "explorer", "builder-junior", "builder-senior", "reviewer", "shipper"}
+expected_models = {
+    "orchestrator": "openai/gpt-5.6-terra",
+    "analyst": "openai/gpt-5.6-sol",
+    "explorer": "openai/gpt-5.4-mini",
+    "builder-junior": "openai/gpt-5.4-mini",
+    "builder-senior": "openai/gpt-5.6-luna",
+    "reviewer": "openai/gpt-5.6-terra",
+    "shipper": "openai/gpt-5.4-mini",
+}
 
 if {p.stem for p in commands} != expected_commands:
     ERRORS.append("commands do not match expected workflow")
 if {p.stem for p in agents} != expected_agents:
     ERRORS.append("agents do not match expected workflow")
-if {p.parent.name for p in skills} != expected_skills:
-    ERRORS.append("skills do not match expected workflow")
+if skills:
+    ERRORS.append("workflow must not define skills")
 
 agent_names = {p.stem for p in agents}
 for path in agents:
@@ -56,6 +64,11 @@ for path in agents:
         ERRORS.append(f"{path.relative_to(ROOT)}: invalid mode")
     if not data.get("model", "").startswith("openai/"):
         ERRORS.append(f"{path.relative_to(ROOT)}: expected explicit OpenAI model")
+    if data.get("model") != expected_models.get(path.stem):
+        ERRORS.append(f"{path.relative_to(ROOT)}: unexpected model")
+    expected_mode = "primary" if path.stem == "orchestrator" else "subagent"
+    if data.get("mode") != expected_mode:
+        ERRORS.append(f"{path.relative_to(ROOT)}: expected {expected_mode} mode")
 
 for path in commands:
     data = frontmatter(path)
@@ -64,14 +77,31 @@ for path in commands:
             ERRORS.append(f"{path.relative_to(ROOT)}: missing {key}")
     if data.get("agent") not in agent_names:
         ERRORS.append(f"{path.relative_to(ROOT)}: unknown agent {data.get('agent')}")
+    if path.stem == "analyze" and data.get("agent") != "orchestrator":
+        ERRORS.append(f"{path.relative_to(ROOT)}: expected orchestrator agent")
 
-for path in skills:
-    data = frontmatter(path)
-    for key in ("name", "description"):
-        if not data.get(key):
-            ERRORS.append(f"{path.relative_to(ROOT)}: missing {key}")
-    if data.get("name") != path.parent.name:
-        ERRORS.append(f"{path.relative_to(ROOT)}: skill name/path mismatch")
+orchestrator_text = (ROOT / ".opencode/agents/orchestrator.md").read_text(encoding="utf-8")
+for delegated_agent in expected_agents - {"orchestrator"}:
+    if f'    "{delegated_agent}": allow' not in orchestrator_text:
+        ERRORS.append(f"orchestrator does not allow {delegated_agent}")
+if '    "*": deny' not in orchestrator_text:
+    ERRORS.append("orchestrator must deny unspecified subagents")
+
+for name in expected_agents - {"orchestrator"}:
+    text = (ROOT / f".opencode/agents/{name}.md").read_text(encoding="utf-8")
+    if "  task: deny" not in text:
+        ERRORS.append(f".opencode/agents/{name}.md: nested delegation must be denied")
+
+reviewer_text = (ROOT / ".opencode/agents/reviewer.md").read_text(encoding="utf-8")
+if '  edit: deny\n  task: deny\n  bash:\n    "*": deny' not in reviewer_text:
+    ERRORS.append("reviewer must enforce read-only permissions")
+
+shipper_text = (ROOT / ".opencode/agents/shipper.md").read_text(encoding="utf-8")
+if '  edit: deny\n  task: deny\n  bash:\n    "*": deny' not in shipper_text:
+    ERRORS.append("shipper must deny edits, delegation, and non-Git shell commands")
+for required_rule in ('    "git add *": allow', '    "git commit *": allow', '    "git push*": ask'):
+    if required_rule not in shipper_text:
+        ERRORS.append(f"shipper missing permission rule {required_rule.strip()}")
 
 if not (ROOT / "templates/AGENTS.global.md").is_file():
     ERRORS.append("missing global AGENTS template")
@@ -86,4 +116,4 @@ if ERRORS:
         print(f"ERROR: {error}", file=sys.stderr)
     raise SystemExit(1)
 
-print(f"OK: {len(commands)} commands, {len(agents)} agents, {len(skills)} skill")
+print(f"OK: {len(commands)} commands, {len(agents)} agents, {len(skills)} skills")
