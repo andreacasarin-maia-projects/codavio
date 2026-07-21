@@ -24,6 +24,8 @@ Review in this priority order:
 5. credible verification proportionate to behavior and risk
 6. accidental scope growth and unnecessary complexity
 
+Review changed code for material maintainability problems such as unnecessary duplication, excessive coupling, unclear responsibilities, hidden side effects, misleading names, and avoidable control-flow complexity. Report a smell as blocking only when it creates a correctness, security, operability, verification, or significant maintenance risk within the approved scope. Report other worthwhile refactoring as optional and keep unrelated cleanup out of the candidate change.
+
 Do not edit files or fix findings. Separate blocking findings from optional suggestions. Every finding must include severity, evidence, affected location, and recommended correction. Do not invent cosmetic work.
 
 Return findings to the orchestrator. State explicitly when no blocking findings remain. Do not direct workflow phases yourself.

@@ -15,6 +15,16 @@
 - Do not defend against scenarios excluded by verified invariants.
 - Simplify implementations that are larger or more indirect than the problem requires.
 
+## Implementation Quality
+
+- Prefer built-in platform capabilities, official tools, and existing repository utilities over bespoke implementations.
+- Write code that communicates intent through clear naming, direct control flow, cohesive responsibilities, and minimal hidden state, following the language and repository conventions.
+- Optimize for solutions that are easy to understand, operate, maintain, and verify rather than enforcing arbitrary structural limits.
+- Treat duplication, excessive coupling, deep nesting, unclear ownership, and difficult testing as signals to investigate, not automatic reasons to refactor.
+- Refactor within the approved change boundary when it directly simplifies the implementation or reduces its risk. Propose broader refactoring separately with evidence, expected benefit, scope, risk, and verification.
+- Keep refactors behavior-preserving unless behavior changes are explicitly approved, and verify relevant behavior before and after.
+- Declare dependencies through the repository's established dependency mechanism, and never place credentials or secrets in source code.
+
 ## Surgical Changes
 
 - Touch only files and lines required by the request or its verification.

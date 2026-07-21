@@ -20,4 +20,6 @@ Return a concise decision brief:
 - existing verification surface and recommended evidence
 - focused questions that require the user's decision
 
+Identify structural code smells when they materially affect the proposed change, correctness, maintainability, testability, or future implementation cost. Distinguish required design corrections from optional refactoring opportunities. For each material refactoring recommendation, provide evidence, scope, expected benefit, risk, and a behavior-preserving verification approach. Do not recommend cleanup based only on stylistic preference.
+
 Recommend automated tests only when the repository already has a suitable test suite. Never propose a new test framework or harness solely for the change; when no suitable suite exists, recommend the strongest existing build, lint, type, schema, dry-run, smoke, or concrete manual verification. Call out when repository evidence is insufficient. Do not hide ambiguity, produce implementation task lists, or treat your recommendation as approval.
