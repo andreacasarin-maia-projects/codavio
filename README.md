@@ -5,7 +5,7 @@ A lean, adaptive development workflow for OpenCode. One orchestrator guides work
 ## Workflow
 
 ```text
-/analyze
+/dev
   → explore and consult analyst when needed
   → discuss and approve material decisions
   → define and plan with approval gates
@@ -42,21 +42,21 @@ cd ai-dev-workflow
 ./scripts/install.sh
 ```
 
-The installer symlinks this repository's agents, commands, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. Repository edits reach every project through those links; restart OpenCode to reload them.
+The installer symlinks this repository's agents, commands, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them.
 
 Unrelated existing files are preserved. Obsolete workflow-owned symlinks are removed automatically. `./scripts/install.sh --force` moves other conflicts to a sibling `.backup` path before linking.
 
 Run OpenCode inside any Git project:
 
 ```text
-/analyze <request>
+/dev <request>
 ```
 
 ## Commands
 
 | Command | Purpose |
 |---|---|
-| `/analyze` | Orchestrate analysis, decisions, planning, implementation, review, and approved shipping |
+| `/dev` | Orchestrate analysis, decisions, planning, implementation, review, and approved shipping |
 
 ## Persistent context
 

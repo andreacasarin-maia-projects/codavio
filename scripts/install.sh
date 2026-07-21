@@ -132,6 +132,7 @@ remove_obsolete_link "$ROOT/.opencode/agents/planner.md" "$TARGET/agents/planner
 remove_obsolete_link "$ROOT/.opencode/agents/explore.md" "$TARGET/agents/explore.md"
 remove_obsolete_link "$ROOT/.opencode/agents/worker-mini.md" "$TARGET/agents/worker-mini.md"
 remove_obsolete_link "$ROOT/.opencode/agents/worker-luna.md" "$TARGET/agents/worker-luna.md"
+remove_obsolete_link "$ROOT/.opencode/commands/analyze.md" "$TARGET/commands/analyze.md"
 remove_obsolete_link "$ROOT/.opencode/commands/build.md" "$TARGET/commands/build.md"
 remove_obsolete_link "$ROOT/.opencode/commands/plan.md" "$TARGET/commands/plan.md"
 remove_obsolete_link "$ROOT/.opencode/commands/review.md" "$TARGET/commands/review.md"
@@ -139,5 +140,5 @@ remove_obsolete_link "$ROOT/.opencode/commands/ship.md" "$TARGET/commands/ship.m
 remove_obsolete_link "$ROOT/.opencode/skills/testing-policy" "$TARGET/skills/testing-policy"
 
 printf 'Linked AI Dev Workflow into %s\n' "$TARGET"
-printf 'Start with: /analyze <request>\n'
+printf 'Start with: /dev <request>\n'
 printf 'Restart OpenCode after repository updates.\n'

@@ -35,7 +35,7 @@ agents = sorted((ROOT / ".opencode/agents").glob("*.md"))
 commands = sorted((ROOT / ".opencode/commands").glob("*.md"))
 skills = sorted((ROOT / ".opencode/skills").glob("*/SKILL.md"))
 
-expected_commands = {"analyze"}
+expected_commands = {"dev"}
 expected_agents = {"orchestrator", "analyst", "explorer", "builder-junior", "builder-senior", "reviewer", "shipper"}
 expected_models = {
     "orchestrator": "openai/gpt-5.6-terra",
@@ -77,7 +77,7 @@ for path in commands:
             ERRORS.append(f"{path.relative_to(ROOT)}: missing {key}")
     if data.get("agent") not in agent_names:
         ERRORS.append(f"{path.relative_to(ROOT)}: unknown agent {data.get('agent')}")
-    if path.stem == "analyze" and data.get("agent") != "orchestrator":
+    if path.stem == "dev" and data.get("agent") != "orchestrator":
         ERRORS.append(f"{path.relative_to(ROOT)}: expected orchestrator agent")
 
 orchestrator_text = (ROOT / ".opencode/agents/orchestrator.md").read_text(encoding="utf-8")
