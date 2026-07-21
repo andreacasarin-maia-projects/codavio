@@ -34,6 +34,17 @@ Model routing:
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
 - Review and shipping remain independent least-privilege subagent gates.
 
+## Permissions
+
+Agent permissions use a balanced, role-specific default:
+
+- Repository reads, file listing, globbing, and searching run without prompts, except `.env` files are denied while `.env.example` remains readable.
+- Access outside the active project and network fetches require confirmation. The shipper denies both because shipping is Git-only.
+- Builders may edit and run common build, test, lint, typecheck, and check commands for JavaScript/TypeScript, Ruby, Python, Rust, C/CMake, JVM, .NET, and YAML projects without prompts.
+- Builders may inspect Docker state and run Docker or Compose builds without prompts. Container execution, Compose lifecycle commands, and other Docker operations require confirmation; pruning and direct resource removal are denied.
+- Builders cannot stage, commit, push, rewrite Git state, delete files with `rm`, or elevate with `sudo`.
+- The reviewer is read-only. The shipper can inspect Git, stage, and commit, while push still requires confirmation and force-push is denied.
+
 ## Install globally
 
 ```bash

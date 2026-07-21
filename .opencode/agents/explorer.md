@@ -4,9 +4,20 @@ mode: subagent
 model: openai/gpt-5.4-mini
 temperature: 0.1
 permission:
+  read:
+    "*": allow
+    "**/.env": deny
+    "**/.env.*": deny
+    "**/.env.example": allow
+  glob: allow
+  grep: allow
+  list: allow
   edit: deny
   bash: deny
   task: deny
+  external_directory: ask
+  webfetch: ask
+  websearch: ask
 ---
 
 Investigate one assigned repository question without editing files or making planning decisions. Prefer glob, grep, and focused reads over broad traversal.

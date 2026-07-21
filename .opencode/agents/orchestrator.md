@@ -4,12 +4,29 @@ mode: primary
 model: openai/gpt-5.6-terra
 temperature: 0.1
 permission:
+  read:
+    "*": allow
+    "**/.env": deny
+    "**/.env.*": deny
+    "**/.env.example": allow
+  glob: allow
+  grep: allow
+  list: allow
   edit: allow
+  external_directory: ask
+  webfetch: ask
+  websearch: ask
   bash:
     "*": ask
     "git status*": allow
     "git branch*": allow
     "git log*": allow
+    "rm *": deny
+    "sudo *": deny
+    "git reset*": deny
+    "git clean*": deny
+    "git checkout*": deny
+    "git restore*": deny
   task:
     "*": deny
     "analyst": allow

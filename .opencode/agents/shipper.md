@@ -4,8 +4,19 @@ mode: subagent
 model: openai/gpt-5.4-mini
 temperature: 0.1
 permission:
+  read:
+    "*": allow
+    "**/.env": deny
+    "**/.env.*": deny
+    "**/.env.example": allow
+  glob: allow
+  grep: allow
+  list: allow
   edit: deny
   task: deny
+  external_directory: deny
+  webfetch: deny
+  websearch: deny
   bash:
     "*": deny
     "git status*": allow

@@ -92,12 +92,53 @@ for name in expected_agents - {"orchestrator"}:
     if "  task: deny" not in text:
         ERRORS.append(f".opencode/agents/{name}.md: nested delegation must be denied")
 
+common_permission_rules = (
+    '  read:\n    "*": allow\n    "**/.env": deny\n    "**/.env.*": deny\n    "**/.env.example": allow',
+    "  glob: allow",
+    "  grep: allow",
+    "  list: allow",
+)
+for name in expected_agents:
+    text = (ROOT / f".opencode/agents/{name}.md").read_text(encoding="utf-8")
+    for required_rule in common_permission_rules:
+        if required_rule not in text:
+            ERRORS.append(f".opencode/agents/{name}.md: missing balanced permission rule")
+    network_action = "deny" if name == "shipper" else "ask"
+    for tool in ("external_directory", "webfetch", "websearch"):
+        if f"  {tool}: {network_action}" not in text:
+            ERRORS.append(f".opencode/agents/{name}.md: expected {tool} to {network_action}")
+
+for name in {"builder-junior", "builder-senior"}:
+    text = (ROOT / f".opencode/agents/{name}.md").read_text(encoding="utf-8")
+    for required_rule in (
+        '    "npm test*": allow',
+        '    "npm run build*": allow',
+        '    "bundle exec rspec*": allow',
+        '    "pytest*": allow',
+        '    "ruff check*": allow',
+        '    "go test*": allow',
+        '    "cargo test*": allow',
+        '    "cargo check*": allow',
+        '    "ctest*": allow',
+        '    "yamllint*": allow',
+        '    "docker build*": allow',
+        '    "docker compose build*": allow',
+        '    "docker system prune*": deny',
+        '    "docker volume rm*": deny',
+        '    "git push*": deny',
+        '    "git reset*": deny',
+        '    "rm *": deny',
+        '    "sudo *": deny',
+    ):
+        if required_rule not in text:
+            ERRORS.append(f".opencode/agents/{name}.md: missing builder shell rule {required_rule.strip()}")
+
 reviewer_text = (ROOT / ".opencode/agents/reviewer.md").read_text(encoding="utf-8")
-if '  edit: deny\n  task: deny\n  bash:\n    "*": deny' not in reviewer_text:
+if not all(rule in reviewer_text for rule in ("  edit: deny", "  task: deny", '    "*": deny')):
     ERRORS.append("reviewer must enforce read-only permissions")
 
 shipper_text = (ROOT / ".opencode/agents/shipper.md").read_text(encoding="utf-8")
-if '  edit: deny\n  task: deny\n  bash:\n    "*": deny' not in shipper_text:
+if not all(rule in shipper_text for rule in ("  edit: deny", "  task: deny", '    "*": deny')):
     ERRORS.append("shipper must deny edits, delegation, and non-Git shell commands")
 for required_rule in ('    "git add *": allow', '    "git commit *": allow', '    "git push*": ask'):
     if required_rule not in shipper_text:
