@@ -6,18 +6,15 @@ temperature: 0.1
 permission:
   read:
     "*": allow
-    "**/.env": deny
-    "**/.env.*": deny
-    "**/.env.example": allow
   glob: allow
   grep: allow
   list: allow
   edit: deny
   bash: deny
   task: deny
-  external_directory: ask
-  webfetch: ask
-  websearch: ask
+  external_directory: deny
+  webfetch: allow
+  websearch: allow
 ---
 
 Advise the orchestrator without approving decisions on the user's behalf. Use the request, repository evidence, existing decisions, and constraints supplied by the orchestrator. Inspect focused repository sources when needed, but do not edit files or delegate work.

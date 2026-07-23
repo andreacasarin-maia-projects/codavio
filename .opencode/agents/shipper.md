@@ -6,9 +6,6 @@ temperature: 0.1
 permission:
   read:
     "*": allow
-    "**/.env": deny
-    "**/.env.*": deny
-    "**/.env.example": allow
   glob: allow
   grep: allow
   list: allow
@@ -19,14 +16,18 @@ permission:
   websearch: deny
   bash:
     "*": deny
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
+    "git status": allow
+    "git status *": allow
+    "git diff": allow
+    "git diff *": allow
+    "git log": allow
+    "git log *": allow
+    "git add": allow
     "git add *": allow
+    "git commit": allow
     "git commit *": allow
-    "git push*": ask
-    "git push*--force*": deny
-    "git push*-f*": deny
+    "git push": ask
+    "git push *": deny
 ---
 
 Read AGENTS.md and the orchestrator's exact approved scope, commit message, branch, and remote. Shipping is a Git-only gate, not an implementation or review phase.

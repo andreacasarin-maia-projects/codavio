@@ -29,21 +29,23 @@ Model routing:
 - Progressive ceremony: small changes stay small.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
 - Every change gets verification proportionate to its behavior and risk.
+- Builders run local task checks. In multi-builder work, a final sequential senior integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
+- Baseline checks are encouraged for complex or high-risk work, not mandatory. If a baseline fails, a builder repairs it before continuing and retains the evidence.
 - Bug fixes add regression coverage only within an existing suitable test suite; otherwise they use and document the strongest existing verification.
 - Worktrees isolate features, risky work, or unrelated dirty changes; parallel writers require explicit disjoint ownership.
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
-- Review and shipping remain independent least-privilege subagent gates.
+- Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
 
 ## Permissions
 
-Agent permissions use a balanced, role-specific default:
+Trusted-project permissions are a curated safe list, not an OS sandbox:
 
-- Repository reads, file listing, globbing, and searching run without prompts, except `.env` files are denied while `.env.example` remains readable.
-- Access outside the active project and network fetches require confirmation. The shipper denies both because shipping is Git-only.
-- Builders may edit and run common build, test, lint, typecheck, and check commands for JavaScript/TypeScript, Ruby, Python, Rust, C/CMake, JVM, .NET, and YAML projects without prompts.
-- Builders may inspect Docker state and run Docker or Compose builds without prompts. Container execution, Compose lifecycle commands, and other Docker operations require confirmation; pruning and direct resource removal are denied.
-- Builders cannot stage, commit, push, rewrite Git state, delete files with `rm`, or elevate with `sudo`.
-- The reviewer is read-only. The shipper can inspect Git, stage, and commit, while push still requires confirmation and force-push is denied.
+- Repository reads (including `.env` files), edits, patch deletions, file listing, globbing, searching, and common project-local shell writes/deletions (`mkdir`, `touch`, `cp`, `mv`, `tee`, `sed`, `rm`, `rmdir`, `unlink`, `find`, and common redirection forms) run without prompts in the relevant roles.
+- Curated build/test/lint/typecheck/check commands, Docker build commands, and non-shipper `webfetch`/`websearch` run without prompts in the relevant roles.
+- Builder-senior may run approved implementation and integration-verification `docker exec`, `docker compose exec`, and `docker compose run`; Docker pull still prompts, and there is no blanket Docker permission.
+- Docker resource removal still prompts. Visibly invoked direct general network clients and cloud/database CLIs prompt on a best-effort lexical basis.
+- External-directory access is denied where OpenCode detects it; `sudo`, builder Git mutation, force-push, and role boundaries remain denied. Bare shipper `git push` is the only push that asks.
+- This is trusted-project convenience policy, not a sandbox: the write/deletion and network rules are best-effort lexical policy. Scripts, interpreters, wrappers, `find -exec`, redirection, and allowed tooling can bypass lexical/direct-path detection and may perform network or filesystem side effects. Native permissions do not infer GET/POST semantics.
 
 ## Install globally
 
@@ -53,7 +55,7 @@ cd ai-dev-workflow
 ./scripts/install.sh
 ```
 
-The installer symlinks this repository's agents, commands, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them.
+The installer symlinks this repository's agents, commands, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them. Configuration changes require an OpenCode restart.
 
 Unrelated existing files are preserved. Obsolete workflow-owned symlinks are removed automatically. `./scripts/install.sh --force` moves other conflicts to a sibling `.backup` path before linking.
 
@@ -87,7 +89,7 @@ Quick changes usually need no work file. A bug fix only gets one if it becomes m
 
 - QUICK: current branch if clean and low risk.
 - BUGFIX: current branch if clean and bounded.
-- FEATURE: isolated branch and worktree.
+- FEATURE: isolated branch and worktree under ignored `.worktrees/`.
 - Parallel writers: shared worktree only for explicit disjoint paths without repository-wide side effects.
 - Dirty repository with unrelated changes: stop for confirmation or isolate from clean `HEAD`.
 

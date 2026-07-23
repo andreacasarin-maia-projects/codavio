@@ -33,6 +33,9 @@
 - Do not refactor, reformat, modernize, or remove unrelated code.
 - Remove imports, variables, functions, and files made obsolete by the current change.
 - Preserve unrelated user or agent changes. Mention pre-existing issues instead of fixing them.
+- When isolated Git worktrees are needed, create them under the active project root in ignored `.worktrees/`; never create a worktree outside the project. Runtime `.ai/work/` state still belongs inside the active worktree.
+- Trusted-project permissions are a curated convenience policy, not an OS sandbox: repository reads (including `.env`), edits, patch deletions, common project-local shell writes/deletions (`mkdir`, `touch`, `cp`, `mv`, `tee`, `sed`, `rm`, `rmdir`, `unlink`, `find`, and common redirection forms), curated build/test/lint/Docker-build commands, and non-shipper `webfetch`/`websearch` run without prompts in relevant roles. Builder-senior may run approved implementation and integration-verification `docker exec`, `docker compose exec`, and `docker compose run`; Docker pull still prompts, and there is no blanket Docker permission. Docker resource removal still prompts; visibly invoked direct general network clients and cloud/database CLIs prompt on a best-effort lexical basis. External-directory access is denied where OpenCode detects it, while `sudo`, builder Git mutation, force-push, and role boundaries remain denied; only bare shipper `git push` asks.
+- Native permissions do not infer GET/POST semantics. Scripts, interpreters, wrappers, `find -exec`, redirection, and allowed tooling can bypass lexical/direct-path detection and may perform network or filesystem side effects.
 
 ## Goal-Driven Execution
 
@@ -40,6 +43,8 @@
 - Tie each non-trivial step to concrete verification.
 - For bugs, reproduce the failure, apply the smallest root-cause fix, and add automated regression coverage when the repository already has a suitable test suite.
 - For refactors, establish relevant checks before changing behavior-preserving code and rerun them afterward.
+- Builders run local task checks. In multi-builder work, a final sequential senior integration-verification task may add approved cross-component tests only in an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope a failure.
+- Baseline checks are encouraged for complex or high-risk work, not mandatory. If a baseline fails, a builder repairs it before continuing and retains the evidence.
 - Continue until completion criteria pass or a concrete blocker requires user input.
 
 ## Verification
@@ -50,7 +55,9 @@
 - Add or change automated tests only when the repository already has a suitable test suite. Never introduce a test framework or harness solely to validate the change.
 - For bug fixes without a suitable test suite, document the limitation, strongest existing alternative verification, and residual risk.
 - Report only checks actually performed and distinguish automated results from inspection or manual verification.
+- Reviewer stays read-only and evidence-based and does not execute tests or Docker.
 - Do not ship when required checks fail or no credible verification is possible.
+- After configuration changes, rerun the installer and restart OpenCode. Configuration changes require an OpenCode restart to take effect.
 
 ## Instruction Priority
 

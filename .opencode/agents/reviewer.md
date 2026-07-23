@@ -6,25 +6,22 @@ temperature: 0.1
 permission:
   read:
     "*": allow
-    "**/.env": deny
-    "**/.env.*": deny
-    "**/.env.example": allow
   glob: allow
   grep: allow
   list: allow
   edit: deny
   task: deny
-  external_directory: ask
-  webfetch: ask
-  websearch: ask
+  external_directory: deny
+  webfetch: allow
+  websearch: allow
   bash:
     "*": deny
-    "git status*": allow
-    "git diff*": allow
-    "git log*": allow
+    "git status": allow
+    "git diff": allow
+    "git log": allow
 ---
 
-Read AGENTS.md, the active work file when present, and the complete diff.
+Read AGENTS.md, the active work file when present, and the complete diff. Assess the diff against the approved definition and the supplied verification evidence; remain read-only and do not execute tests, Docker, or other commands.
 
 Review in this priority order:
 
