@@ -72,8 +72,7 @@ export function builderCommandBlocked(command: string): boolean {
   const lowered = parsed.argv.map((argument) => argument.toLowerCase());
   const commandStringInterpreters = new Set(["sh", "bash", "zsh", "dash", "ksh", "fish", "python", "python3", "node", "ruby", "perl", "php", "lua"]);
   if (lowered.some((argument, index) => commandStringInterpreters.has(argument.split("/").at(-1) ?? "") && lowered.slice(index + 1).some((flag) => flag === "-c" || flag === "-e" || flag === "--eval"))) return true;
-  if (lowered.some((argument) => argument === "git" || argument.endsWith("/git") || argument === "rm" || argument === "sudo")) return true;
-  const docker = lowered[0] === "docker";
-  if (!docker) return false;
-  return lowered.slice(1).some((argument) => argument === "rm" || argument === "rmi" || argument === "prune");
+  if (lowered.some((argument) => argument === "sudo")) return true;
+  if (lowered[0] === "git") return !isInspection(parsed.argv);
+  return lowered.some((argument) => argument === "git" || argument.endsWith("/git"));
 }

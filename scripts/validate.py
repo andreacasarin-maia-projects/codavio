@@ -485,6 +485,39 @@ for path in pi_agents:
         ERRORS.append(f"{path.relative_to(ROOT)}: package role namespace is not allowed")
     if "subagentOnlyExtensions" in data:
         ERRORS.append(f"{path.relative_to(ROOT)}: guards must load from the global package")
+    require_markers(path, ("permission:", "external_directory: deny"))
+
+for name in ("builder-junior", "builder-senior"):
+    path = ROOT / f"pi/agents/{name}.md"
+    require_effective(path, "bash", {
+        "ls": "allow",
+        "npm test": "allow",
+        "npm run lint": "allow",
+        "python3 scripts/validate.py": "allow",
+        "curl https://example.com": "ask",
+        "docker system prune": "ask",
+        "rm file": "ask",
+        "git status": "allow",
+        "git diff --stat": "allow",
+        "git commit -m message": "deny",
+        "sudo ls": "deny",
+    })
+
+require_effective(ROOT / "pi/agents/reviewer.md", "bash", {
+    "git status": "allow",
+    "git diff --stat": "allow",
+    "git commit -m message": "deny",
+    "npm test": "deny",
+})
+require_effective(ROOT / "pi/agents/shipper.md", "bash", {
+    "git status": "allow",
+    "git add file": "allow",
+    "git add -A": "ask",
+    "git commit -m message": "allow",
+    "git commit --amend": "ask",
+    "git push origin main": "ask",
+    "npm test": "deny",
+})
 
 for path in sorted(path for path in (ROOT / "pi").rglob("*") if path.is_file()):
     text = path.read_text(encoding="utf-8")
@@ -499,7 +532,7 @@ if dev_text and not frontmatter(dev_prompt):
 for filename, markers in {
     "builder-guard.ts": ("PI_SUBAGENT_CHILD_AGENT", "builder-junior", "builder-senior", 'from "./command-policy"', "block"),
     "reviewer-guard.ts": ("PI_SUBAGENT_CHILD_AGENT", "reviewer", 'from "./command-policy"', "block"),
-    "shipper-guard.ts": ("PI_SUBAGENT_CHILD_AGENT", "shipper", 'from "./command-policy"', "block", "isNormalPush"),
+    "shipper-guard.ts": ("PI_SUBAGENT_CHILD_AGENT", "shipper", 'from "./command-policy"', "block"),
     "workflow.ts": ("registerCommand(\"workflow-status\"", "gitRoot", "existsSync"),
 }.items():
     require_text(ROOT / "pi/extensions" / filename, markers)
@@ -575,6 +608,21 @@ require_text(
 require_text(
     ROOT / "scripts/install-codex.sh",
     ("plugin marketplace add", "plugin add", "templates/AGENTS.global.md", "GLOBAL_AGENTS_BACKUP"),
+)
+require_text(
+    ROOT / "README.md",
+    ("./scripts/install-pi.sh", "/subagents-doctor"),
+)
+require_text(
+    ROOT / "scripts/install-pi.sh",
+    (
+        "npm:@gotgenes/pi-permission-system",
+        '"$NPM_BIN" install',
+        '"$PI_BIN" install "$PERMISSION_PACKAGE"',
+        '"$PI_BIN" install "$WORKFLOW_PACKAGE"',
+        '"$PI_BIN" list',
+        "/subagents-doctor",
+    ),
 )
 
 if ERRORS:

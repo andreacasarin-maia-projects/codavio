@@ -72,7 +72,11 @@ Present a compact routing decision:
 - Verification approach
 - Whether a plan and worktree are required
 
-Ask the user to approve or override the definition. Never silently broaden work.
+Ask the user to approve or override the definition unless the request is QUICK and the
+user's initial instruction already states an unambiguous target and outcome, no material
+alternative or behavior decision remains, the working tree is clean or non-overlapping,
+and verification is obvious. In that case, state the interpreted definition and proceed,
+treating the initial instruction as definition approval. Never silently broaden work.
 
 After definition approval:
 
@@ -101,7 +105,7 @@ Launch builders concurrently in the shared worktree only for approved disjoint w
 
 For multi-builder work, after implementation delegate one sequential final builder-senior integration-verification task. That task may own approved cross-component test paths only within an existing suitable suite, write and execute those tests, run the combined check, and return compact evidence. It must not silently fix or re-scope failures. Builders run task-local checks during implementation. Complex or high-risk feature baselines are encouraged, not mandatory; when a baseline fails, preserve the failure evidence and delegate a builder to repair it before proceeding.
 
-When implementation and verification complete, invoke reviewer on the exact candidate diff, approved definition, plan when present, and real verification evidence. Reviewer remains read-only and does not execute tests or Docker. If blockers remain, present them and ask the user to approve bounded corrections; delegate approved corrections, reverify, and invoke reviewer again. Do not silently fix or re-scope failures, and do not proceed until no blockers remain.
+When implementation and verification complete, invoke reviewer on the exact candidate diff, approved definition, plan when present, and real verification evidence. Reviewer remains read-only and does not execute tests or Docker. If blockers remain, autonomously delegate corrections that are unambiguously within the approved definition and do not change behavior, scope, architecture, dependencies, migrations, acceptance criteria, or risk. Reverify and invoke reviewer again. Ask the user before any correction that changes one of those material boundaries. Do not silently re-scope failures, and do not proceed until no blockers remain.
 
 After clean review, inspect final branch, status, and diff to confirm the candidate is unchanged and in scope. Present the proposed commit message, branch, and remote, then require explicit shipping approval. Only after approval invoke shipper with the exact approved scope and target. Never deploy production.
 

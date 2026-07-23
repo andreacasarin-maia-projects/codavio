@@ -9,8 +9,9 @@ A lean, adaptive development workflow for OpenCode, Pi, and Codex. One coordinat
   → coordinator opens the request, records live .ai/work state, and makes exact Git bookkeeping decisions
   → explore and consult analyst when needed
   → discuss and approve material decisions
-  → define and plan with approval gates
-  → after approval, proceed autonomously through high-confidence in-scope implementation, verification, and bounded mechanical corrections
+  → define and plan with approval gates when material choices remain
+  → treat an explicit unambiguous QUICK request as its definition approval
+  → proceed autonomously through high-confidence in-scope implementation, verification, and corrections within approved material boundaries
   → delegate implementation, test, and Docker execution
   → verify and run independent review
   → request shipping approval
@@ -36,6 +37,7 @@ Model routing:
 ## Principles
 
 - Progressive ceremony: small changes stay small.
+- An explicit, unambiguous QUICK request can serve as definition approval when no material alternative remains, the working tree is clean or non-overlapping, and verification is obvious.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
 - After definition and plan approval, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
 - Every change gets verification proportionate to its behavior and risk.
@@ -47,6 +49,7 @@ Model routing:
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
 - Orchestrator is coordination-only: it owns `.ai/work` state, exact Git bookkeeping, decisions, plans, and delegation.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
+- Review corrections proceed autonomously when they stay inside approved behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk; changing one of those boundaries requires approval.
 
 ## Permissions
 
@@ -59,7 +62,7 @@ Trusted-project permissions are a curated safe list, not an OS sandbox:
 - External-directory access is denied where OpenCode detects it; `sudo`, builder Git mutation, force-push, and role boundaries remain denied. Bare shipper `git push` is the only push that asks.
 - Senior is trusted-project default-allow, but visibly invoked direct client commands ask first; global selectors before verb, including `--project-name`, Docker pull/up/down, and resource removals ask. Junior is mechanical and default-ask.
 - This is trusted-project convenience policy, not a sandbox: the write/deletion and network rules are best-effort lexical policy. Scripts, interpreters, wrappers, `find -exec`, redirection, and allowed tooling can bypass lexical/direct-path detection and may perform network or filesystem side effects. Native permissions do not infer GET/POST semantics.
-- These OpenCode permissions are intentionally not a parity claim for Pi; the Pi package remains stricter.
+- These OpenCode permissions are intentionally not a parity claim for Pi. Pi uses `@gotgenes/pi-permission-system` to auto-approve its explicit low-risk command set, forward `ask` decisions from subagents to the parent UI, and deny hard role boundaries.
 
 ## Install globally
 
@@ -81,20 +84,20 @@ Run OpenCode inside any Git project:
 
 ## Use with Pi
 
-From the repository root, install the pinned source dependency first:
+From the repository root, install the pinned source dependency, required permission
+extension, and this workflow:
 
 ```bash
-npm install
-```
-
-Install this checkout globally so its role guards also load in persistent feature worktrees:
-
-```bash
-pi install /path/to/ai-dev-workflow
+./scripts/install-pi.sh
 pi
 ```
 
-This project keeps `pi-subagents@0.35.1` pinned exactly. The global package applies only to repositories you trust: Pi native permissions are a curated safe list, not an OS sandbox. Log in with the provider supported by your Pi setup and choose the model there—no provider or model is hardcoded by this workflow.
+The installer runs `npm install`, installs `@gotgenes/pi-permission-system`, installs
+this checkout globally so its role guards load in persistent feature worktrees, and
+verifies that Pi lists both packages. Override the executables with `NPM_BIN` or
+`PI_BIN` when needed.
+
+This project keeps `pi-subagents@0.35.1` pinned exactly. The permission extension is required for runtime `allow`/`ask`/`deny` enforcement; run `/subagents-doctor` after installation to confirm that child-agent approval forwarding is active. The global package applies only to repositories you trust: Pi permissions are a curated safe list, not an OS sandbox. Log in with the provider supported by your Pi setup and choose the model there—no provider or model is hardcoded by this workflow.
 
 Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/dev <request>`, inspect state with `/workflow-status`, and use `.ai/work/<branch-slug>.md` for multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
 
@@ -119,8 +122,8 @@ $dev-workflow <request>
 ```
 
 Implicit invocation is disabled. Codex maps analyst and reviewer to `gpt-5.6-sol`;
-explorer, builders, and shipper use `gpt-5.6-terra`. The same definition, plan,
-correction, and shipping approval gates apply.
+explorer, builders, and shipper use `gpt-5.6-terra`. The same material-definition,
+FEATURE-plan, material-correction, and shipping approval rules apply.
 
 ## Entry points
 

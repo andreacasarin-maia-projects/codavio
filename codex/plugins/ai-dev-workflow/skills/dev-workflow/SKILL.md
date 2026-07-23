@@ -15,8 +15,11 @@ the role briefs in [roles.md](references/roles.md).
   `.ai/work/<branch-slug>.md` before routing.
 - Treat the user as the owner of material architecture, API, schema, security,
   infrastructure, migration, destructive, and shipping decisions.
-- Require explicit approval at four gates: definition, plan when required, review
-  corrections, and shipping. Silence is never approval.
+- Require explicit approval for material definitions, plans when required, corrections
+  that change an approved material boundary, and shipping. Silence is never approval.
+- An explicit, unambiguous `QUICK` request itself approves its compact definition when
+  no material alternative remains, the working tree is clean or non-overlapping, and
+  verification is obvious. State the interpreted definition before proceeding.
 - After definition and plan approval, continue autonomously through high-confidence,
   in-scope work. Interrupt only for a mandatory gate, material decision, conflict,
   worker failure, or unexpected required-check failure.
@@ -61,7 +64,8 @@ infrastructure, migration, destructive behavior, or hard escalation.
 
 Present a compact definition containing route, goal, scope, non-goals, material
 alternatives, risks, verification, and whether a plan/worktree is required. Ask the
-user to approve or override it before implementation.
+user to approve or override it before implementation, except for an unambiguous
+`QUICK` request that meets the implicit-definition conditions above.
 
 ## Plan and implement
 
@@ -89,9 +93,10 @@ After successful verification, spawn a fresh reviewer against the approved defin
 complete candidate diff, and actual verification evidence. The reviewer remains
 read-only and does not run tests.
 
-If blockers exist, present them and request explicit approval for bounded corrections.
-Delegate approved corrections, reverify, and review again. Do not silently fix review
-findings.
+If blockers exist, autonomously delegate corrections that remain inside the approved
+behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk.
+Reverify and review again. Present the finding and request explicit approval before any
+correction that changes one of those material boundaries. Do not silently re-scope work.
 
 After a clean review, confirm the final branch/status/diff and present the exact commit
 message, branch, remote, and files. Require explicit shipping approval. Only then

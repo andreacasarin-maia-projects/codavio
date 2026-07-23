@@ -50,7 +50,8 @@
 ## Workflow and role boundaries
 
 - `/dev` begins with the coordinator. The orchestrator records live `.ai/work` state, performs exact Git bookkeeping, makes decisions and plans, and delegates implementation, test, and Docker execution.
-- After user-approved definition and plan gates, the workflow proceeds autonomously through high-confidence in-scope implementation, verification, and bounded mechanical corrections. It interrupts only for material decisions, scope/security/architecture changes, conflicts, worker failure, unexpected required-check failure, or definition/plan/shipping gates.
+- An explicit, unambiguous QUICK request may itself approve its compact definition when no material alternative remains, the working tree is clean or non-overlapping, and verification is obvious. Material definitions and FEATURE plans still require explicit approval.
+- After approved definition and plan gates, the workflow proceeds autonomously through high-confidence in-scope implementation, verification, and corrections that remain within the approved behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk. Corrections require new approval only when one of those material boundaries changes.
 - Builder-senior is trusted-project default-allow for command execution. It owns normal implementation, test execution, integration verification, and approved Docker execution, while keeping hard Git/sudo boundaries and visible direct-client prompts best-effort.
 - Builder-junior is mechanical/default-ask and escalates normal reasoning, test, and Docker work when appropriate.
 - Builder-senior may auto-run verb-first `docker compose run`, `docker compose exec`, and `docker compose restart`; global selectors before the verb (`-p`, `--env-file`, `-f`, `--project-directory`, `--profile`, and `--project-name`) ask, and `docker compose pull`, `up`, `down`, and resource removal ask.

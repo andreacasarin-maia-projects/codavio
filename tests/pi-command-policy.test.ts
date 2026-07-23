@@ -16,8 +16,11 @@ test("shell syntax and unsafe builder commands are rejected", () => {
     assert.equal(isReviewerCommand(command), false, command);
     assert.equal(builderCommandBlocked(command), true, command);
   }
-  for (const command of ["git -C . status", "command git status", "/usr/bin/git status", "rm file", "sudo git status", "docker system prune", "docker volume rm data", "docker compose rm", "docker image prune", "sh -c 'git commit -m x'", "bash -c 'rm file'", "python3 -c 'import os; os.system(\"git commit -m x\")'", "node --eval 'require(\"child_process\").execSync(\"rm file\")'"]) {
+  for (const command of ["git -C . status", "command git status", "/usr/bin/git status", "sudo git status", "sh -c 'git commit -m x'", "bash -c 'rm file'", "python3 -c 'import os; os.system(\"git commit -m x\")'", "node --eval 'require(\"child_process\").execSync(\"rm file\")'"]) {
     assert.equal(builderCommandBlocked(command), true, command);
+  }
+  for (const command of ["git status", "git diff --stat", "git log -1", "rm file", "docker system prune", "docker volume rm data", "docker compose rm", "docker image prune", "curl https://example.com"]) {
+    assert.equal(builderCommandBlocked(command), false, `${command} should reach the permission system`);
   }
 });
 
