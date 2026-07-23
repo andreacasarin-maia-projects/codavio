@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the repository's OpenCode and Pi definitions using stdlib only."""
+"""Validate the repository's OpenCode, Pi, and Codex definitions using stdlib only."""
 
 from __future__ import annotations
 
@@ -518,9 +518,71 @@ loadable_extensions = [path for path in pi_extensions if path.name != "command-p
 if len(loadable_extensions) != 4:
     ERRORS.append(f"expected 4 loadable Pi extensions, found {len(loadable_extensions)}")
 
+codex_plugin = ROOT / "codex/plugins/ai-dev-workflow"
+codex_manifest_path = codex_plugin / ".codex-plugin/plugin.json"
+codex_marketplace_path = ROOT / "codex/.agents/plugins/marketplace.json"
+codex_skill_path = codex_plugin / "skills/dev-workflow/SKILL.md"
+codex_ui_path = codex_plugin / "skills/dev-workflow/agents/openai.yaml"
+codex_roles_path = codex_plugin / "skills/dev-workflow/references/roles.md"
+
+try:
+    codex_manifest = json.loads(codex_manifest_path.read_text(encoding="utf-8"))
+except (OSError, json.JSONDecodeError) as exc:
+    ERRORS.append(f"Codex plugin manifest is invalid ({exc})")
+    codex_manifest = {}
+if codex_manifest.get("name") != "ai-dev-workflow":
+    ERRORS.append("Codex plugin manifest has unexpected name")
+if codex_manifest.get("skills") != "./skills/":
+    ERRORS.append("Codex plugin manifest must declare ./skills/")
+
+try:
+    codex_marketplace = json.loads(codex_marketplace_path.read_text(encoding="utf-8"))
+except (OSError, json.JSONDecodeError) as exc:
+    ERRORS.append(f"Codex marketplace manifest is invalid ({exc})")
+    codex_marketplace = {}
+if codex_marketplace.get("name") != "ai-dev-workflow":
+    ERRORS.append("Codex marketplace has unexpected name")
+codex_entries = codex_marketplace.get("plugins", [])
+if not isinstance(codex_entries, list) or len(codex_entries) != 1:
+    ERRORS.append("Codex marketplace must declare exactly one plugin")
+elif codex_entries[0].get("name") != "ai-dev-workflow":
+    ERRORS.append("Codex marketplace plugin name is misaligned")
+
+codex_skill = frontmatter(codex_skill_path)
+if codex_skill.get("name") != "dev-workflow":
+    ERRORS.append("Codex skill has unexpected name")
+require_text(
+    codex_skill_path,
+    (
+        "explicit approval",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "builder-junior",
+        "builder-senior",
+        ".ai/work",
+        ".worktrees",
+        "shipping approval",
+    ),
+)
+require_text(
+    codex_ui_path,
+    ("allow_implicit_invocation: false", "$dev-workflow"),
+)
+require_text(
+    codex_roles_path,
+    ("## Analyst", "## Explorer", "## Builder junior", "## Builder senior", "## Reviewer", "## Shipper"),
+)
+require_text(
+    ROOT / "scripts/install-codex.sh",
+    ("plugin marketplace add", "plugin add", "templates/AGENTS.global.md", "GLOBAL_AGENTS_BACKUP"),
+)
+
 if ERRORS:
     for error in ERRORS:
         print(f"ERROR: {error}", file=sys.stderr)
     raise SystemExit(1)
 
-print(f"OK: OpenCode ({len(commands)} commands, {len(agents)} agents) and Pi (6 agents, {len(loadable_extensions)} extensions)")
+print(
+    f"OK: OpenCode ({len(commands)} commands, {len(agents)} agents), "
+    f"Pi (6 agents, {len(loadable_extensions)} extensions), and Codex (1 plugin, 1 skill)"
+)

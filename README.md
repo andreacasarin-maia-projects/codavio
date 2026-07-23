@@ -1,6 +1,6 @@
 # AI Dev Workflow
 
-A lean, adaptive development workflow for OpenCode and Pi. One coordinator guides work from analysis through approved shipping using provider-neutral subagents.
+A lean, adaptive development workflow for OpenCode, Pi, and Codex. One coordinator guides work from analysis through approved shipping using role-specific subagents.
 
 ## Workflow
 
@@ -98,11 +98,37 @@ This project keeps `pi-subagents@0.35.1` pinned exactly. The global package appl
 
 Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/dev <request>`, inspect state with `/workflow-status`, and use `.ai/work/<branch-slug>.md` for multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
 
-## Commands
+## Install in Codex
 
-| Command | Purpose |
-|---|---|
-| `/dev` | Orchestrate coordination, analysis, decisions, planning, delegation, review, and approved shipping |
+Install the tracked local marketplace, plugin, and shared global engineering guidance:
+
+```bash
+./scripts/install-codex.sh
+```
+
+The installer registers the marketplace under `codex/`, installs the
+`ai-dev-workflow` plugin, and links `templates/AGENTS.global.md` to
+`${CODEX_HOME:-$HOME/.codex}/AGENTS.md`. Existing global guidance aborts installation;
+use `./scripts/install-codex.sh --force` to move it to `AGENTS.md.backup` first. An
+existing backup is never overwritten.
+
+Start a new Codex task after installation and invoke the workflow explicitly:
+
+```text
+$dev-workflow <request>
+```
+
+Implicit invocation is disabled. Codex maps analyst and reviewer to `gpt-5.6-sol`;
+explorer, builders, and shipper use `gpt-5.6-terra`. The same definition, plan,
+correction, and shipping approval gates apply.
+
+## Entry points
+
+| Harness | Entry point | Purpose |
+|---|---|---|
+| OpenCode | `/dev` | Orchestrate analysis through approved shipping |
+| Pi | `/dev` | Orchestrate analysis through approved shipping |
+| Codex | `$dev-workflow` | Explicitly run the Codex plugin workflow |
 
 ## Persistent context
 
@@ -134,7 +160,7 @@ python3 scripts/validate.py
 
 ## Status
 
-Dual-harness package for OpenCode and Pi. Deliberately small: no daemon or hidden state machine.
+Three-harness package for OpenCode, Pi, and Codex. Deliberately small: no daemon or hidden state machine.
 
 ## License
 
