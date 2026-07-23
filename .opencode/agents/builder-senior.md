@@ -15,7 +15,7 @@ permission:
   webfetch: allow
   websearch: allow
   bash:
-    "*": ask
+    "*": allow
     "ls": allow
     "ls *": allow
     "less": allow
@@ -174,7 +174,81 @@ permission:
     "docker compose logs *": allow
     "docker compose build": allow
     "docker compose build *": allow
-    "docker exec": allow
+    "docker compose restart": allow
+    "docker compose restart *": allow
+    "docker compose pull": ask
+    "docker compose pull *": ask
+    "docker compose up": ask
+    "docker compose up *": ask
+    "docker compose down": ask
+    "docker compose down *": ask
+    "docker compose * pull": ask
+    "docker compose * pull *": ask
+    "docker compose * up": ask
+    "docker compose * up *": ask
+    "docker compose * down": ask
+    "docker compose * down *": ask
+    "docker compose -p * restart": ask
+     "docker compose -p * restart *": ask
+     "docker compose -p=* restart": ask
+     "docker compose -p=* restart *": ask
+     "docker compose --env-file * restart": ask
+     "docker compose --env-file * restart *": ask
+     "docker compose --env-file=* restart": ask
+     "docker compose --env-file=* restart *": ask
+     "docker compose -f * restart": ask
+     "docker compose -f * restart *": ask
+     "docker compose -f=* restart": ask
+     "docker compose -f=* restart *": ask
+     "docker compose --project-directory * restart": ask
+     "docker compose --project-directory * restart *": ask
+     "docker compose --project-directory=* restart": ask
+     "docker compose --project-directory=* restart *": ask
+     "docker compose --profile * restart": ask
+     "docker compose --profile * restart *": ask
+     "docker compose --profile=* restart": ask
+     "docker compose --profile=* restart *": ask
+     "docker compose -p * run": ask
+     "docker compose -p * run *": ask
+     "docker compose -p=* run": ask
+     "docker compose -p=* run *": ask
+     "docker compose -p * exec": ask
+     "docker compose -p * exec *": ask
+     "docker compose -p=* exec": ask
+     "docker compose -p=* exec *": ask
+     "docker compose --env-file * run": ask
+     "docker compose --env-file * run *": ask
+     "docker compose --env-file=* run": ask
+     "docker compose --env-file=* run *": ask
+     "docker compose --env-file * exec": ask
+     "docker compose --env-file * exec *": ask
+     "docker compose --env-file=* exec": ask
+     "docker compose --env-file=* exec *": ask
+     "docker compose -f * run": ask
+     "docker compose -f * run *": ask
+     "docker compose -f=* run": ask
+     "docker compose -f=* run *": ask
+     "docker compose -f * exec": ask
+     "docker compose -f * exec *": ask
+     "docker compose -f=* exec": ask
+     "docker compose -f=* exec *": ask
+     "docker compose --project-directory * run": ask
+     "docker compose --project-directory * run *": ask
+     "docker compose --project-directory=* run": ask
+     "docker compose --project-directory=* run *": ask
+     "docker compose --project-directory * exec": ask
+     "docker compose --project-directory * exec *": ask
+     "docker compose --project-directory=* exec": ask
+     "docker compose --project-directory=* exec *": ask
+     "docker compose --profile * run": ask
+     "docker compose --profile * run *": ask
+     "docker compose --profile=* run": ask
+     "docker compose --profile=* run *": ask
+     "docker compose --profile * exec": ask
+     "docker compose --profile * exec *": ask
+     "docker compose --profile=* exec": ask
+     "docker compose --profile=* exec *": ask
+     "docker exec": allow
     "docker exec *": allow
     "docker compose exec": allow
     "docker compose exec *": allow
@@ -190,8 +264,65 @@ permission:
     "git log": allow
     "git log *": allow
     "git status && *": deny
+    "git status ; *": deny
+    "git status * ; *": deny
+    "git status | *": deny
+    "git status * | *": deny
+    "git status || *": deny
+    "git status * || *": deny
+    "git status & *": deny
+    "git status * & *": deny
+     "git status * && *": deny
+     "git status&&*": deny
+     "git status*&&*": deny
+     "git status;*": deny
+     "git status*;*": deny
+     "git status|*": deny
+     "git status*|*": deny
+     "git status||*": deny
+     "git status*||*": deny
+     "git status&*": deny
+     "git status*&*": deny
     "git diff && *": deny
+    "git diff ; *": deny
+    "git diff * ; *": deny
+    "git diff | *": deny
+    "git diff * | *": deny
+    "git diff || *": deny
+    "git diff * || *": deny
+    "git diff & *": deny
+    "git diff * & *": deny
+     "git diff * && *": deny
+     "git diff&&*": deny
+     "git diff*&&*": deny
+     "git diff;*": deny
+     "git diff*;*": deny
+     "git diff|*": deny
+     "git diff*|*": deny
+     "git diff||*": deny
+     "git diff*||*": deny
+     "git diff&*": deny
+     "git diff*&*": deny
     "git log && *": deny
+    "git log ; *": deny
+    "git log * ; *": deny
+    "git log | *": deny
+    "git log * | *": deny
+    "git log || *": deny
+    "git log * || *": deny
+    "git log & *": deny
+    "git log * & *": deny
+     "git log * && *": deny
+     "git log&&*": deny
+     "git log*&&*": deny
+     "git log;*": deny
+     "git log*;*": deny
+     "git log|*": deny
+     "git log*|*": deny
+     "git log||*": deny
+     "git log*||*": deny
+     "git log&*": deny
+     "git log*&*": deny
     "git add": deny
     "git commit": deny
     "git push": deny
@@ -256,6 +387,8 @@ permission:
 ---
 
 Execute one assigned task within its approved boundaries and follow AGENTS.md. Run task-local checks appropriate to the change and report their evidence. The orchestrator owns Git baselines and combined diff inspection.
+
+For Docker Compose, prefer verb-first forms for `run`, `exec`, and `restart` (for example, `docker compose run ...`, `docker compose exec ...`, and `docker compose restart ...`). Global selectors before the verb—`-p`, `--env-file`, `-f`, `--project-directory`, and `--profile`—continue to ask for approval.
 
 Keep new and modified code clear, cohesive, and consistent with surrounding patterns. Refactor locally when necessary for the assigned implementation, but do not expand into unrelated cleanup.
 

@@ -184,8 +184,65 @@ permission:
     "git log": allow
     "git log *": allow
     "git status && *": deny
+    "git status ; *": deny
+    "git status * ; *": deny
+    "git status | *": deny
+    "git status * | *": deny
+    "git status || *": deny
+    "git status * || *": deny
+    "git status & *": deny
+    "git status * & *": deny
+     "git status * && *": deny
+     "git status&&*": deny
+     "git status*&&*": deny
+     "git status;*": deny
+     "git status*;*": deny
+     "git status|*": deny
+     "git status*|*": deny
+     "git status||*": deny
+     "git status*||*": deny
+     "git status&*": deny
+     "git status*&*": deny
     "git diff && *": deny
+    "git diff ; *": deny
+    "git diff * ; *": deny
+    "git diff | *": deny
+    "git diff * | *": deny
+    "git diff || *": deny
+    "git diff * || *": deny
+    "git diff & *": deny
+    "git diff * & *": deny
+     "git diff * && *": deny
+     "git diff&&*": deny
+     "git diff*&&*": deny
+     "git diff;*": deny
+     "git diff*;*": deny
+     "git diff|*": deny
+     "git diff*|*": deny
+     "git diff||*": deny
+     "git diff*||*": deny
+     "git diff&*": deny
+     "git diff*&*": deny
     "git log && *": deny
+    "git log ; *": deny
+    "git log * ; *": deny
+    "git log | *": deny
+    "git log * | *": deny
+    "git log || *": deny
+    "git log * || *": deny
+    "git log & *": deny
+    "git log * & *": deny
+     "git log * && *": deny
+     "git log&&*": deny
+     "git log*&&*": deny
+     "git log;*": deny
+     "git log*;*": deny
+     "git log|*": deny
+     "git log*|*": deny
+     "git log||*": deny
+     "git log*||*": deny
+     "git log&*": deny
+     "git log*&*": deny
     "git add": deny
     "git commit": deny
     "git push": deny
@@ -249,7 +306,7 @@ permission:
     "sudo *": deny
 ---
 
-Execute exactly the assigned task. Modify only owned paths; planned peer changes in declared paths are expected. The orchestrator owns Git baselines and combined diff inspection. Run task-local checks appropriate to the change and report their evidence. Do not redesign, add dependencies, broaden scope, commit, push, or modify the work plan.
+Execute exactly the assigned task. Modify only owned paths; planned peer changes in declared paths are expected. The orchestrator owns Git baselines and combined diff inspection. Escalate normal reasoning, test, and Docker tasks to builder-senior when appropriate rather than having the orchestrator execute them. Run task-local checks appropriate to the change and report their evidence. Do not redesign, add dependencies, broaden scope, commit, push, or modify the work plan.
 
 Keep new and modified code clear, cohesive, and consistent with surrounding patterns. Refactor locally when necessary for the assigned implementation, but do not expand into unrelated cleanup.
 

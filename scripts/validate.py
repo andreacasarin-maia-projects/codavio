@@ -53,7 +53,7 @@ def permission_rules(path: Path) -> dict[str, list[tuple[str, str]]]:
                 tool = line.strip()[:-1]
                 rules[tool] = []
         elif tool and line.startswith("    "):
-            match = re.fullmatch(r'    "(.*)": (allow|ask|deny)', line)
+            match = re.fullmatch(r' {4,}"(.*)": (allow|ask|deny)', line)
             if match:
                 rules[tool].append(match.groups())
     return rules
@@ -181,22 +181,23 @@ for name in expected_agents:
     for tool in ("webfetch", "websearch"):
         if rules.get(tool) != [("*", expected_network)]:
             ERRORS.append(f"{path.relative_to(ROOT)}: {tool} must be {expected_network}")
-    expected_edit = "allow" if name in {"orchestrator", "builder-junior", "builder-senior"} else "deny"
-    if rules.get("edit") != [("*", expected_edit)]:
-        ERRORS.append(f"{path.relative_to(ROOT)}: edit must be {expected_edit}")
+    expected_edit = [("*", "deny"), (".ai/work/**", "allow")] if name == "orchestrator" else [("*", "allow")] if name in {"builder-junior", "builder-senior"} else [("*", "deny")]
+    if rules.get("edit") != expected_edit:
+        ERRORS.append(f"{path.relative_to(ROOT)}: unexpected edit rules")
 
 for name in {"builder-junior", "builder-senior"}:
     path = ROOT / f".opencode/agents/{name}.md"
     rules = permission_rules(path).get("bash", [])
-    if not rules or rules[0] != ("*", "ask"):
-        ERRORS.append(f"{path.relative_to(ROOT)}: bash baseline must be first and ask")
+    expected_baseline = ("*", "allow") if name == "builder-senior" else ("*", "ask")
+    if not rules or rules[0] != expected_baseline:
+        ERRORS.append(f"{path.relative_to(ROOT)}: bash baseline is incorrect")
     require_effective(path, "bash", {
         "ls": "allow", "ls src": "allow", "less README.md": "allow",
         "cat README.md": "allow", "head -n 1 README.md": "allow",
         "tail -n 1 README.md": "allow", "pwd": "allow", "find .": "allow",
         "wc -l README.md": "allow", "sort README.md": "allow",
         "npm test": "allow", "npm test -- --runInBand": "allow",
-        "npm testfoo": "ask", "docker build .": "allow",
+        "npm testfoo": "ask" if name == "builder-junior" else "allow", "docker build .": "allow",
         "docker system prune": "ask", "docker volume rm data": "ask",
         "docker container rm data": "ask", "docker image rm data": "ask",
         "docker rmi data": "ask", "docker rm data": "ask",
@@ -210,20 +211,89 @@ for name in {"builder-junior", "builder-senior"}:
         "git diff": "allow", "git diff --stat": "allow", "git log": "allow", "git log -1": "allow",
         "git add": "deny", "git add file": "deny",
         "git commit -m message": "deny", "git push origin main": "deny",
-        "git rebase main": "deny", "git merge main": "deny",
-        "git revert HEAD": "deny", "git stash pop": "deny",
-        "git branch -d old": "deny", "git worktree remove ../other": "deny",
-        "git status && git add file": "deny",
-        "git diff && git add file": "deny", "git log && git commit -m message": "deny",
-        "docker pull image": "ask",
+         "git rebase main": "deny", "git merge main": "deny",
+         "git revert HEAD": "deny", "git stash pop": "deny",
+         "git branch -d old": "deny", "git worktree remove ../other": "deny",
+         "git status && git add file": "deny",
+         "git status ; git add file": "deny", "git status | git add file": "deny",
+         "git status || git add file": "deny", "git status & git add file": "deny",
+          "git status --short && git add file": "deny",
+          "git status&&git add file": "deny", "git status --short&&git add file": "deny",
+          "git status;git add file": "deny", "git status --short;git add file": "deny",
+          "git status|git add file": "deny", "git status --short|git add file": "deny",
+          "git status||git add file": "deny", "git status --short||git add file": "deny",
+          "git status&git add file": "deny", "git status --short&git add file": "deny",
+          "git diff && git add file": "deny", "git log && git commit -m message": "deny",
+          "git diff&&git add file": "deny", "git log&&git commit -m message": "deny",
+          "git diff;git add file": "deny", "git log;git commit -m message": "deny",
+          "git diff|git add file": "deny", "git log|git commit -m message": "deny",
+          "git diff||git add file": "deny", "git log||git commit -m message": "deny",
+          "git diff&git add file": "deny", "git log&git commit -m message": "deny",
+         "git diff ; git add file": "deny", "git diff | git add file": "deny",
+         "git diff || git add file": "deny", "git diff & git add file": "deny",
+         "git log ; git commit -m message": "deny", "git log | git commit -m message": "deny",
+         "git log || git commit -m message": "deny", "git log & git commit -m message": "deny",
+         "git log -1 && git commit -m message": "deny",
+         "docker pull image": "ask",
     })
     docker_cases = {
         "docker exec app sh": "allow" if name == "builder-senior" else "ask",
         "docker compose exec app sh": "allow" if name == "builder-senior" else "ask",
         "docker compose run app command": "allow" if name == "builder-senior" else "ask",
+        "docker compose restart": "allow" if name == "builder-senior" else "ask",
+        "docker compose restart app": "allow" if name == "builder-senior" else "ask",
+         "docker compose -p demo restart": "ask",
+         "docker compose --env-file .env restart": "ask",
+         "docker compose -f compose.yml restart": "ask",
+         "docker compose --project-directory . restart": "ask",
+         "docker compose --profile dev restart": "ask",
+         "docker compose -p demo run": "ask",
+         "docker compose -p demo run app command": "ask",
+         "docker compose -p demo exec": "ask",
+         "docker compose -p demo exec app sh": "ask",
+         "docker compose --env-file .env run": "ask",
+         "docker compose --env-file .env run app command": "ask",
+         "docker compose --env-file .env exec": "ask",
+         "docker compose --env-file .env exec app sh": "ask",
+         "docker compose -f compose.yml run": "ask",
+         "docker compose -f compose.yml run app command": "ask",
+         "docker compose -f compose.yml exec": "ask",
+         "docker compose -f compose.yml exec app sh": "ask",
+         "docker compose --project-directory . run": "ask",
+         "docker compose --project-directory . run app command": "ask",
+         "docker compose --project-directory . exec": "ask",
+         "docker compose --project-directory . exec app sh": "ask",
+         "docker compose --profile dev run": "ask",
+         "docker compose --profile dev run app command": "ask",
+         "docker compose --profile dev exec": "ask",
+          "docker compose --profile dev exec app sh": "ask",
+          "docker compose -p=demo restart": "ask",
+          "docker compose --env-file=.env restart": "ask",
+          "docker compose -f=compose.yml restart": "ask",
+          "docker compose --project-directory=. restart": "ask",
+          "docker compose --profile=dev restart": "ask",
+          "docker compose -p=demo run": "ask",
+          "docker compose --env-file=.env run": "ask",
+          "docker compose -f=compose.yml run": "ask",
+          "docker compose --project-directory=. run": "ask",
+          "docker compose --profile=dev run": "ask",
+          "docker compose -p=demo exec": "ask",
+          "docker compose --env-file=.env exec": "ask",
+          "docker compose -f=compose.yml exec": "ask",
+          "docker compose --project-directory=. exec": "ask",
+          "docker compose --profile=dev exec": "ask",
+        "docker compose pull": "ask",
+        "docker compose pull image": "ask",
+        "docker compose up": "ask",
+        "docker compose up app": "ask",
+        "docker compose down": "ask",
+        "docker compose down app": "ask",
+        "docker compose -f compose.yml pull": "ask",
+        "docker compose --project-name demo up": "ask",
+        "docker compose -f compose.yml down": "ask",
     }
     require_effective(path, "bash", docker_cases)
-    require_ordered(path, "bash", ("*", "ask"), ("git *", "deny"))
+    require_ordered(path, "bash", expected_baseline, ("git *", "deny"))
     require_ordered(path, "bash", ("git *", "deny"), ("git status", "allow"))
     require_ordered(path, "bash", ("git *", "deny"), ("git status *", "allow"))
     require_ordered(path, "bash", ("git *", "deny"), ("git diff", "allow"))
@@ -233,22 +303,14 @@ for name in {"builder-junior", "builder-senior"}:
 
 orchestrator_path = ROOT / ".opencode/agents/orchestrator.md"
 require_effective(orchestrator_path, "bash", {
-    "rm file": "allow", "rmdir empty": "allow", "unlink file": "allow",
-    "mkdir project": "allow", "touch file": "allow", "cp a b": "allow",
-    "mv a b": "allow", "tee file": "allow", "sed -n 1p README.md": "allow",
-    "printf text > file": "allow", "printf text >file": "allow", "printf text>file": "allow",
-    "docker system prune": "ask", "docker volume rm data": "ask",
-    "docker container rm data": "ask", "docker image rm data": "ask",
-    "docker rmi data": "ask", "docker rm data": "ask",
-    "curl https://example.com": "ask", "psql db": "ask", "sudo ls": "deny",
-    "git status": "allow", "git status --short": "allow",
-    "git diff": "allow", "git diff --stat": "allow", "git log": "allow", "git log -1": "allow",
-    "git add": "deny", "git add file": "deny", "git push origin main": "deny",
-    "git status && git add file": "deny", "git diff && git add file": "deny",
-    "git log && git commit -m message": "deny",
+    "git rev-parse --show-toplevel": "allow", "git branch --show-current": "allow",
+    "git status": "allow", "git status --short": "allow", "git worktree list": "allow",
+    "git diff": "allow", "git diff --stat": "allow", "git diff --name-only": "allow",
+    "git diff --check": "allow", "git log": "allow", "git log -1": "allow",
+    "ls": "deny", "npm test": "deny", "docker ps": "deny",
+    "git add file": "deny", "git status && git add file": "deny",
 })
-require_ordered(orchestrator_path, "bash", ("*", "ask"), ("git *", "deny"))
-require_ordered(orchestrator_path, "bash", ("git *", "deny"), ("git status", "allow"))
+require_ordered(orchestrator_path, "bash", ("*", "deny"), ("git rev-parse --show-toplevel", "allow"))
 
 reviewer_text = (ROOT / ".opencode/agents/reviewer.md").read_text(encoding="utf-8")
 if not all(rule in reviewer_text for rule in ("  edit: deny", "  task: deny", '    "*": deny')):
@@ -296,8 +358,8 @@ for name in ("orchestrator", "reviewer", "shipper"):
     rules = permission_rules(path).get("bash", [])
     if not rules:
         ERRORS.append(f"{path.relative_to(ROOT)}: missing bash rules")
-    if name == "orchestrator" and rules[0] != ("*", "ask"):
-        ERRORS.append(f"{path.relative_to(ROOT)}: bash baseline must be first and ask")
+    if name == "orchestrator" and rules[0] != ("*", "deny"):
+        ERRORS.append(f"{path.relative_to(ROOT)}: bash baseline must be first and deny")
 
 for name in ("orchestrator", "builder-junior", "builder-senior", "reviewer", "shipper"):
     path = ROOT / f".opencode/agents/{name}.md"

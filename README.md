@@ -6,10 +6,11 @@ A lean, adaptive development workflow for OpenCode. One orchestrator guides work
 
 ```text
 /dev
+  → orchestrator coordinates analysis, decisions, plans, delegation, and exact Git bookkeeping
   → explore and consult analyst when needed
   → discuss and approve material decisions
   → define and plan with approval gates
-  → delegate parallel-safe implementation
+  → delegate implementation, tests, and Docker to builders
   → verify and run independent review
   → request shipping approval
   → delegate commit and push
@@ -28,12 +29,14 @@ Model routing:
 
 - Progressive ceremony: small changes stay small.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
+- After definition and plan approval, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
 - Every change gets verification proportionate to its behavior and risk.
-- Builders run local task checks. In multi-builder work, a final sequential senior integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
+- Builders execute implementation, tests, and Docker. In multi-builder work, a final sequential senior integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
 - Baseline checks are encouraged for complex or high-risk work, not mandatory. If a baseline fails, a builder repairs it before continuing and retains the evidence.
 - Bug fixes add regression coverage only within an existing suitable test suite; otherwise they use and document the strongest existing verification.
 - Worktrees isolate features, risky work, or unrelated dirty changes; parallel writers require explicit disjoint ownership.
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
+- Orchestrator is coordination-only: it owns `.ai/work` state, exact Git bookkeeping, decisions, plans, and delegation.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
 
 ## Permissions
@@ -42,9 +45,10 @@ Trusted-project permissions are a curated safe list, not an OS sandbox:
 
 - Repository reads (including `.env` files), edits, patch deletions, file listing, globbing, searching, and common project-local shell writes/deletions (`mkdir`, `touch`, `cp`, `mv`, `tee`, `sed`, `rm`, `rmdir`, `unlink`, `find`, and common redirection forms) run without prompts in the relevant roles.
 - Curated build/test/lint/typecheck/check commands, Docker build commands, and non-shipper `webfetch`/`websearch` run without prompts in the relevant roles.
-- Builder-senior may run approved implementation and integration-verification `docker exec`, `docker compose exec`, and `docker compose run`; Docker pull still prompts, and there is no blanket Docker permission.
-- Docker resource removal still prompts. Visibly invoked direct general network clients and cloud/database CLIs prompt on a best-effort lexical basis.
+- Builder-senior may run approved implementation and integration-verification `docker exec`, `docker compose exec`, `docker compose restart`, and `docker compose run`; Docker pull still prompts, and there is no blanket Docker permission.
+- Docker resource removal still prompts. Global selectors before verb, visibly invoked direct general network clients, and cloud/database CLIs prompt on a best-effort lexical basis.
 - External-directory access is denied where OpenCode detects it; `sudo`, builder Git mutation, force-push, and role boundaries remain denied. Bare shipper `git push` is the only push that asks.
+- Senior is trusted-project default-allow, but visibly invoked direct client commands ask first; global selectors before verb, Docker pull/up/down, and resource removals ask. Junior is mechanical and default-ask.
 - This is trusted-project convenience policy, not a sandbox: the write/deletion and network rules are best-effort lexical policy. Scripts, interpreters, wrappers, `find -exec`, redirection, and allowed tooling can bypass lexical/direct-path detection and may perform network or filesystem side effects. Native permissions do not infer GET/POST semantics.
 
 ## Install globally
@@ -69,7 +73,7 @@ Run OpenCode inside any Git project:
 
 | Command | Purpose |
 |---|---|
-| `/dev` | Orchestrate analysis, decisions, planning, implementation, review, and approved shipping |
+| `/dev` | Orchestrate coordination, analysis, decisions, planning, delegation, review, and approved shipping |
 
 ## Persistent context
 

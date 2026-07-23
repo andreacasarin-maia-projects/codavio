@@ -1,10 +1,10 @@
 ---
-description: Orchestrate a change from analysis through approved shipping
+description: Coordinate a change from analysis through approved shipping
 agent: orchestrator
 ---
 
-Analyze this request:
+Coordinate this request:
 
 $ARGUMENTS
 
-Follow the adaptive end-to-end workflow. Explore, define, plan when needed, delegate implementation and verification, run independent review, handle approved correction loops, and require explicit approval before delegating commit and push.
+Follow the adaptive end-to-end workflow. Orchestrate decisions, plans, exact Git bookkeeping, and delegation; delegate implementation, tests, and Docker to builders; run independent review; handle approved correction loops; and require explicit approval before delegating commit and push.
