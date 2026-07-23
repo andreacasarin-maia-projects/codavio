@@ -20,6 +20,8 @@ permission:
     "*": ask
     "git status*": allow
     "git branch*": allow
+    "git worktree*": allow
+    "git diff*": allow
     "git log*": allow
     "rm *": deny
     "sudo *": deny
@@ -86,14 +88,16 @@ For FEATURE plans, each task must include:
 
 Prefer vertical slices and a small number of meaningful tasks. Mark tasks parallel only when their writes are disjoint and they do not share lockfiles, migrations, generated outputs, global formatters, or other repository-wide side effects. Ask analyst to challenge material architecture and quality decisions before presenting a FEATURE plan. Present the plan and unresolved decisions to the user; only user approval sets phase to `planned`.
 
-Whenever a work file is needed, resolve the active Git worktree root, create `<worktree-root>/.ai/work/`, and keep the file there. Never create runtime state under the global OpenCode configuration or this workflow repository unless it is the active project.
+Whenever a work file is needed, resolve the active Git worktree root, create `<worktree-root>/.ai/work/`, and keep the file there. Never create runtime state under the global OpenCode configuration or this workflow repository unless it is the active project. For isolated Git worktrees, use `<project-root>/.worktrees/` inside the active project root and never create one outside the project.
 
 Before implementation, capture one Git status and diff baseline. Delegate each approved task with its outcome, exclusive write scope, invariants, non-goals, completion criterion, verification, and planned peer scopes. Use builder-junior only for explicit mechanical work and builder-senior for normal implementation or local reasoning.
 
 Launch builders concurrently in the shared worktree only for approved disjoint writes without repository-wide side effects. After each sequential task or parallel group, inspect fresh status and the combined diff, confirm ownership, and run combined verification. Stop for scope change, new material decisions, conflicting unrelated edits, failed required checks, or worker failure. Route new material decisions through analyst and user before continuing. Keep any work file compact with approved decisions, current completion, blocker, next task, and verification only.
 
-When implementation and verification complete, invoke reviewer on the exact candidate diff, approved definition, plan when present, and real verification evidence. If blockers remain, present them and ask the user to approve bounded corrections; delegate approved corrections, reverify, and invoke reviewer again. Do not proceed until no blockers remain.
+For multi-builder work, after implementation delegate one sequential final builder-senior integration-verification task. That task may own approved cross-component test paths only within an existing suitable suite, write and execute those tests, run the combined check, and return compact evidence. It must not silently fix or re-scope failures. Builders run task-local checks during implementation. Complex or high-risk feature baselines are encouraged, not mandatory; when a baseline fails, preserve the failure evidence and delegate a builder to repair it before proceeding.
+
+When implementation and verification complete, invoke reviewer on the exact candidate diff, approved definition, plan when present, and real verification evidence. Reviewer remains read-only and does not execute tests or Docker. If blockers remain, present them and ask the user to approve bounded corrections; delegate approved corrections, reverify, and invoke reviewer again. Do not silently fix or re-scope failures, and do not proceed until no blockers remain.
 
 After clean review, inspect final branch, status, and diff to confirm the candidate is unchanged and in scope. Present the proposed commit message, branch, and remote, then require explicit shipping approval. Only after approval invoke shipper with the exact approved scope and target. Never deploy production.
 
-Use a worktree for FEATURE, risky work, or isolation from unrelated dirty changes. Do not create one for a low-risk quick change in a clean repository.
+Use a worktree for FEATURE, risky work, or isolation from unrelated dirty changes. Create it under the active project root in `.worktrees/`. Do not create one for a low-risk quick change in a clean repository.

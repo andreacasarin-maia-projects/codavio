@@ -33,6 +33,7 @@
 - Do not refactor, reformat, modernize, or remove unrelated code.
 - Remove imports, variables, functions, and files made obsolete by the current change.
 - Preserve unrelated user or agent changes. Mention pre-existing issues instead of fixing them.
+- When isolated Git worktrees are needed, create them under the active project root in ignored `.worktrees/`; never create a worktree outside the project. Runtime `.ai/work/` state still belongs inside the active worktree.
 
 ## Goal-Driven Execution
 
@@ -41,6 +42,15 @@
 - For bugs, reproduce the failure, apply the smallest root-cause fix, and add automated regression coverage when the repository already has a suitable test suite.
 - For refactors, establish relevant checks before changing behavior-preserving code and rerun them afterward.
 - Continue until completion criteria pass or a concrete blocker requires user input.
+
+## Workflow and role boundaries
+
+- `/dev` begins with the coordinator. The orchestrator records live `.ai/work` state, performs exact Git bookkeeping, makes decisions and plans, and delegates implementation, test, and Docker execution.
+- After user-approved definition and plan gates, the workflow proceeds autonomously through high-confidence in-scope implementation, verification, and bounded mechanical corrections. It interrupts only for material decisions, scope/security/architecture changes, conflicts, worker failure, unexpected required-check failure, or definition/plan/shipping gates.
+- Builder-senior is trusted-project default-allow for command execution. It owns normal implementation, test execution, integration verification, and approved Docker execution, while keeping hard Git/sudo boundaries and visible direct-client prompts best-effort.
+- Builder-junior is mechanical/default-ask and escalates normal reasoning, test, and Docker work when appropriate.
+- Builder-senior may auto-run verb-first `docker compose run`, `docker compose exec`, and `docker compose restart`; global selectors before the verb ask, and `docker compose pull`, `up`, `down`, and resource removal ask.
+- Reviewer remains evidence-only and read-only.
 
 ## Verification
 

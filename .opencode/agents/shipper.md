@@ -21,6 +21,7 @@ permission:
     "*": deny
     "git status*": allow
     "git diff*": allow
+    "git worktree*": allow
     "git log*": allow
     "git add *": allow
     "git commit *": allow

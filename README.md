@@ -1,19 +1,27 @@
 # AI Dev Workflow
 
-A lean, adaptive development workflow for OpenCode and Pi. One orchestrator guides work from analysis through approved shipping using provider-neutral subagents.
+A lean, adaptive development workflow for OpenCode and Pi. One coordinator guides work from analysis through approved shipping using provider-neutral subagents.
 
 ## Workflow
 
 ```text
 /dev
-  → explore and consult analyst when needed
+  → coordinator opens the request, records live .ai/work state, and makes exact Git bookkeeping decisions
   → discuss and approve material decisions
   → define and plan with approval gates
-  → delegate parallel-safe implementation
+  → after approval, proceed autonomously through high-confidence in-scope implementation, verification, and bounded mechanical corrections
+  → delegate implementation, test, and Docker execution
   → verify and run independent review
   → request shipping approval
   → delegate commit and push
 ```
+
+Role behavior:
+
+- Builder-senior is the trusted-project default-allow command worker for normal implementation, test execution, integration verification, and approved Docker execution. It still keeps hard Git/sudo boundaries and visible direct-client prompts best-effort.
+- Builder-junior is mechanical/default-ask and escalates normal reasoning, test, and Docker work when appropriate.
+- Reviewer remains evidence-only and read-only.
+- Builder-senior may auto-run verb-first `docker compose run`, `docker compose exec`, and `docker compose restart`; global selectors before the verb ask, and `docker compose pull`, `up`, `down`, and resource removal ask.
 
 Model routing:
 
@@ -37,14 +45,13 @@ Model routing:
 
 ## Permissions
 
-Agent permissions use a balanced, role-specific default:
+Trusted-project permissions are a curated safe list, not an OS sandbox:
 
-- Repository reads, file listing, globbing, and searching run without prompts, except `.env` files are denied while `.env.example` remains readable.
-- Access outside the active project and network fetches require confirmation. The shipper denies both because shipping is Git-only.
-- Builders may edit and run common build, test, lint, typecheck, and check commands for JavaScript/TypeScript, Ruby, Python, Rust, C/CMake, JVM, .NET, and YAML projects without prompts.
-- Builders may inspect Docker state and run Docker or Compose builds without prompts. Container execution, Compose lifecycle commands, and other Docker operations require confirmation; pruning and direct resource removal are denied.
-- Builders cannot stage, commit, push, rewrite Git state, delete files with `rm`, or elevate with `sudo`.
-- The reviewer is read-only. The shipper can inspect Git, stage, and commit, while push still requires confirmation and force-push is denied.
+- Repository reads, edits, patch deletions, file listing, globbing, searching, and listed shell inspection commands run without prompts in the relevant roles.
+- Curated build/test/lint/typecheck/check commands, Docker build commands, and `webfetch`/`websearch` run without prompts in the relevant roles.
+- Direct general network clients and explicit removal commands ask.
+- `.env` files, external-directory access, `sudo`, builder Git mutation, force-push, and role boundaries deny.
+- Native permissions do not infer GET/POST semantics, and allowed project scripts may have side effects.
 
 ## Install globally
 
@@ -54,7 +61,7 @@ cd ai-dev-workflow
 ./scripts/install.sh
 ```
 
-The installer symlinks this repository's agents, commands, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them.
+The installer symlinks this repository's agents, commands, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them. Configuration changes require an OpenCode restart.
 
 Unrelated existing files are preserved. Obsolete workflow-owned symlinks are removed automatically. `./scripts/install.sh --force` moves other conflicts to a sibling `.backup` path before linking.
 
@@ -79,9 +86,9 @@ pi install /path/to/ai-dev-workflow
 pi
 ```
 
-This project keeps `pi-subagents@0.35.1` pinned exactly. The global package applies only to repositories you trust: Pi extensions are guardrails, not a sandbox. Log in with the provider supported by your Pi setup and choose the model there—no provider or model is hardcoded by this workflow.
+This project keeps `pi-subagents@0.35.1` pinned exactly. The global package applies only to repositories you trust: Pi native permissions are a curated safe list, not an OS sandbox. Log in with the provider supported by your Pi setup and choose the model there—no provider or model is hardcoded by this workflow.
 
-Pi must run in a trusted repository: its package extensions do not provide a sandbox. Start the workflow with `/dev <request>`, inspect state with `/workflow-status`, and use `.ai/work/<branch-slug>.md` for multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
+Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/dev <request>`, inspect state with `/workflow-status`, and use `.ai/work/<branch-slug>.md` for multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
 
 ## Commands
 
@@ -107,7 +114,7 @@ Quick changes usually need no work file. A bug fix only gets one if it becomes m
 
 - QUICK: current branch if clean and low risk.
 - BUGFIX: current branch if clean and bounded.
-- FEATURE: isolated branch and worktree under `.worktrees/`.
+- FEATURE: isolated branch and worktree under ignored `.worktrees/`.
 - Parallel writers: shared worktree only for explicit disjoint paths without repository-wide side effects.
 - Dirty repository with unrelated changes: stop for confirmation or isolate from clean `HEAD`.
 
