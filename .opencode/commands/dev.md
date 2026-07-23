@@ -1,5 +1,5 @@
 ---
-description: Orchestrate a change from analysis through approved shipping
+description: Coordinate a change from analysis through approved shipping
 agent: orchestrator
 ---
 
