@@ -1,0 +1,31 @@
+{
+  "name": "ai-dev-workflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pi package for the AI development workflow",
+  "scripts": {
+    "test": "node --experimental-strip-types --test tests/pi-command-policy.test.ts"
+  },
+  "keywords": [
+    "pi-package"
+  ],
+  "dependencies": {
+    "pi-subagents": "0.35.1"
+  },
+  "pi": {
+    "subagents": {
+      "agents": [
+        "./pi/agents"
+      ]
+    },
+    "prompts": [
+      "./pi/prompts"
+    ],
+    "extensions": [
+      "./pi/extensions/workflow.ts",
+      "./pi/extensions/builder-guard.ts",
+      "./pi/extensions/reviewer-guard.ts",
+      "./pi/extensions/shipper-guard.ts"
+    ]
+  }
+}

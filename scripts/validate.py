@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Validate the repository's OpenCode Markdown definitions using stdlib only."""
+"""Validate the repository's OpenCode and Pi definitions using stdlib only."""
 
 from __future__ import annotations
 
 import re
+import json
 import sys
 from pathlib import Path
 
@@ -152,9 +153,133 @@ if not installer.is_file():
 elif ".ai/work" in installer.read_text(encoding="utf-8"):
     ERRORS.append("global installer must not create project runtime state")
 
+
+def require_text(path: Path, markers: tuple[str, ...]) -> str:
+    if not path.is_file():
+        ERRORS.append(f"missing {path.relative_to(ROOT)}")
+        return ""
+    text = path.read_text(encoding="utf-8")
+    for marker in markers:
+        if marker not in text:
+            ERRORS.append(f"{path.relative_to(ROOT)}: missing {marker}")
+    return text
+
+
+package_path = ROOT / "package.json"
+try:
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+except (OSError, json.JSONDecodeError) as exc:
+    ERRORS.append(f"package.json: invalid JSON ({exc})")
+    package = {}
+if package.get("name") != "ai-dev-workflow":
+    ERRORS.append("package.json: expected name ai-dev-workflow")
+if not isinstance(package.get("keywords"), list) or package["keywords"].count("pi-package") != 1:
+    ERRORS.append("package.json: expected pi-package keyword")
+dependencies = package.get("dependencies", {})
+if not isinstance(dependencies, dict) or dependencies.get("pi-subagents") != "0.35.1":
+    ERRORS.append("package.json: pi-subagents must be pinned to 0.35.1")
+
+package_lock_path = ROOT / "package-lock.json"
+try:
+    package_lock = json.loads(package_lock_path.read_text(encoding="utf-8"))
+except (OSError, json.JSONDecodeError) as exc:
+    ERRORS.append(f"package-lock.json: invalid JSON ({exc})")
+    package_lock = {}
+lock_packages = package_lock.get("packages", {})
+if not isinstance(lock_packages, dict):
+    ERRORS.append("package-lock.json: missing packages block")
+    lock_packages = {}
+lock_root = lock_packages.get("")
+if not isinstance(lock_root, dict):
+    ERRORS.append("package-lock.json: missing root package entry")
+    lock_root = {}
+lock_dependencies = lock_root.get("dependencies", {})
+if not isinstance(lock_dependencies, dict) or lock_dependencies.get("pi-subagents") != "0.35.1":
+    ERRORS.append("package-lock.json: root package must pin pi-subagents to 0.35.1")
+
+pi_declarations = package.get("pi", {})
+expected_pi_declarations = {
+    "prompts": ["./pi/prompts"],
+    "extensions": [
+        "./pi/extensions/workflow.ts",
+        "./pi/extensions/builder-guard.ts",
+        "./pi/extensions/reviewer-guard.ts",
+        "./pi/extensions/shipper-guard.ts",
+    ],
+}
+if not isinstance(pi_declarations, dict):
+    ERRORS.append("package.json: missing Pi declaration block")
+    pi_declarations = {}
+for declaration, expected in expected_pi_declarations.items():
+    if pi_declarations.get(declaration) != expected:
+        ERRORS.append(f"package.json: unexpected Pi declaration {declaration}")
+subagents = pi_declarations.get("subagents", {})
+if not isinstance(subagents, dict) or subagents.get("agents") != ["./pi/agents"]:
+    ERRORS.append("package.json: unexpected Pi declaration subagents.agents")
+
+pi_agent_dir = ROOT / "pi/agents"
+pi_agents = sorted(pi_agent_dir.glob("*.md"))
+if {path.stem for path in pi_agents} != expected_agents - {"orchestrator"}:
+    ERRORS.append("Pi agents do not match expected six roles")
+expected_pi_tools = {
+    "analyst": "read,grep,find,ls",
+    "explorer": "read,grep,find,ls",
+    "builder-junior": "read,grep,find,ls,edit,write,bash",
+    "builder-senior": "read,grep,find,ls,edit,write,bash",
+    "reviewer": "read,grep,find,ls,bash",
+    "shipper": "read,grep,find,ls,bash",
+}
+for path in pi_agents:
+    data = frontmatter(path)
+    for key in ("name", "description", "tools", "maxSubagentDepth"):
+        if not data.get(key):
+            ERRORS.append(f"{path.relative_to(ROOT)}: missing {key}")
+    if data.get("name") != path.stem:
+        ERRORS.append(f"{path.relative_to(ROOT)}: name must match filename")
+    if data.get("maxSubagentDepth") != "0":
+        ERRORS.append(f"{path.relative_to(ROOT)}: maxSubagentDepth must be 0")
+    if data.get("tools") != expected_pi_tools.get(path.stem):
+        ERRORS.append(f"{path.relative_to(ROOT)}: unexpected tools")
+    if "package" in data:
+        ERRORS.append(f"{path.relative_to(ROOT)}: package role namespace is not allowed")
+    if "subagentOnlyExtensions" in data:
+        ERRORS.append(f"{path.relative_to(ROOT)}: guards must load from the global package")
+
+for path in sorted(path for path in (ROOT / "pi").rglob("*") if path.is_file()):
+    text = path.read_text(encoding="utf-8")
+    if re.search(r"(?i)(?:model\s*[:=]|(?:openai|anthropic|google|mistral)/)", text):
+        ERRORS.append(f"{path.relative_to(ROOT)}: models must remain provider-neutral")
+
+dev_prompt = ROOT / "pi/prompts/dev.md"
+dev_text = require_text(dev_prompt, ("$ARGUMENTS", "analyst", "explorer", "builder-junior", "builder-senior", "reviewer", "shipper", "explicit approval", ".worktrees", ".ai/work"))
+if dev_text and not frontmatter(dev_prompt):
+    ERRORS.append("pi/prompts/dev.md: invalid frontmatter")
+
+for filename, markers in {
+    "builder-guard.ts": ("PI_SUBAGENT_CHILD_AGENT", "builder-junior", "builder-senior", 'from "./command-policy"', "block"),
+    "reviewer-guard.ts": ("PI_SUBAGENT_CHILD_AGENT", "reviewer", 'from "./command-policy"', "block"),
+    "shipper-guard.ts": ("PI_SUBAGENT_CHILD_AGENT", "shipper", 'from "./command-policy"', "block", "isNormalPush"),
+    "workflow.ts": ("registerCommand(\"workflow-status\"", "gitRoot", "existsSync"),
+}.items():
+    require_text(ROOT / "pi/extensions" / filename, markers)
+
+policy_path = ROOT / "pi/extensions/command-policy.ts"
+require_text(policy_path, ("parseCommand", "isReviewerCommand", "isShipperCommand", "builderCommandBlocked", "--output", "--no-verify"))
+test_path = ROOT / "tests/pi-command-policy.test.ts"
+require_text(test_path, ("node:test", "isReviewerCommand", "isShipperCommand", "builderCommandBlocked"))
+
+gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+if not any(line.strip() == "node_modules/" for line in gitignore.splitlines()):
+    ERRORS.append(".gitignore: node_modules/ must be ignored")
+
+pi_extensions = sorted((ROOT / "pi/extensions").glob("*.ts"))
+loadable_extensions = [path for path in pi_extensions if path.name != "command-policy.ts"]
+if len(loadable_extensions) != 4:
+    ERRORS.append(f"expected 4 loadable Pi extensions, found {len(loadable_extensions)}")
+
 if ERRORS:
     for error in ERRORS:
         print(f"ERROR: {error}", file=sys.stderr)
     raise SystemExit(1)
 
-print(f"OK: {len(commands)} commands, {len(agents)} agents, {len(skills)} skills")
+print(f"OK: OpenCode ({len(commands)} commands, {len(agents)} agents) and Pi (6 agents, {len(loadable_extensions)} extensions)")
