@@ -30,7 +30,7 @@ Role behavior:
 - Reviewer remains evidence-only and read-only.
 - Builder-senior may auto-run verb-first `docker compose run`, `docker compose exec`, and `docker compose restart`; global selectors before the verb (`-p`, `--env-file`, `-f`, `--project-directory`, `--profile`, and `--project-name`) ask, and `docker compose pull`, `up`, `down`, and resource removal ask.
 
-Model routing:
+OpenCode model routing:
 
 | Role | Model |
 |---|---|
@@ -102,7 +102,13 @@ this checkout globally so its role guards load in persistent feature worktrees, 
 verifies that Pi lists both packages. Override the executables with `NPM_BIN` or
 `PI_BIN` when needed.
 
-This project keeps `pi-subagents@0.35.1` pinned exactly. The permission extension is required for runtime `allow`/`ask`/`deny` enforcement; run `/subagents-doctor` after installation to confirm that child-agent approval forwarding is active. The global package applies only to repositories you trust: Pi permissions are a curated safe list, not an OS sandbox. Log in with the provider supported by your Pi setup and choose the model there—no provider or model is hardcoded by this workflow.
+This project keeps `pi-subagents@0.35.1` pinned exactly. The permission extension is
+required for runtime `allow`/`ask`/`deny` enforcement; run `/subagents-doctor` after
+installation to confirm that child-agent approval forwarding is active. The global
+package applies only to repositories you trust: Pi permissions are a curated safe
+list, not an OS sandbox. Log in to OpenAI in Pi and choose the main coordinator model
+there. Each delegated role pins the same model shown in the OpenCode routing table;
+use `/subagents-models` after restarting Pi to inspect the live mapping.
 
 Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/dev <request>`, inspect state with `/workflow-status`, and use `.ai/work/<branch-slug>.md` for multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
 
@@ -126,9 +132,12 @@ Start a new Codex task after installation and invoke the workflow explicitly:
 $dev-workflow <request>
 ```
 
-Implicit invocation is disabled. Codex maps analyst, planner, and reviewer to `gpt-5.6-sol`;
-explorer, builders, and shipper use `gpt-5.6-terra`. The same material-definition,
-FEATURE-plan, material-correction, and shipping approval rules apply.
+Implicit invocation is disabled. Select the main coordinator model in Codex. For
+subagents, Codex uses the same role mapping as OpenCode and Pi: analyst and planner use
+`gpt-5.6-sol`; explorer, builder-junior, and shipper use `gpt-5.4-mini`;
+builder-senior uses `gpt-5.6-luna`; and reviewer uses `gpt-5.6-terra`. The same
+material-definition, FEATURE-plan, material-correction, and shipping approval rules
+apply.
 
 ## Entry points
 

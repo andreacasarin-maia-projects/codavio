@@ -159,10 +159,28 @@ assertContains(".opencode/agents/planner.md", [
 ]);
 assertContains("pi/agents/planner.md", [
   "name: planner",
+  "model: openai/gpt-5.6-sol",
   "tools: read,grep,find,ls",
   "maxSubagentDepth: 0",
 ]);
-assertContains("pi/prompts/dev.md", ["$ARGUMENTS", ...ROLES]);
+const roleModels = {
+  analyst: "openai/gpt-5.6-sol",
+  planner: "openai/gpt-5.6-sol",
+  explorer: "openai/gpt-5.4-mini",
+  "builder-junior": "openai/gpt-5.4-mini",
+  "builder-senior": "openai/gpt-5.6-luna",
+  reviewer: "openai/gpt-5.6-terra",
+  shipper: "openai/gpt-5.4-mini",
+};
+for (const [role, model] of Object.entries(roleModels)) {
+  assertContains(`.opencode/agents/${role}.md`, [`model: ${model}`]);
+  assertContains(`pi/agents/${role}.md`, [`model: ${model}`]);
+}
+assertContains("pi/prompts/dev.md", [
+  "$ARGUMENTS",
+  ...ROLES,
+  "Use each role's pinned model without a per-run model override.",
+]);
 
 const packageJson = json("package.json");
 assert.equal(packageJson.dependencies["pi-subagents"], "0.35.1");
@@ -181,6 +199,11 @@ assertContains("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md", [
   "name: dev-workflow",
   "gpt-5.6-sol",
   "gpt-5.6-terra",
+  "gpt-5.4-mini",
+  "gpt-5.6-luna",
+  "main session model is selected in Codex",
+  "explorer, builder-junior, and shipper",
+  "builder-senior with `gpt-5.6-luna`",
   "shipping approval",
   "planner",
 ]);

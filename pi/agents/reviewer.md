@@ -1,6 +1,7 @@
 ---
 name: reviewer
 description: Performs an independent, read-only review against the approved definition and repository constraints
+model: openai/gpt-5.6-terra
 tools: read,grep,find,ls,bash
 permission:
   tools:

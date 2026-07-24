@@ -1,6 +1,7 @@
 ---
 name: builder-junior
 description: Executes explicit mechanical low-risk edits with minimal scope
+model: openai/gpt-5.4-mini
 tools: read,grep,find,ls,edit,write,bash
 permission:
   tools:

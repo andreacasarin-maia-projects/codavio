@@ -77,7 +77,8 @@ $ARGUMENTS
 
 You are the current main Pi session and the workflow coordinator; do not pretend that
 an orchestrator subagent exists. Invoke only these \`pi-subagents\` roles:
-${roles.join(", ")}. Do not delegate to any other role or allow nested delegation.
+${roles.join(", ")}. Use each role's pinned model without a per-run model override.
+Do not delegate to any other role or allow nested delegation.
 
 For delegated command work, specify the narrowest direct repository command required.
 Create worktrees only under \`<project-root>/.worktrees/\` and keep compact state at
@@ -90,8 +91,10 @@ function codexSkillBody() {
   return `# AI development workflow
 
 Use Codex collaboration agents; do not create user-owned threads for workflow roles.
-Spawn analyst, planner, and reviewer with \`gpt-5.6-sol\`. Spawn explorer,
-builder-junior, builder-senior, and shipper with \`gpt-5.6-terra\`. Use
+The main session model is selected in Codex and is not overridden by this workflow.
+Spawn analyst and planner with \`gpt-5.6-sol\`; explorer, builder-junior, and shipper
+with \`gpt-5.4-mini\`; builder-senior with \`gpt-5.6-luna\`; and reviewer with
+\`gpt-5.6-terra\`. Use
 \`fork_turns: "none"\` or a bounded positive turn count whenever setting a model
 override, include all necessary context, and tell every role not to spawn subagents.
 

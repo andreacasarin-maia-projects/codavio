@@ -1,6 +1,7 @@
 ---
 name: shipper
 description: Verifies shipping preconditions, creates a focused commit, and pushes the current branch
+model: openai/gpt-5.4-mini
 tools: read,grep,find,ls,bash
 permission:
   tools:

@@ -1,6 +1,7 @@
 ---
 name: builder-senior
 description: Implements bounded normal development tasks and proportionate verification
+model: openai/gpt-5.6-luna
 tools: read,grep,find,ls,edit,write,bash
 permission:
   tools:

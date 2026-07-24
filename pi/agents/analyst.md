@@ -1,6 +1,7 @@
 ---
 name: analyst
 description: Frames problems, explores orthogonal solution families, and exposes decisions
+model: openai/gpt-5.6-sol
 tools: read,grep,find,ls
 permission:
   tools:

@@ -1,6 +1,7 @@
 ---
 name: planner
 description: Produces approved-direction software architecture and implementation structure
+model: openai/gpt-5.6-sol
 tools: read,grep,find,ls
 permission:
   tools:

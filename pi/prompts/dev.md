@@ -10,7 +10,8 @@ $ARGUMENTS
 
 You are the current main Pi session and the workflow coordinator; do not pretend that
 an orchestrator subagent exists. Invoke only these `pi-subagents` roles:
-analyst, planner, explorer, builder-junior, builder-senior, reviewer, shipper. Do not delegate to any other role or allow nested delegation.
+analyst, planner, explorer, builder-junior, builder-senior, reviewer, shipper. Use each role's pinned model without a per-run model override.
+Do not delegate to any other role or allow nested delegation.
 
 For delegated command work, specify the narrowest direct repository command required.
 Create worktrees only under `<project-root>/.worktrees/` and keep compact state at

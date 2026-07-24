@@ -1,6 +1,7 @@
 ---
 name: explorer
 description: Performs fast read-only repository exploration with file and line evidence
+model: openai/gpt-5.4-mini
 tools: read,grep,find,ls
 permission:
   tools:
