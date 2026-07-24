@@ -41,42 +41,42 @@
     "orchestrator": {
       "description": "Orchestrates work from analysis through approved shipping",
       "model": "gpt-5.6-terra", "mode": "primary", "git": "orient", "web": false,
-      "edit": "work-file", "shell": "none", "delegate": true, "guidance": [], "guard": "coordinator"
+      "edit": "work-file", "shell": "none", "delegate": true, "guard": "coordinator"
     },
     "analyst": {
       "description": "Frames problems, explores orthogonal solution families, and exposes decisions",
       "model": "gpt-5.6-sol", "mode": "subagent", "git": "none", "web": true,
-      "edit": "none", "shell": "none", "delegate": false, "guidance": ["web-use"], "guard": null
+      "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
     "planner": {
       "description": "Produces approved-direction software architecture and implementation structure",
       "model": "gpt-5.6-sol", "mode": "subagent", "git": "none", "web": true,
-      "edit": "none", "shell": "none", "delegate": false, "guidance": ["web-use"], "guard": null
+      "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
     "explorer": {
       "description": "Performs fast read-only repository exploration with file and line evidence",
       "model": "gpt-5.4-mini", "mode": "subagent", "git": "none", "web": false,
-      "edit": "none", "shell": "none", "delegate": false, "guidance": [], "guard": null
+      "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
     "builder-junior": {
       "description": "Executes explicit mechanical low-risk edits with minimal scope",
       "model": "gpt-5.4-mini", "mode": "subagent", "git": "none", "web": false,
-      "edit": "owned", "shell": "verify", "delegate": false, "guidance": ["implementation", "verification"], "guard": "builder"
+      "edit": "owned", "shell": "verify", "delegate": false, "guard": "builder"
     },
     "builder-senior": {
       "description": "Implements bounded normal development tasks and proportionate verification",
       "model": "gpt-5.6-luna", "mode": "subagent", "git": "none", "web": false,
-      "edit": "owned", "shell": "verify+integration", "delegate": false, "guidance": ["implementation", "verification"], "guard": "builder"
+      "edit": "owned", "shell": "verify+integration", "delegate": false, "guard": "builder"
     },
     "reviewer": {
       "description": "Performs an independent, read-only review against the approved definition and repository constraints",
       "model": "gpt-5.6-terra", "mode": "subagent", "git": "inspect", "web": false,
-      "edit": "none", "shell": "none", "delegate": false, "guidance": ["verification"], "guard": "reviewer"
+      "edit": "none", "shell": "none", "delegate": false, "guard": "reviewer"
     },
     "shipper": {
       "description": "Verifies shipping preconditions, creates a focused commit, and pushes the current branch",
       "model": "gpt-5.4-mini", "mode": "subagent", "git": "commit", "web": false,
-      "edit": "none", "shell": "none", "delegate": false, "guidance": [], "guard": "shipper"
+      "edit": "none", "shell": "none", "delegate": false, "guard": "shipper"
     }
   }
 }

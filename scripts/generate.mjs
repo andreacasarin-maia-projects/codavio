@@ -152,9 +152,12 @@ function piFrontmatter(role) {
 
 function roleBody(role, harness) {
   let body = read("workflow/roles/" + role + ".md");
-  for (const name of CAPABILITIES.roles[role].guidance) {
-    body += "\n\n" + read("workflow/guidance/" + name + ".md");
-  }
+  const c = CAPABILITIES.roles[role];
+  const docs = [];
+  if (c.edit === "owned") docs.push("implementation");
+  if (c.shell.startsWith("verify") || c.git === "inspect") docs.push("verification");
+  if (c.web) docs.push("web-use");
+  for (const name of docs) body += "\n\n" + read("workflow/guidance/" + name + ".md");
   if (harness === "pi") {
     body += "\n\nWork only in the assigned active worktree. Preserve " +
       CODE + ".ai/work/<branch-slug>.md" + CODE + "; do not create worktrees or runtime state " +

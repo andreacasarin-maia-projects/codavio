@@ -24,8 +24,9 @@ sourced. `capabilities.json` covers *only* the config/permission layer.
 | `edit` | `none` \| `work-file` \| `owned` | file-write scope |
 | `shell` | `none` \| `verify` \| `verify+integration` | general (non-Git) shell |
 | `delegate` | boolean | may spawn worker roles (orchestrator only) |
-| `guidance` | list | guidance docs appended to the role body |
 | `guard` | `coordinator` \| `builder` \| `reviewer` \| `shipper` \| `null` | Pi runtime guard |
+
+Guidance docs are **derived** from these fields, not declared (see below).
 
 ### `git` levels (cumulative)
 
@@ -68,15 +69,21 @@ without an AI classifier don't prompt on every common test command. It is expect
 | `hardDeny` (`sudo`) | `"sudo": deny`, `"sudo *": deny` | builder/coordinator guard | prose |
 | `delegate: true` | `task:` allowlist of the worker roles | (main session invokes subagents) | prose |
 | `guard: <name>` | n/a | register `<name>-guard` extension | n/a |
-| `guidance` | append docs to body | append docs to body | append docs to `roles.md` brief |
+| guidance (derived) | append docs to body | append docs to body | append docs to `roles.md` brief |
 
 Constants applied uniformly (not per role): `constants.opencode` / `constants.pi`
 (`external_directory: deny`, Pi inherit flags). Each command in a set renders as both its
 bare form and its `<cmd> *` wildcard, except `redirect` entries which are used verbatim.
 
-`guidance` is currently explicit in the spec but is derivable (`web` → `web-use`;
-`edit: owned` → `implementation`; `verification` guidance for builders and reviewer). It is
-kept explicit for readability; a renderer may derive it instead.
+Guidance docs appended to a role body are **derived from its capabilities** (in
+`roleBody`), so they cannot contradict the policy:
+
+- `edit == "owned"` → `implementation.md`
+- `shell` starts with `verify` **or** `git == "inspect"` → `verification.md`
+- `web == true` → `web-use.md`
+
+appended in that order (builders get implementation then verification; reviewer gets
+verification; analyst/planner get web research).
 
 ## Gray-zone adjudication
 
