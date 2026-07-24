@@ -2,7 +2,7 @@
 
 ## Scope
 
-- Tracked product is the OpenCode workflow under `.opencode/` and the Pi package under `pi/`: commands and prompts route to role-specific agents through frontmatter; the Pi package keeps its own role prompts, extensions, and manifest declarations; global engineering guidance lives in `templates/AGENTS.global.md`.
+- Tracked product is the OpenCode workflow under `.opencode/` and the Pi package under `pi/`: commands and prompts route to role-specific agents through frontmatter; the Pi package keeps its own role prompts, extensions, and manifest declarations; the minimal global behavioral baseline lives in `templates/AGENTS.global.md`, while workflow-specific implementation and verification guidance lives under `workflow/guidance/`.
 - `.opencode/package.json`, `.opencode/package-lock.json`, `.opencode/node_modules/`, and `.opencode/.gitignore` are ignored local OpenCode artifacts, not repository source. Do not include them in changes.
 - The Pi package uses source dependencies declared by the tracked root `package.json` and `package-lock.json`; local `node_modules/` is ignored and must not be treated as product source.
 - All isolated Git worktrees must live under the active project root in ignored `.worktrees/`; never create a worktree outside the project.

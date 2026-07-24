@@ -69,6 +69,51 @@ for (const role of ROLES) {
   assert.ok(names("pi/agents").includes(role), `missing Pi ${role}`);
 }
 
+assertContains("workflow/guidance/implementation.md", [
+  "existing repository",
+  "approved change boundary",
+  "credentials or secrets",
+  "Preserve unrelated",
+]);
+assertContains("workflow/guidance/verification.md", [
+  "observable completion criteria",
+  "repository-defined checks",
+  "regression coverage",
+  "Never introduce a test framework",
+]);
+for (const role of ["builder-junior", "builder-senior"]) {
+  assertContains(`.opencode/agents/${role}.md`, [
+    "## Implementation guidance",
+    "## Verification guidance",
+  ]);
+  assertContains(`pi/agents/${role}.md`, [
+    "## Implementation guidance",
+    "## Verification guidance",
+  ]);
+}
+assertContains(".opencode/agents/reviewer.md", ["## Verification guidance"]);
+assertContains("pi/agents/reviewer.md", ["## Verification guidance"]);
+
+assertContains("templates/AGENTS.global.md", [
+  "Think Before Coding",
+  "Simplicity First",
+  "Surgical Changes",
+  "Goal-Driven Execution",
+]);
+for (const forbidden of [
+  "/dev",
+  "builder-senior",
+  "docker compose",
+  ".worktrees",
+  "openai/",
+  "permission",
+]) {
+  assert.ok(
+    !read("templates/AGENTS.global.md").toLowerCase().includes(forbidden.toLowerCase()),
+    `templates/AGENTS.global.md must not contain workflow-specific marker ${forbidden}`,
+  );
+}
+
 for (const role of ROLES) {
   assert.match(
     read(`workflow/roles/${role}.md`),

@@ -77,7 +77,7 @@ cd ai-dev-workflow
 node scripts/install.mjs opencode
 ```
 
-The installer symlinks this repository's agents, commands, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them. Configuration changes require an OpenCode restart.
+The installer symlinks this repository's agents, commands, and minimal global behavioral baseline into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them. Configuration changes require an OpenCode restart.
 
 Unrelated existing files are preserved. Obsolete workflow-owned symlinks are removed automatically. `node scripts/install.mjs opencode --force` moves other conflicts to a sibling `.backup` path before linking.
 
@@ -108,7 +108,7 @@ Pi must run in a trusted repository: its package extensions do not provide a san
 
 ## Install in Codex
 
-Install the tracked local marketplace, plugin, and shared global engineering guidance:
+Install the tracked local marketplace, plugin, and minimal global behavioral baseline:
 
 ```bash
 node scripts/install.mjs codex
@@ -155,12 +155,20 @@ Shared workflow behavior lives under `workflow/`:
 - `workflow/orchestrator.md` defines routing, approvals, planning, implementation,
   verification, review, correction, and shipping behavior.
 - `workflow/roles/*.md` defines the seven reusable role contracts.
+- `workflow/guidance/*.md` contains focused implementation and verification guidance
+  composed only into the roles that need it.
 - `workflow/manifest.json` declares the command, roles, and supported harnesses.
 
 `scripts/generate.mjs` combines those canonical sources with the native frontmatter
 already present in each harness adapter. This keeps OpenCode models and permissions,
 Pi tools and permission policies, and Codex skill metadata in their native formats
 without duplicating behavioral prompts.
+
+`templates/AGENTS.global.md` intentionally contains only universal behavioral
+guidelines: think before coding, prefer simplicity, make surgical changes, and work
+toward verifiable goals. Workflow routing, architecture, permissions, implementation
+quality, and verification policy stay in canonical coordinator, role, guidance, or
+harness-specific files rather than leaking into every global session.
 
 Generated adapters are tracked so installations do not require generation. After
 editing canonical sources or adapter frontmatter, regenerate and check them:

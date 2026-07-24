@@ -321,3 +321,42 @@ on ambiguity, unexpected overlap, or scope conflict.
 Keep changes clear and consistent with surrounding patterns. Run the narrowest credible
 existing check and return changed files, checks actually performed, results, and
 remaining risk.
+
+## Implementation guidance
+
+- Prefer built-in platform capabilities, official tools, and existing repository
+  utilities over bespoke implementations.
+- Inspect an analogous implementation before introducing a new pattern. Match the
+  repository's architecture, naming, control flow, style, formatter, linter, and type
+  conventions.
+- Keep responsibilities cohesive, dependencies explicit, and side effects visible.
+  Treat duplication, coupling, nesting, unclear ownership, and difficult testing as
+  signals to investigate rather than automatic reasons to refactor.
+- Refactor only inside the approved change boundary when it directly simplifies the
+  implementation or reduces its risk. Keep behavior-preserving refactors separate from
+  approved behavior changes.
+- Declare dependencies through the repository's established mechanism. Do not add a
+  dependency when the platform or repository already provides a suitable capability.
+- Never place credentials or secrets in source, generated artifacts, logs, tests, or
+  examples.
+- Remove imports, variables, functions, files, generated outputs, and debug artifacts
+  made obsolete by the assigned change. Preserve unrelated user or agent work and
+  report pre-existing problems instead of correcting them.
+
+## Verification guidance
+
+- Define observable completion criteria before implementation and tie every non-trivial
+  slice to concrete evidence.
+- Treat repository-defined checks and CI requirements as authoritative. Choose the
+  strongest practical evidence: integration or end-to-end tests, focused tests,
+  build/type/lint/schema checks, dry runs, smoke tests, or concrete manual verification.
+- For a bug, reproduce the failure and add regression coverage only when the repository
+  already has a suitable test suite. Otherwise document the strongest available check
+  and residual risk.
+- For a behavior-preserving refactor, establish relevant checks before changing it and
+  rerun them afterward.
+- Never introduce a test framework or harness solely to validate one change.
+- Report only checks actually performed and distinguish automated results from
+  inspection or manual evidence.
+- Do not treat a failed required check as success, bypass it, or ship when no credible
+  verification is possible.
