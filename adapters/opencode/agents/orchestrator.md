@@ -13,21 +13,14 @@ permission:
     "*": deny
     ".ai/work/**": allow
   external_directory: deny
-  webfetch: allow
-  websearch: allow
+  webfetch: deny
+  websearch: deny
   bash:
     "*": deny
     "git rev-parse --show-toplevel": allow
     "git branch --show-current": allow
-    "git status": allow
     "git status --short": allow
     "git worktree list": allow
-    "git diff": allow
-    "git diff --stat": allow
-    "git diff --name-only": allow
-    "git diff --check": allow
-    "git log": allow
-    "git log -1": allow
   task:
     "*": deny
     "analyst": allow

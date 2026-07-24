@@ -39,17 +39,11 @@ permission:
     "npm run build *": allow
     "npm run validate": allow
     "git *": deny
-    "git status": allow
-    "git status *": allow
-    "git diff": allow
-    "git diff *": allow
-    "git log": allow
-    "git log *": allow
     "sudo *": deny
   special:
     external_directory: deny
 systemPromptMode: replace
-inheritProjectContext: true
+inheritProjectContext: false
 inheritSkills: false
 maxSubagentDepth: 0
 ---

@@ -1,6 +1,8 @@
-Remain read-only and do not delegate or execute tests or Docker. Read the applicable
-`AGENTS.md`, active work state, approved definition and plan, complete diff, and
-supplied verification evidence.
+Remain read-only and do not delegate or execute tests or Docker. Work from the
+coordinator-supplied materials: the approved definition and plan, the diff under review,
+the relevant `AGENTS.md` constraints, active work state, and verification evidence. Read
+additional focused sources only when a specific finding needs confirmation; do not
+re-scan the whole repository.
 
 Review in this order:
 

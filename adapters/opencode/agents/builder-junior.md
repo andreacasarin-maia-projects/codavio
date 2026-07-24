@@ -12,8 +12,8 @@ permission:
   edit: allow
   task: deny
   external_directory: deny
-  webfetch: allow
-  websearch: allow
+  webfetch: deny
+  websearch: deny
   bash:
     "*": ask
     "ls": allow
@@ -174,134 +174,13 @@ permission:
     "docker compose logs *": allow
     "docker compose build": allow
     "docker compose build *": allow
-    "docker pull": ask
-    "docker pull *": ask
     "git *": deny
-    "git status": allow
-    "git status *": allow
-    "git diff": allow
-    "git diff *": allow
-    "git log": allow
-    "git log *": allow
-    "git status && *": deny
-    "git status ; *": deny
-    "git status * ; *": deny
-    "git status | *": deny
-    "git status * | *": deny
-    "git status || *": deny
-    "git status * || *": deny
-    "git status & *": deny
-    "git status * & *": deny
-     "git status * && *": deny
-     "git status&&*": deny
-     "git status*&&*": deny
-     "git status;*": deny
-     "git status*;*": deny
-     "git status|*": deny
-     "git status*|*": deny
-     "git status||*": deny
-     "git status*||*": deny
-     "git status&*": deny
-     "git status*&*": deny
-    "git diff && *": deny
-    "git diff ; *": deny
-    "git diff * ; *": deny
-    "git diff | *": deny
-    "git diff * | *": deny
-    "git diff || *": deny
-    "git diff * || *": deny
-    "git diff & *": deny
-    "git diff * & *": deny
-     "git diff * && *": deny
-     "git diff&&*": deny
-     "git diff*&&*": deny
-     "git diff;*": deny
-     "git diff*;*": deny
-     "git diff|*": deny
-     "git diff*|*": deny
-     "git diff||*": deny
-     "git diff*||*": deny
-     "git diff&*": deny
-     "git diff*&*": deny
-    "git log && *": deny
-    "git log ; *": deny
-    "git log * ; *": deny
-    "git log | *": deny
-    "git log * | *": deny
-    "git log || *": deny
-    "git log * || *": deny
-    "git log & *": deny
-    "git log * & *": deny
-     "git log * && *": deny
-     "git log&&*": deny
-     "git log*&&*": deny
-     "git log;*": deny
-     "git log*;*": deny
-     "git log|*": deny
-     "git log*|*": deny
-     "git log||*": deny
-     "git log*||*": deny
-     "git log&*": deny
-     "git log*&*": deny
-    "git add": deny
-    "git commit": deny
-    "git push": deny
-    "git reset": deny
-    "git clean": deny
-    "git checkout": deny
-    "git restore": deny
-    "git rebase": deny
-    "git merge": deny
-    "git revert": deny
-    "git stash": deny
-    "git branch -d": deny
-    "git branch -D": deny
-    "git worktree add": deny
-    "git worktree remove": deny
-    "docker system prune": ask
-    "docker system prune *": ask
-    "docker volume rm": ask
-    "docker volume rm *": ask
-    "docker container rm": ask
-    "docker container rm *": ask
-    "docker image rm": ask
-    "docker image rm *": ask
-    "docker rmi": ask
-    "docker rmi *": ask
-    "docker rm": ask
-    "docker rm *": ask
     "rm": allow
     "rm *": allow
     "rmdir": allow
     "rmdir *": allow
     "unlink": allow
     "unlink *": allow
-    "curl": ask
-    "curl *": ask
-    "wget": ask
-    "wget *": ask
-    "ssh": ask
-    "ssh *": ask
-    "scp": ask
-    "scp *": ask
-    "rsync": ask
-    "rsync *": ask
-    "gh": ask
-    "gh *": ask
-    "aws": ask
-    "aws *": ask
-    "az": ask
-    "az *": ask
-    "gcloud": ask
-    "gcloud *": ask
-    "kubectl": ask
-    "kubectl *": ask
-    "psql": ask
-    "psql *": ask
-    "mysql": ask
-    "mysql *": ask
-    "redis-cli": ask
-    "redis-cli *": ask
     "sudo": deny
     "sudo *": deny
 ---

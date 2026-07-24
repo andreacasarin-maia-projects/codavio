@@ -12,8 +12,8 @@ permission:
   edit: deny
   task: deny
   external_directory: deny
-  webfetch: allow
-  websearch: allow
+  webfetch: deny
+  websearch: deny
   bash:
     "*": deny
     "git status": allow

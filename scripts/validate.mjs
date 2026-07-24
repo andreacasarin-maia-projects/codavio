@@ -74,6 +74,9 @@ contains("workflow/guidance/verification.md", [
   "observable completion criteria", "repository-defined checks", "regression coverage",
   "Never introduce a test framework",
 ]);
+contains("workflow/guidance/web-use.md", [
+  "Web research guidance", "official or primary sources", "Never paste whole pages",
+]);
 contains("templates/AGENTS.global.md", [
   "Think Before Coding", "Simplicity First", "Surgical Changes", "Goal-Driven Execution",
 ]);
@@ -87,7 +90,7 @@ for (const role of ROLES) {
 }
 contains("workflow/orchestrator.md", [
   "QUICK", "BUGFIX", "FEATURE", "explicit approval", "shipping approval", ".ai/work",
-  ".worktrees", "architecture implementation brief",
+  ".worktrees", "Implementation plan",
 ]);
 contains("workflow/roles/analyst.md", [
   "problem-definition brief", "orthogonal solution families", "decision criteria",
@@ -130,6 +133,16 @@ for (const role of ["builder-junior", "builder-senior"]) {
 }
 contains(generated("opencode/agents/reviewer.md"), ["## Verification guidance"]);
 contains(generated("pi/pi/agents/reviewer.md"), ["## Verification guidance"]);
+for (const role of ["analyst", "planner"]) {
+  contains(generated("opencode/agents/" + role + ".md"), ["## Web research guidance"]);
+  contains(generated("pi/pi/agents/" + role + ".md"),
+    ["## Web research guidance", "web_search", "fetch_content"]);
+}
+contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md"),
+  ["## Web research guidance"]);
+for (const role of ["explorer", "builder-junior", "builder-senior", "reviewer", "orchestrator", "shipper"]) {
+  contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
+}
 contains(generated("opencode/agents/orchestrator.md"), [
   "mode: primary", "model: openai/gpt-5.6-terra", "\"planner\": allow",
 ]);
@@ -202,7 +215,8 @@ try {
   fs.writeFileSync(fakeCli, "#!" + process.execPath + "\n" +
     "import fs from 'node:fs';\n" +
     "fs.appendFileSync(process.env.FAKE_CLI_LOG, JSON.stringify(process.argv.slice(2)) + '\\n');\n" +
-    "if (process.argv.includes('list')) console.log('pi-permission-system\\nai-dev-workflow');\n");
+    "if (process.argv.includes('--json')) console.log(JSON.stringify({ marketplaces: process.env.FAKE_MARKETPLACE_ROOT ? [{ name: 'ai-dev-workflow', root: process.env.FAKE_MARKETPLACE_ROOT }] : [] }));\n" +
+    "if (process.argv.includes('list') && !process.argv.includes('--json')) console.log('pi-permission-system\\nai-dev-workflow');\n");
   fs.chmodSync(fakeCli, 0o755);
 
   fs.rmSync(path.join(BUILD, "opencode"), { recursive: true, force: true });
@@ -252,8 +266,22 @@ try {
 
   const calls = fs.readFileSync(fakeLog, "utf8");
   assert.ok(calls.includes(JSON.stringify(["install", "npm:@gotgenes/pi-permission-system"])));
+  assert.ok(calls.includes(JSON.stringify(["install", "npm:pi-web-access"])));
   assert.ok(calls.includes(JSON.stringify(["install", path.join(BUILD, "pi")])));
   assert.ok(calls.includes(JSON.stringify(["plugin", "marketplace", "add", path.join(BUILD, "codex")])));
+
+  const staleMarketplaceHome = path.join(temporary, "codex-stale-marketplace");
+  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "codex", "--force"], {
+    env: {
+      ...process.env,
+      CODEX_BIN: fakeCli,
+      CODEX_HOME: staleMarketplaceHome,
+      FAKE_CLI_LOG: fakeLog,
+      FAKE_MARKETPLACE_ROOT: path.join(ROOT, "codex"),
+    },
+  });
+  const staleCalls = fs.readFileSync(fakeLog, "utf8");
+  assert.ok(staleCalls.includes(JSON.stringify(["plugin", "marketplace", "remove", "ai-dev-workflow"])));
 
   const legacyRoot = path.join(temporary, "legacy");
   const legacyAgents = path.join(legacyRoot, "opencode", "agents");

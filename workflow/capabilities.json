@@ -1,0 +1,102 @@
+{
+  "constants": {
+    "opencode": { "external_directory": "deny" },
+    "pi": {
+      "systemPromptMode": "replace",
+      "inheritProjectContext": false,
+      "inheritSkills": false,
+      "maxSubagentDepth": 0,
+      "external_directory": "deny"
+    }
+  },
+  "roles": {
+    "orchestrator": {
+      "model": "gpt-5.6-terra",
+      "mode": "primary",
+      "web": false,
+      "edit": "work-file",
+      "shell": "none",
+      "git": "orient",
+      "delegate": true,
+      "guidance": [],
+      "guard": "coordinator"
+    },
+    "analyst": {
+      "model": "gpt-5.6-sol",
+      "mode": "subagent",
+      "web": true,
+      "edit": "none",
+      "shell": "none",
+      "git": "none",
+      "delegate": false,
+      "guidance": ["web-use"],
+      "guard": null
+    },
+    "planner": {
+      "model": "gpt-5.6-sol",
+      "mode": "subagent",
+      "web": true,
+      "edit": "none",
+      "shell": "none",
+      "git": "none",
+      "delegate": false,
+      "guidance": ["web-use"],
+      "guard": null
+    },
+    "explorer": {
+      "model": "gpt-5.4-mini",
+      "mode": "subagent",
+      "web": false,
+      "edit": "none",
+      "shell": "none",
+      "git": "none",
+      "delegate": false,
+      "guidance": [],
+      "guard": null
+    },
+    "builder-junior": {
+      "model": "gpt-5.4-mini",
+      "mode": "subagent",
+      "web": false,
+      "edit": "owned",
+      "shell": "verify",
+      "git": "none",
+      "delegate": false,
+      "guidance": ["implementation", "verification"],
+      "guard": "builder"
+    },
+    "builder-senior": {
+      "model": "gpt-5.6-luna",
+      "mode": "subagent",
+      "web": false,
+      "edit": "owned",
+      "shell": "verify+docker",
+      "git": "none",
+      "delegate": false,
+      "guidance": ["implementation", "verification"],
+      "guard": "builder"
+    },
+    "reviewer": {
+      "model": "gpt-5.6-terra",
+      "mode": "subagent",
+      "web": false,
+      "edit": "none",
+      "shell": "none",
+      "git": "inspect",
+      "delegate": false,
+      "guidance": ["verification"],
+      "guard": "reviewer"
+    },
+    "shipper": {
+      "model": "gpt-5.4-mini",
+      "mode": "subagent",
+      "web": false,
+      "edit": "none",
+      "shell": "none",
+      "git": "commit",
+      "delegate": false,
+      "guidance": [],
+      "guard": "shipper"
+    }
+  }
+}

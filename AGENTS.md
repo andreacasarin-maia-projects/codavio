@@ -1,5 +1,9 @@
 # Repository Instructions
 
+## Purpose
+
+This project builds a stable, testable, and repeatable AI development workflow that does not depend on always using the most capable model. The end goal is to leverage cheaper models to reach roughly 80% of what the best model could achieve at about 20% of the token cost. Prefer predictable structure, hard-enforced role boundaries, and minimal per-agent context over maximal model capability. Favor a single canonical source per concern, expanded per harness by the generator, over duplicated definitions that can silently diverge.
+
 ## Scope
 
 - Tracked product includes canonical workflow sources, frontmatter-only adapter definitions under `adapters/`, templates, native Pi extensions, root package and lock metadata, Codex marketplace/plugin/invocation metadata, scripts, tests, documentation, and the license. The generator writes only generated harness artifacts under ignored `build/opencode`, `build/pi`, and `build/codex`; those build subtrees are not tracked product inputs.
@@ -7,7 +11,7 @@
 - The Pi package uses source dependencies declared by the tracked root `package.json` and `package-lock.json`; local `node_modules/` is ignored and must not be treated as product source.
 - All isolated Git worktrees must live under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
 - `.ai/work/` contains per-branch runtime state inside each active project worktree; global installation must never create it under OpenCode configuration.
-- Trusted-project permissions are a curated safe list, not an OS sandbox: repository reads/edits, patch deletions, listed shell inspection commands, curated build/test/lint/Docker-build commands, and `webfetch`/`websearch` run without prompts in the relevant roles; direct general network clients and explicit removal commands ask; `.env`, external-directory access, `sudo`, builder Git mutation, force-push, and role boundaries deny.
+- Trusted-project permissions are a curated safe list, not an OS sandbox: repository reads/edits, patch deletions, listed shell inspection commands, and curated build/test/lint/Docker-build commands run without prompts in the relevant roles; web access (OpenCode `webfetch`/`websearch`, Pi `web_search`/`fetch_content`/`get_search_content`) is allowed only for the research roles (analyst and planner); direct general network clients and explicit removal commands ask; `.env`, external-directory access, `sudo`, all builder Git access, the Pi coordinator session's `git diff`/`git log`, non-research web access, force-push, and role boundaries deny.
 
 ## Keep Definitions Aligned
 

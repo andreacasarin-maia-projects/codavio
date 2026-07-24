@@ -31,6 +31,7 @@
     ],
     "extensions": [
       "./pi/extensions/workflow.ts",
+      "./pi/extensions/coordinator-guard.ts",
       "./pi/extensions/builder-guard.ts",
       "./pi/extensions/reviewer-guard.ts",
       "./pi/extensions/shipper-guard.ts"

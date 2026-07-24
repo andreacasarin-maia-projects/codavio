@@ -13,6 +13,6 @@ permission:
   bash: deny
   task: deny
   external_directory: deny
-  webfetch: allow
-  websearch: allow
+  webfetch: deny
+  websearch: deny
 ---

@@ -24,7 +24,7 @@ permission:
   special:
     external_directory: deny
 systemPromptMode: replace
-inheritProjectContext: true
+inheritProjectContext: false
 inheritSkills: false
 maxSubagentDepth: 0
 ---

@@ -73,6 +73,18 @@ export function builderCommandBlocked(command: string): boolean {
   const commandStringInterpreters = new Set(["sh", "bash", "zsh", "dash", "ksh", "fish", "python", "python3", "node", "ruby", "perl", "php", "lua"]);
   if (lowered.some((argument, index) => commandStringInterpreters.has(argument.split("/").at(-1) ?? "") && lowered.slice(index + 1).some((flag) => flag === "-c" || flag === "-e" || flag === "--eval"))) return true;
   if (lowered.some((argument) => argument === "sudo")) return true;
-  if (lowered[0] === "git") return !isInspection(parsed.argv);
+  if (lowered[0] === "git") return true;
   return lowered.some((argument) => argument === "git" || argument.endsWith("/git"));
+}
+
+export function coordinatorCommandBlocked(command: string): boolean {
+  const parsed = parseCommand(command);
+  if ("error" in parsed) return false;
+  const argv = parsed.argv;
+  let index = 0;
+  if (argv[index] === "command") index += 1;
+  const base = argv[index]?.split("/").at(-1);
+  if (base !== "git") return false;
+  const action = argv[index + 1];
+  return action === "diff" || action === "log";
 }

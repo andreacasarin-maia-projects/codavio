@@ -31,6 +31,9 @@ function roleBody(role, harness) {
     reviewer: ["workflow/guidance/verification.md"],
   };
   for (const source of guidance[role] ?? []) body += "\n\n" + read(source);
+  if (role === "analyst" || role === "planner") {
+    body += "\n\n" + read("workflow/guidance/web-use.md");
+  }
   if (harness === "pi") {
     body += "\n\nWork only in the assigned active worktree. Preserve " +
       CODE + ".ai/work/<branch-slug>.md" + CODE + "; do not create worktrees or runtime state " +

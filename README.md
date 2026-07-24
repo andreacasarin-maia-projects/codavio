@@ -52,7 +52,7 @@ OpenCode model routing:
 - Worktrees isolate features, risky work, or unrelated dirty changes; parallel writers require explicit disjoint ownership.
 - All isolated Git worktrees must be created under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
-- Orchestrator is coordination-only: it owns approvals, `.ai/work` state, exact Git bookkeeping, combined-diff inspection, and execution delegation; analyst owns problem framing and planner owns architecture.
+- Orchestrator is coordination-only: it owns approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not read diff content. Analyst owns problem framing, planner owns the detailed implementation plan, and the reviewer owns authoritative diff inspection.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
 - Review corrections proceed autonomously when they stay inside approved behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk; changing one of those boundaries requires approval.
 
@@ -61,11 +61,10 @@ OpenCode model routing:
 Trusted-project permissions are a curated safe list, not an OS sandbox:
 
 - Repository reads (including `.env` files), edits, patch deletions, file listing, globbing, searching, and common project-local shell writes/deletions (`mkdir`, `touch`, `cp`, `mv`, `tee`, `sed`, `rm`, `rmdir`, `unlink`, `find`, and common redirection forms) run without prompts in the relevant roles.
-- Curated build/test/lint/typecheck/check commands, Docker build commands, and non-shipper `webfetch`/`websearch` run without prompts in the relevant roles.
+- Curated build/test/lint/typecheck/check commands and Docker build commands run without prompts in the relevant roles. Web access — OpenCode `webfetch`/`websearch` and Pi `web_search`/`fetch_content`/`get_search_content` — is allowed only for the research roles (analyst and planner) and denied for every other role.
 - Builder-senior may run approved implementation and integration-verification `docker exec`, `docker compose exec`, `docker compose restart`, and `docker compose run`; Docker pull still prompts, and there is no blanket Docker permission.
-- Docker resource removal still prompts. Global selectors before verb, including `--project-name`, visibly invoked direct general network clients, and cloud/database CLIs prompt on a best-effort lexical basis.
-- External-directory access is denied where OpenCode detects it; `sudo`, builder Git mutation, force-push, and role boundaries remain denied. Bare shipper `git push` is the only push that asks.
-- Senior is trusted-project default-allow, but visibly invoked direct client commands ask first; global selectors before verb, including `--project-name`, Docker pull/up/down, and resource removals ask. Junior is mechanical and default-ask.
+- External-directory access is denied where OpenCode detects it; `sudo`, all builder Git access (builders never run Git; the reviewer and shipper own diff inspection), the Pi coordinator session's `git diff`/`git log`, force-push, and role boundaries remain denied. Bare shipper `git push` is the only push that asks.
+- Both builders are default-`ask`, scoped to file edits and a curated verification allowlist (test/lint/typecheck/build/check across ecosystems, plus read-only and integration-verification Docker for builder-senior). Anything outside that list prompts: general network clients, cloud/database CLIs, Docker pull/up/down, and resource removal. `git` and `sudo` are denied outright.
 - This is trusted-project convenience policy, not a sandbox: the write/deletion and network rules are best-effort lexical policy. Scripts, interpreters, wrappers, `find -exec`, redirection, and allowed tooling can bypass lexical/direct-path detection and may perform network or filesystem side effects. Native permissions do not infer GET/POST semantics.
 - These OpenCode permissions are intentionally not a parity claim for Pi. Pi uses `@gotgenes/pi-permission-system` to auto-approve its explicit low-risk command set, forward `ask` decisions from subagents to the parent UI, and deny hard role boundaries.
 
@@ -104,7 +103,13 @@ load in persistent feature worktrees. Override the executables with `NPM_BIN` or
 
 This project keeps `pi-subagents@0.35.1` pinned exactly. The permission extension is
 required for runtime `allow`/`ask`/`deny` enforcement; run `/subagents-doctor` after
-installation to confirm that child-agent approval forwarding is active. The global
+installation to confirm that child-agent approval forwarding is active. The analyst and
+planner use Pi's `web_search`, `fetch_content`, and `get_search_content` tools for
+documentation lookup and search; the installer adds the
+[`pi-web-access`](https://github.com/nicobailon/pi-web-access) extension
+(`pi install npm:pi-web-access`) automatically so those tools work. A coordinator guard
+blocks the main Pi session's `git diff`/`git log` so diff inspection stays with the
+reviewer. The global
 package applies only to repositories you trust: Pi permissions are a curated safe list,
 not an OS sandbox. Log in to OpenAI in Pi and choose the main coordinator model there.
 Each delegated role pins the same model shown in the OpenCode routing table; use
@@ -124,7 +129,8 @@ The installer generates and registers the marketplace under `build/codex/`, inst
 `ai-dev-workflow` plugin, and links its generated global guidance to
 `${CODEX_HOME:-$HOME/.codex}/AGENTS.md`. Existing global guidance aborts installation;
 use `node scripts/install.mjs codex --force` to move it to `AGENTS.md.backup` first. An
-existing backup is never overwritten.
+existing backup is never overwritten. If `ai-dev-workflow` is already registered from a
+different marketplace path, `--force` replaces that marketplace entry as well.
 
 Start a new Codex task after installation and invoke the workflow explicitly:
 
@@ -201,7 +207,7 @@ Only multi-session or planned work needs a file:
 .ai/work/<branch-slug>.md
 ```
 
-It contains the approved definition, task checklist, current state, verification, and open review findings. It is rewritten and compacted, never used as an append-only transcript.
+It contains the approved definition, a durable `## Implementation plan` section, task checklist, current state, verification, and open review findings. The coordinator records the planner's approved plan there in enough detail that each builder implements its slice by reading its plan section plus a short task brief — so delegations carry task-specific scope, not the whole plan. The compact state sections are rewritten and compacted; the plan section stays durable, never an append-only transcript.
 
 The workflow creates `.ai/work/` on demand under the active Git worktree. Global installation never creates runtime project state.
 
@@ -214,6 +220,28 @@ Quick changes usually need no work file. A bug fix only gets one if it becomes m
 - FEATURE: isolated branch and worktree under ignored `.worktrees/`.
 - Parallel writers: shared worktree only for explicit disjoint paths without repository-wide side effects.
 - Dirty repository with unrelated changes: stop for confirmation or isolate from clean `HEAD`.
+
+## Measuring token usage
+
+There is no built-in cross-harness token meter: OpenCode, Pi, and Codex each track usage
+their own way, and none exposes a unified per-role figure. Because all three drive the
+same `openai/...` models over the OpenAI API, the portable way to measure per-role cost
+is a **local logging proxy** in front of every harness:
+
+- Run an OpenAI-compatible proxy locally (for example LiteLLM's proxy, or a minimal Node
+  reverse proxy that forwards to the real API) and record `usage.prompt_tokens` and
+  `usage.completion_tokens` from each response.
+- Point each harness at the proxy by setting its OpenAI base URL to the proxy address
+  (OpenCode/Pi/Codex all read the standard `OPENAI_BASE_URL` / provider base-URL
+  setting).
+- Attribute each request to a role. The model tier already maps one-to-one to role
+  (`gpt-5.4-mini` → explorer/builder-junior/shipper, `gpt-5.6-sol` → analyst/planner,
+  `gpt-5.6-luna` → builder-senior, `gpt-5.6-terra` → orchestrator/reviewer), so grouping
+  logged usage by model yields a per-role breakdown without any harness changes.
+
+This is intentionally out of the generated package: it is host configuration, not
+workflow source. Use the breakdown to see whether cost concentrates in the reasoning
+roles (analyst/planner), the review loop, or repeated context, and tune from there.
 
 ## Validation
 

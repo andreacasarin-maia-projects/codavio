@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { builderCommandBlocked, isNormalPush, isReviewerCommand, isShipperCommand } from "../pi/extensions/command-policy.ts";
+import { builderCommandBlocked, coordinatorCommandBlocked, isNormalPush, isReviewerCommand, isShipperCommand } from "../pi/extensions/command-policy.ts";
 
 test("reviewer allows only direct inspection Git commands", () => {
   for (const command of ["git status", "git diff --stat", "git log -1", "git worktree", "git worktree list"]) {
@@ -16,11 +16,20 @@ test("shell syntax and unsafe builder commands are rejected", () => {
     assert.equal(isReviewerCommand(command), false, command);
     assert.equal(builderCommandBlocked(command), true, command);
   }
-  for (const command of ["git -C . status", "command git status", "/usr/bin/git status", "sudo git status", "sh -c 'git commit -m x'", "bash -c 'rm file'", "python3 -c 'import os; os.system(\"git commit -m x\")'", "node --eval 'require(\"child_process\").execSync(\"rm file\")'"]) {
+  for (const command of ["git status", "git diff --stat", "git log -1", "git -C . status", "command git status", "/usr/bin/git status", "sudo git status", "sh -c 'git commit -m x'", "bash -c 'rm file'", "python3 -c 'import os; os.system(\"git commit -m x\")'", "node --eval 'require(\"child_process\").execSync(\"rm file\")'"]) {
     assert.equal(builderCommandBlocked(command), true, command);
   }
-  for (const command of ["git status", "git diff --stat", "git log -1", "rm file", "docker system prune", "docker volume rm data", "docker compose rm", "docker image prune", "curl https://example.com"]) {
+  for (const command of ["rm file", "docker system prune", "docker volume rm data", "docker compose rm", "docker image prune", "curl https://example.com"]) {
     assert.equal(builderCommandBlocked(command), false, `${command} should reach the permission system`);
+  }
+});
+
+test("coordinator guard blocks only git diff and log reads", () => {
+  for (const command of ["git diff", "git diff --stat", "git log", "git log -1", "/usr/bin/git diff", "command git log"]) {
+    assert.equal(coordinatorCommandBlocked(command), true, command);
+  }
+  for (const command of ["git status --short", "git branch --show-current", "git rev-parse --show-toplevel", "git worktree list", "npm test", "ls"]) {
+    assert.equal(coordinatorCommandBlocked(command), false, command);
   }
 });
 

@@ -148,6 +148,7 @@ function installPi(commands) {
   const packageRoot = path.join(BUILD, "pi");
   run(commands.npm, ["install"], { cwd: packageRoot });
   run(commands.pi, ["install", "npm:@gotgenes/pi-permission-system"]);
+  run(commands.pi, ["install", "npm:pi-web-access"]);
   run(commands.pi, ["install", packageRoot]);
   const listing = run(commands.pi, ["list"], { capture: true });
   if (!listing.includes("pi-permission-system")) {

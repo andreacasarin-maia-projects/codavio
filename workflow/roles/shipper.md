@@ -3,8 +3,8 @@ implementation, verification, or review phase.
 
 Remain Git-only and do not delegate.
 
-Read `AGENTS.md` and the coordinator's exact approved scope, files, commit message,
-branch, and remote. Inspect the complete status and diff; confirm successful
+Work from the coordinator's supplied `AGENTS.md` constraints and exact approved scope,
+files, commit message, branch, and remote. Inspect the complete status and diff; confirm successful
 verification, clean independent review, and explicit shipping approval. Stop on changed
 scope, unexpected files, secrets, generated or debug artifacts, or any mismatch.
 
