@@ -152,14 +152,8 @@ function piFrontmatter(role) {
 
 function roleBody(role, harness) {
   let body = read("workflow/roles/" + role + ".md");
-  const guidance = {
-    "builder-junior": ["workflow/guidance/implementation.md", "workflow/guidance/verification.md"],
-    "builder-senior": ["workflow/guidance/implementation.md", "workflow/guidance/verification.md"],
-    reviewer: ["workflow/guidance/verification.md"],
-  };
-  for (const source of guidance[role] ?? []) body += "\n\n" + read(source);
-  if (role === "analyst" || role === "planner") {
-    body += "\n\n" + read("workflow/guidance/web-use.md");
+  for (const name of CAPABILITIES.roles[role].guidance) {
+    body += "\n\n" + read("workflow/guidance/" + name + ".md");
   }
   if (harness === "pi") {
     body += "\n\nWork only in the assigned active worktree. Preserve " +
