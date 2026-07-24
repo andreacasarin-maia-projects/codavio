@@ -161,6 +161,21 @@ function installPi(commands) {
   console.log("Start Pi, run /subagents-doctor, then invoke: /dev <request>");
 }
 
+function installMarketplace(force, commands, marketplace) {
+  const listing = JSON.parse(run(commands.codex, ["plugin", "marketplace", "list", "--json"], { capture: true }));
+  const existing = listing.marketplaces.find((entry) => entry.name === "ai-dev-workflow");
+  if (existing && path.resolve(existing.root) !== path.resolve(marketplace)) {
+    if (!force) {
+      throw new Error("ai-dev-workflow marketplace is already registered from " + existing.root +
+        "; rerun with --force to replace it with " + marketplace);
+    }
+    run(commands.codex, ["plugin", "marketplace", "remove", "ai-dev-workflow"]);
+  }
+  if (!existing || path.resolve(existing.root) !== path.resolve(marketplace)) {
+    run(commands.codex, ["plugin", "marketplace", "add", marketplace]);
+  }
+}
+
 function installCodex(force, commands) {
   const codexRoot = process.env.CODEX_HOME ?? path.join(process.env.HOME ?? os.homedir(), ".codex");
   const sourceAgents = path.join(BUILD, "codex/AGENTS.md");
@@ -169,7 +184,7 @@ function installCodex(force, commands) {
   checkDestination(sourceAgents, globalAgents, force, legacyAgents);
   linkDestination(sourceAgents, globalAgents, force, legacyAgents);
   const marketplace = path.join(BUILD, "codex");
-  run(commands.codex, ["plugin", "marketplace", "add", marketplace]);
+  installMarketplace(force, commands, marketplace);
   run(commands.codex, ["plugin", "add", "ai-dev-workflow@ai-dev-workflow"]);
   console.log("Linked global guidance into " + globalAgents);
   console.log("Installed ai-dev-workflow from " + marketplace);
