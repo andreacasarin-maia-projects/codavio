@@ -7,96 +7,76 @@
       "inheritSkills": false,
       "maxSubagentDepth": 0,
       "external_directory": "deny"
+    },
+    "hardDeny": ["sudo"],
+    "git": {
+      "orient": ["git rev-parse --show-toplevel", "git branch --show-current", "git status --short", "git worktree list"],
+      "inspect": ["git status", "git diff", "git log", "git worktree list"],
+      "commit": ["git status", "git diff", "git log", "git worktree list", "git add", "git commit", "git push"]
+    },
+    "builderShell": {
+      "fileOps": ["ls", "less", "cat", "head", "tail", "pwd", "find", "wc", "sort", "sed", "mkdir", "touch", "cp", "mv", "tee", "rm", "rmdir", "unlink"],
+      "redirect": ["* > *", "* >*", "*>*"],
+      "verification": [
+        "npm test", "npm run test", "npm run lint", "npm run typecheck", "npm run check", "npm run build", "npm run validate",
+        "pnpm test", "pnpm lint", "pnpm typecheck", "pnpm check", "pnpm build",
+        "yarn test", "yarn lint", "yarn typecheck", "yarn check", "yarn build",
+        "bun test", "bun run lint", "bun run typecheck", "bun run check", "bun run build",
+        "bundle exec rspec", "bundle exec rake test", "bundle exec rubocop", "ruby -c",
+        "pytest", "python -m pytest", "python3 -m pytest", "tox", "nox",
+        "ruff check", "ruff format --check", "mypy",
+        "go test", "cargo test", "cargo check", "cargo clippy", "cargo fmt --check", "cargo build",
+        "ctest", "cmake --build", "meson test", "ninja test", "yamllint",
+        "dotnet test", "mvn test", "./mvnw test", "gradle test", "./gradlew test",
+        "make test", "make check", "make lint"
+      ],
+      "dockerRead": [
+        "docker version", "docker info", "docker ps", "docker images", "docker inspect", "docker logs",
+        "docker build", "docker compose config", "docker compose ps", "docker compose logs", "docker compose build"
+      ],
+      "integration": ["docker compose restart", "docker exec", "docker compose exec", "docker compose run"]
     }
   },
   "roles": {
     "orchestrator": {
-      "model": "gpt-5.6-terra",
-      "mode": "primary",
-      "web": false,
-      "edit": "work-file",
-      "shell": "none",
-      "git": "orient",
-      "delegate": true,
-      "guidance": [],
-      "guard": "coordinator"
+      "description": "Orchestrates work from analysis through approved shipping",
+      "model": "gpt-5.6-terra", "mode": "primary", "git": "orient", "web": false,
+      "edit": "work-file", "shell": "none", "delegate": true, "guidance": [], "guard": "coordinator"
     },
     "analyst": {
-      "model": "gpt-5.6-sol",
-      "mode": "subagent",
-      "web": true,
-      "edit": "none",
-      "shell": "none",
-      "git": "none",
-      "delegate": false,
-      "guidance": ["web-use"],
-      "guard": null
+      "description": "Frames problems, explores orthogonal solution families, and exposes decisions",
+      "model": "gpt-5.6-sol", "mode": "subagent", "git": "none", "web": true,
+      "edit": "none", "shell": "none", "delegate": false, "guidance": ["web-use"], "guard": null
     },
     "planner": {
-      "model": "gpt-5.6-sol",
-      "mode": "subagent",
-      "web": true,
-      "edit": "none",
-      "shell": "none",
-      "git": "none",
-      "delegate": false,
-      "guidance": ["web-use"],
-      "guard": null
+      "description": "Produces approved-direction software architecture and implementation structure",
+      "model": "gpt-5.6-sol", "mode": "subagent", "git": "none", "web": true,
+      "edit": "none", "shell": "none", "delegate": false, "guidance": ["web-use"], "guard": null
     },
     "explorer": {
-      "model": "gpt-5.4-mini",
-      "mode": "subagent",
-      "web": false,
-      "edit": "none",
-      "shell": "none",
-      "git": "none",
-      "delegate": false,
-      "guidance": [],
-      "guard": null
+      "description": "Performs fast read-only repository exploration with file and line evidence",
+      "model": "gpt-5.4-mini", "mode": "subagent", "git": "none", "web": false,
+      "edit": "none", "shell": "none", "delegate": false, "guidance": [], "guard": null
     },
     "builder-junior": {
-      "model": "gpt-5.4-mini",
-      "mode": "subagent",
-      "web": false,
-      "edit": "owned",
-      "shell": "verify",
-      "git": "none",
-      "delegate": false,
-      "guidance": ["implementation", "verification"],
-      "guard": "builder"
+      "description": "Executes explicit mechanical low-risk edits with minimal scope",
+      "model": "gpt-5.4-mini", "mode": "subagent", "git": "none", "web": false,
+      "edit": "owned", "shell": "verify", "delegate": false, "guidance": ["implementation", "verification"], "guard": "builder"
     },
     "builder-senior": {
-      "model": "gpt-5.6-luna",
-      "mode": "subagent",
-      "web": false,
-      "edit": "owned",
-      "shell": "verify+docker",
-      "git": "none",
-      "delegate": false,
-      "guidance": ["implementation", "verification"],
-      "guard": "builder"
+      "description": "Implements bounded normal development tasks and proportionate verification",
+      "model": "gpt-5.6-luna", "mode": "subagent", "git": "none", "web": false,
+      "edit": "owned", "shell": "verify+integration", "delegate": false, "guidance": ["implementation", "verification"], "guard": "builder"
     },
     "reviewer": {
-      "model": "gpt-5.6-terra",
-      "mode": "subagent",
-      "web": false,
-      "edit": "none",
-      "shell": "none",
-      "git": "inspect",
-      "delegate": false,
-      "guidance": ["verification"],
-      "guard": "reviewer"
+      "description": "Performs an independent, read-only review against the approved definition and repository constraints",
+      "model": "gpt-5.6-terra", "mode": "subagent", "git": "inspect", "web": false,
+      "edit": "none", "shell": "none", "delegate": false, "guidance": ["verification"], "guard": "reviewer"
     },
     "shipper": {
-      "model": "gpt-5.4-mini",
-      "mode": "subagent",
-      "web": false,
-      "edit": "none",
-      "shell": "none",
-      "git": "commit",
-      "delegate": false,
-      "guidance": [],
-      "guard": "shipper"
+      "description": "Verifies shipping preconditions, creates a focused commit, and pushes the current branch",
+      "model": "gpt-5.4-mini", "mode": "subagent", "git": "commit", "web": false,
+      "edit": "none", "shell": "none", "delegate": false, "guidance": [], "guard": "shipper"
     }
   }
 }

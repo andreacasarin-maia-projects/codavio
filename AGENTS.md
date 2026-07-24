@@ -6,7 +6,7 @@ This project builds a stable, testable, and repeatable AI development workflow t
 
 ## Scope
 
-- Tracked product includes canonical workflow sources, frontmatter-only adapter definitions under `adapters/`, templates, native Pi extensions, root package and lock metadata, Codex marketplace/plugin/invocation metadata, scripts, tests, documentation, and the license. The generator writes only generated harness artifacts under ignored `build/opencode`, `build/pi`, and `build/codex`; those build subtrees are not tracked product inputs.
+- Tracked product includes canonical workflow sources (including `workflow/capabilities.json`, the single source for per-role model and permission policy), the remaining command/prompt adapters under `adapters/`, templates, native Pi extensions, root package and lock metadata, Codex marketplace/plugin/invocation metadata, scripts, tests, documentation, and the license. The generator writes only generated harness artifacts under ignored `build/opencode`, `build/pi`, and `build/codex`; those build subtrees are not tracked product inputs.
 - `.opencode/` is local OpenCode state, not repository source. Do not include its package files, lockfile, node_modules, or local configuration in changes.
 - The Pi package uses source dependencies declared by the tracked root `package.json` and `package-lock.json`; local `node_modules/` is ignored and must not be treated as product source.
 - All isolated Git worktrees must live under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
@@ -15,9 +15,10 @@ This project builds a stable, testable, and repeatable AI development workflow t
 
 ## Keep Definitions Aligned
 
-- `scripts/validate.mjs` checks ignored build outputs, native metadata, and a disposable installer integration for exactly command `dev` and roles `orchestrator`, `analyst`, `planner`, `explorer`, `builder-junior`, `builder-senior`, `reviewer`, `shipper`. Adding or renaming one requires updating `workflow/manifest.json`, generator output, and adapter frontmatter.
+- `scripts/validate.mjs` checks ignored build outputs, native metadata, and a disposable installer integration for exactly command `dev` and roles `orchestrator`, `analyst`, `planner`, `explorer`, `builder-junior`, `builder-senior`, `reviewer`, `shipper`. Adding or renaming one requires updating `workflow/manifest.json` and the role entry in `workflow/capabilities.json`.
+- OpenCode and Pi agent frontmatter is generated from `workflow/capabilities.json` (see `workflow/capabilities.md` for the field vocabulary and per-harness rendering rules); do not hand-edit generated `build/` frontmatter. Codex role config is prose derived from the role bodies plus the model assignment in `capabilities.json`.
 - Keep the command, role files, Pi support files, and docs coordinated when routes, roles, models, verification, or shipping behavior changes.
-- Preserve YAML frontmatter. Agents require `description`, `mode`, and explicit `openai/...` `model`; commands require `description` and an existing `agent`.
+- Commands still carry hand-written frontmatter and require `description` and an existing `agent`.
 
 ## Verification
 

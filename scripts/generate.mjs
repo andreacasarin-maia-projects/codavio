@@ -22,6 +22,133 @@ function adapter(relative) {
 function generated(source, body) {
   return adapter(source) + "\n\n" + NOTICE + "\n\n" + body.trim() + "\n";
 }
+function generatedFrom(frontmatter, body) {
+  return frontmatter.trimEnd() + "\n\n" + NOTICE + "\n\n" + body.trim() + "\n";
+}
+
+const CAPABILITIES = JSON.parse(read("workflow/capabilities.json"));
+
+function ocExpand(commands) {
+  return commands.flatMap((cmd) => [`    "${cmd}": allow`, `    "${cmd} *": allow`]);
+}
+function ocGit(level) {
+  return CAPABILITIES.constants.git[level].flatMap((cmd) =>
+    cmd === "git push"
+      ? [`    "git push": ask`, `    "git push *": deny`]
+      : [`    "${cmd}": allow`, `    "${cmd} *": allow`]);
+}
+function ocBash(role) {
+  const c = CAPABILITIES.roles[role];
+  if (c.shell === "none" && c.git === "none") return ["  bash: deny"];
+  if (c.shell === "none") return ["  bash:", `    "*": deny`, ...ocGit(c.git)];
+  const bs = CAPABILITIES.constants.builderShell;
+  const lines = ["  bash:", `    "*": ask`, ...ocExpand(bs.fileOps),
+    ...bs.redirect.map((r) => `    "${r}": allow`), ...ocExpand(bs.verification), ...ocExpand(bs.dockerRead)];
+  if (c.shell === "verify+integration") lines.push(...ocExpand(bs.integration));
+  lines.push(`    "git *": deny`);
+  for (const deny of CAPABILITIES.constants.hardDeny) lines.push(`    "${deny}": deny`, `    "${deny} *": deny`);
+  return lines;
+}
+function ocEdit(edit) {
+  if (edit === "owned") return ["  edit: allow"];
+  if (edit === "work-file") return ["  edit:", `    "*": deny`, `    ".ai/work/**": allow`];
+  return ["  edit: deny"];
+}
+function ocTask(role) {
+  if (!CAPABILITIES.roles[role].delegate) return ["  task: deny"];
+  const workers = Object.keys(CAPABILITIES.roles).filter((other) => other !== "orchestrator");
+  return ["  task:", `    "*": deny`, ...workers.map((worker) => `    "${worker}": allow`)];
+}
+function openCodeFrontmatter(role) {
+  const c = CAPABILITIES.roles[role];
+  const web = c.web ? "allow" : "deny";
+  return [
+    "---",
+    "description: " + c.description,
+    "mode: " + c.mode,
+    "model: openai/" + c.model,
+    "temperature: 0.1",
+    "permission:",
+    "  read:",
+    `    "*": allow`,
+    "  glob: allow",
+    "  grep: allow",
+    "  list: allow",
+    ...ocEdit(c.edit),
+    ...ocBash(role),
+    ...ocTask(role),
+    "  external_directory: deny",
+    "  webfetch: " + web,
+    "  websearch: " + web,
+    "---",
+  ].join("\n");
+}
+
+function piHasBash(c) { return c.git !== "none" || c.shell !== "none"; }
+function piTools(role) {
+  const c = CAPABILITIES.roles[role];
+  const tools = ["read", "grep", "find", "ls"];
+  if (c.web) tools.push("web_search", "fetch_content", "get_search_content");
+  if (c.edit === "owned") tools.push("edit", "write");
+  if (piHasBash(c)) tools.push("bash");
+  return tools;
+}
+function piToolPerms(role) {
+  const c = CAPABILITIES.roles[role];
+  const lines = [`    "*": ${c.shell.startsWith("verify") ? "ask" : "deny"}`,
+    "    read: allow", "    grep: allow", "    find: allow", "    ls: allow"];
+  if (c.web) lines.push("    web_search: allow", "    fetch_content: allow", "    get_search_content: allow");
+  if (c.edit === "owned") lines.push("    edit: allow", "    write: allow");
+  if (piHasBash(c)) lines.push("    bash: allow");
+  return lines;
+}
+function piExpand(commands) {
+  return commands.flatMap((cmd) => [`    "${cmd}": allow`, `    "${cmd} *": allow`]);
+}
+function piGit(level) {
+  const inspect = [...piExpand(["git status", "git diff", "git log"]),
+    `    "git worktree": allow`, `    "git worktree list": allow`];
+  if (level === "inspect") return inspect;
+  return [...inspect,
+    `    "git add": allow`, `    "git add *": allow`,
+    `    "git add .": ask`, `    "git add -A": ask`, `    "git add --all": ask`,
+    `    "git commit": allow`, `    "git commit *": allow`,
+    `    "git commit --amend": ask`, `    "git commit --amend *": ask`,
+    `    "git push": ask`, `    "git push *": ask`];
+}
+function piBash(role) {
+  const c = CAPABILITIES.roles[role];
+  if (!piHasBash(c)) return [];
+  if (c.shell === "none") return ["  bash:", `    "*": deny`, ...piGit(c.git)];
+  const bs = CAPABILITIES.constants.builderShell;
+  const lines = ["  bash:", `    "*": ask`, ...piExpand(bs.fileOps), ...piExpand(bs.verification), ...piExpand(bs.dockerRead)];
+  if (c.shell === "verify+integration") lines.push(...piExpand(bs.integration));
+  lines.push(`    "git *": deny`);
+  for (const deny of CAPABILITIES.constants.hardDeny) lines.push(`    "${deny} *": deny`);
+  return lines;
+}
+function piFrontmatter(role) {
+  const c = CAPABILITIES.roles[role];
+  const pi = CAPABILITIES.constants.pi;
+  return [
+    "---",
+    "name: " + role,
+    "description: " + c.description,
+    "model: openai/" + c.model,
+    "tools: " + piTools(role).join(","),
+    "permission:",
+    "  tools:",
+    ...piToolPerms(role),
+    ...piBash(role),
+    "  special:",
+    "    external_directory: deny",
+    "systemPromptMode: " + pi.systemPromptMode,
+    "inheritProjectContext: " + pi.inheritProjectContext,
+    "inheritSkills: " + pi.inheritSkills,
+    "maxSubagentDepth: " + pi.maxSubagentDepth,
+    "---",
+  ].join("\n");
+}
 
 function roleBody(role, harness) {
   let body = read("workflow/roles/" + role + ".md");
@@ -69,14 +196,28 @@ function piPrompt(roles) {
   ].join("\n");
 }
 
-function codexSkill() {
+function oxford(items) {
+  if (items.length <= 1) return items[0] ?? "";
+  if (items.length === 2) return items[0] + " and " + items[1];
+  return items.slice(0, -1).join(", ") + ", and " + items[items.length - 1];
+}
+function codexModelSentence(roles) {
+  const order = [];
+  const groups = new Map();
+  for (const role of roles) {
+    const model = CAPABILITIES.roles[role].model;
+    if (!groups.has(model)) { groups.set(model, []); order.push(model); }
+    groups.get(model).push(role);
+  }
+  const parts = order.map((model) => oxford(groups.get(model)) + " with " + CODE + model + CODE);
+  return "Spawn " + parts.slice(0, -1).join("; ") + "; and " + parts[parts.length - 1] + ".";
+}
+function codexSkill(roles) {
   return [
     "# AI development workflow", "",
     "Use Codex collaboration agents; do not create user-owned threads for workflow roles.",
     "The main session model is selected in Codex and is not overridden by this workflow.",
-    "Spawn analyst and planner with " + CODE + "gpt-5.6-sol" + CODE + "; explorer, builder-junior, and shipper",
-    "with " + CODE + "gpt-5.4-mini" + CODE + "; builder-senior with " + CODE + "gpt-5.6-luna" + CODE + "; and reviewer with",
-    CODE + "gpt-5.6-terra" + CODE + ". Use",
+    codexModelSentence(roles) + " Use",
     CODE + 'fork_turns: "none"' + CODE + " or a bounded positive turn count whenever setting a model",
     "override, include all necessary context, and tell every role not to spawn subagents.",
     "",
@@ -108,10 +249,10 @@ function outputs(manifest) {
   const result = new Map();
   for (const role of manifest.harnesses.opencode.roles) {
     add(result, "build/opencode/agents/" + role + ".md",
-      generated("adapters/opencode/agents/" + role + ".md", roleBody(role, "opencode")));
+      generatedFrom(openCodeFrontmatter(role), roleBody(role, "opencode")));
   }
   add(result, "build/opencode/agents/orchestrator.md",
-    generated("adapters/opencode/agents/orchestrator.md", read("workflow/orchestrator.md")));
+    generatedFrom(openCodeFrontmatter("orchestrator"), read("workflow/orchestrator.md")));
   add(result, "build/opencode/commands/dev.md",
     generated("adapters/opencode/commands/dev.md", openCodeCommand()));
   add(result, "build/opencode/AGENTS.md", read("templates/AGENTS.global.md") + "\n");
@@ -125,7 +266,7 @@ function outputs(manifest) {
   }
   for (const role of manifest.harnesses.pi.roles) {
     add(result, "build/pi/pi/agents/" + role + ".md",
-      generated("adapters/pi/agents/" + role + ".md", roleBody(role, "pi")));
+      generatedFrom(piFrontmatter(role), roleBody(role, "pi")));
   }
   add(result, "build/pi/pi/prompts/dev.md",
     generated("adapters/pi/prompts/dev.md", piPrompt(manifest.harnesses.pi.roles)));
@@ -139,7 +280,7 @@ function outputs(manifest) {
     add(result, "build/" + relative, fs.readFileSync(absolute(relative), "utf8"));
   }
   add(result, "build/codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md",
-    generated("adapters/codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md", codexSkill()));
+    generated("adapters/codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md", codexSkill(manifest.harnesses.codex.roles)));
   add(result, "build/codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md",
     NOTICE + "\n\n" + codexRoles(manifest.harnesses.codex.roles));
   return result;

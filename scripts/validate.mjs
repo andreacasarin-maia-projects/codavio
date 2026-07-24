@@ -152,16 +152,9 @@ contains(generated("opencode/agents/planner.md"), [
 contains(generated("pi/pi/agents/planner.md"), [
   "model: openai/gpt-5.6-sol", "tools: read,grep,find,ls",
 ]);
-const models = {
-  analyst: "openai/gpt-5.6-sol",
-  planner: "openai/gpt-5.6-sol",
-  explorer: "openai/gpt-5.4-mini",
-  "builder-junior": "openai/gpt-5.4-mini",
-  "builder-senior": "openai/gpt-5.6-luna",
-  reviewer: "openai/gpt-5.6-terra",
-  shipper: "openai/gpt-5.4-mini",
-};
-for (const [role, model] of Object.entries(models)) {
+const capabilities = json("workflow/capabilities.json");
+for (const role of ROLES) {
+  const model = "openai/" + capabilities.roles[role].model;
   contains(generated("opencode/agents/" + role + ".md"), ["model: " + model]);
   contains(generated("pi/pi/agents/" + role + ".md"), ["model: " + model]);
 }
