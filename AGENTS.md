@@ -2,8 +2,8 @@
 
 ## Scope
 
-- Tracked product is the OpenCode workflow under `.opencode/` and the Pi package under `pi/`: commands and prompts route to role-specific agents through frontmatter; the Pi package keeps its own role prompts, extensions, and manifest declarations; the minimal global behavioral baseline lives in `templates/AGENTS.global.md`, while workflow-specific implementation and verification guidance lives under `workflow/guidance/`.
-- `.opencode/package.json`, `.opencode/package-lock.json`, `.opencode/node_modules/`, and `.opencode/.gitignore` are ignored local OpenCode artifacts, not repository source. Do not include them in changes.
+- Tracked product includes canonical workflow sources, frontmatter-only adapter definitions under `adapters/`, templates, native Pi extensions, root package and lock metadata, Codex marketplace/plugin/invocation metadata, scripts, tests, documentation, and the license. The generator writes only generated harness artifacts under ignored `build/opencode`, `build/pi`, and `build/codex`; those build subtrees are not tracked product inputs.
+- `.opencode/` is local OpenCode state, not repository source. Do not include its package files, lockfile, node_modules, or local configuration in changes.
 - The Pi package uses source dependencies declared by the tracked root `package.json` and `package-lock.json`; local `node_modules/` is ignored and must not be treated as product source.
 - All isolated Git worktrees must live under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
 - `.ai/work/` contains per-branch runtime state inside each active project worktree; global installation must never create it under OpenCode configuration.
@@ -11,16 +11,16 @@
 
 ## Keep Definitions Aligned
 
-- `scripts/validate.mjs` checks the generated adapters, native manifests, and a disposable installer integration for exactly command `dev` and roles `orchestrator`, `analyst`, `planner`, `explorer`, `builder-junior`, `builder-senior`, `reviewer`, `shipper`. Adding or renaming one requires updating `workflow/manifest.json`, generator output, and native frontmatter.
+- `scripts/validate.mjs` checks ignored build outputs, native metadata, and a disposable installer integration for exactly command `dev` and roles `orchestrator`, `analyst`, `planner`, `explorer`, `builder-junior`, `builder-senior`, `reviewer`, `shipper`. Adding or renaming one requires updating `workflow/manifest.json`, generator output, and adapter frontmatter.
 - Keep the command, role files, Pi support files, and docs coordinated when routes, roles, models, verification, or shipping behavior changes.
 - Preserve YAML frontmatter. Agents require `description`, `mode`, and explicit `openai/...` `model`; commands require `description` and an existing `agent`.
 
 ## Verification
 
 - Run the complete repository check with `npm run check`, `git diff --check`, and focused stale-claim inspection. Tooling uses Node built-ins; Promptfoo evals are intentionally out of scope for this repository.
-- For installer changes, set `XDG_CONFIG_HOME` to a disposable directory and verify every installed definition is a symlink back to this repository.
+- For installer changes, set `XDG_CONFIG_HOME` to a disposable directory and verify every installed definition resolves under the generated `build/` tree.
 
 ## Installer Gotchas
 
-- Installer links individual agents, commands, and `templates/AGENTS.global.md` into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`, preserving unrelated global OpenCode files.
+- Installer links individual agents, commands, and generated `build/opencode/AGENTS.md` into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`, preserving unrelated global OpenCode files.
 - Existing destinations abort installation. `--force` moves each conflict to `<destination>.backup`; an existing backup also aborts rather than being overwritten. Exact obsolete workflow-owned symlinks are removed automatically. After adding or renaming commands, rerun the installer and then restart OpenCode; configuration changes require a restart.

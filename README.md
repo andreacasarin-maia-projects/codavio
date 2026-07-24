@@ -77,7 +77,7 @@ cd ai-dev-workflow
 node scripts/install.mjs opencode
 ```
 
-The installer symlinks this repository's agents, commands, and minimal global behavioral baseline into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them. Configuration changes require an OpenCode restart.
+The installer first generates ignored `build/opencode` artifacts, then symlinks its agents, command, and minimal global behavioral baseline into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them. Configuration changes require an OpenCode restart.
 
 Unrelated existing files are preserved. Obsolete workflow-owned symlinks are removed automatically. `node scripts/install.mjs opencode --force` moves other conflicts to a sibling `.backup` path before linking.
 
@@ -97,31 +97,31 @@ node scripts/install.mjs pi
 pi
 ```
 
-The installer runs `npm install`, installs `@gotgenes/pi-permission-system`, installs
-this checkout globally so its role guards load in persistent feature worktrees, and
-verifies that Pi lists both packages. Override the executables with `NPM_BIN` or
+The installer generates `build/pi`, runs `npm install` in that package root, installs
+`@gotgenes/pi-permission-system`, and installs that generated package so its role guards
+load in persistent feature worktrees. Override the executables with `NPM_BIN` or
 `PI_BIN` when needed.
 
 This project keeps `pi-subagents@0.35.1` pinned exactly. The permission extension is
 required for runtime `allow`/`ask`/`deny` enforcement; run `/subagents-doctor` after
 installation to confirm that child-agent approval forwarding is active. The global
-package applies only to repositories you trust: Pi permissions are a curated safe
-list, not an OS sandbox. Log in to OpenAI in Pi and choose the main coordinator model
-there. Each delegated role pins the same model shown in the OpenCode routing table;
-use `/subagents-models` after restarting Pi to inspect the live mapping.
+package applies only to repositories you trust: Pi permissions are a curated safe list,
+not an OS sandbox. Log in to OpenAI in Pi and choose the main coordinator model there.
+Each delegated role pins the same model shown in the OpenCode routing table; use
+`/subagents-models` after restarting Pi to inspect the live mapping.
 
 Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/dev <request>`, inspect state with `/workflow-status`, and use `.ai/work/<branch-slug>.md` for multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
 
 ## Install in Codex
 
-Install the tracked local marketplace, plugin, and minimal global behavioral baseline:
+Install the generated local marketplace, plugin, and minimal global behavioral baseline:
 
 ```bash
 node scripts/install.mjs codex
 ```
 
-The installer registers the marketplace under `codex/`, installs the
-`ai-dev-workflow` plugin, and links `templates/AGENTS.global.md` to
+The installer generates and registers the marketplace under `build/codex/`, installs the
+`ai-dev-workflow` plugin, and links its generated global guidance to
 `${CODEX_HOME:-$HOME/.codex}/AGENTS.md`. Existing global guidance aborts installation;
 use `node scripts/install.mjs codex --force` to move it to `AGENTS.md.backup` first. An
 existing backup is never overwritten.
@@ -153,8 +153,8 @@ Install every supported harness after their CLIs are available:
 node scripts/install.mjs all
 ```
 
-The unified Node installer checks generated-adapter freshness and all required
-executables before changing any harness. It is the only installer; each target uses
+The unified Node installer resolves all required executables, regenerates build outputs,
+and then changes the selected harness. It is the only installer; each target uses
 its native installation mechanism behind the same interface.
 
 ## Canonical workflow sources
@@ -168,10 +168,11 @@ Shared workflow behavior lives under `workflow/`:
   composed only into the roles that need it.
 - `workflow/manifest.json` declares the command, roles, and supported harnesses.
 
-`scripts/generate.mjs` combines those canonical sources with the native frontmatter
-already present in each harness adapter. This keeps OpenCode models and permissions,
-Pi tools and permission policies, and Codex skill metadata in their native formats
-without duplicating behavioral prompts.
+`scripts/generate.mjs` combines those canonical sources with frontmatter-only native
+definitions under `adapters/`. It writes installable artifacts only to ignored
+`build/opencode`, `build/pi`, and `build/codex`, preserving OpenCode models and
+permissions, Pi tools and permission policies, and Codex skill metadata without
+duplicating behavioral prompts.
 
 `templates/AGENTS.global.md` intentionally contains only universal behavioral
 guidelines: think before coding, prefer simplicity, make surgical changes, and work
@@ -179,8 +180,9 @@ toward verifiable goals. Workflow routing, architecture, permissions, implementa
 quality, and verification policy stay in canonical coordinator, role, guidance, or
 harness-specific files rather than leaking into every global session.
 
-Generated adapters are tracked so installations do not require generation. After
-editing canonical sources or adapter frontmatter, regenerate and check them:
+Only definitions and source metadata are tracked. Generated harness artifacts are
+ignored, and the installer regenerates them before making changes. After editing
+canonical sources or adapter frontmatter, regenerate and check them:
 
 ```bash
 npm run generate
@@ -219,8 +221,8 @@ Quick changes usually need no work file. A bug fix only gets one if it becomes m
 npm run validate
 ```
 
-Validation includes a generation drift check and fails when tracked harness adapters
-do not match the canonical workflow sources.
+Validation rebuilds ignored harness artifacts, checks their exact generated layout and
+content, and exercises installer integrations against those build outputs.
 
 ## Status
 

@@ -8,51 +8,57 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-function read(relative) {
-  return fs.readFileSync(path.join(ROOT, relative), "utf8");
-}
+const BUILD = path.join(ROOT, "build");
+const CODE = String.fromCharCode(96);
 
-function json(relative) {
-  return JSON.parse(read(relative));
-}
+function read(relative) { return fs.readFileSync(path.join(ROOT, relative), "utf8"); }
+function json(relative) { return JSON.parse(read(relative)); }
 
 function run(command, args, options = {}) {
-  const result = spawnSync(command, args, {
-    cwd: ROOT,
-    encoding: "utf8",
-    ...options,
-  });
+  const result = spawnSync(command, args, { cwd: ROOT, encoding: "utf8", ...options });
   if (result.error) throw result.error;
-  assert.equal(
-    result.status,
-    0,
-    `${command} ${args.join(" ")} failed:\n${result.stderr || result.stdout}`,
-  );
+  assert.equal(result.status, 0, command + " " + args.join(" ") + " failed:\n" +
+    (result.stderr || result.stdout));
   return result;
+}
+
+function fails(command, args, options = {}) {
+  const result = spawnSync(command, args, { cwd: ROOT, encoding: "utf8", ...options });
+  assert.notEqual(result.status, 0, command + " unexpectedly succeeded");
+  return result;
+}
+
+function names(relative) {
+  return fs.readdirSync(path.join(ROOT, relative)).sort();
+}
+
+function contains(relative, markers) {
+  const text = read(relative);
+  for (const marker of markers) assert.ok(text.includes(marker), relative + " missing " + marker);
 }
 
 function frontmatter(relative) {
   const text = read(relative);
-  assert.match(text, /^---\n[\s\S]*?\n---\n\n\S/, `${relative} has invalid frontmatter`);
+  assert.match(text, /^---\n[\s\S]*?\n---\n\n\S/, relative + " has invalid frontmatter");
   return text.slice(4, text.indexOf("\n---\n", 4));
 }
 
-function names(directory) {
-  return fs
-    .readdirSync(path.join(ROOT, directory))
-    .filter((name) => name.endsWith(".md"))
-    .map((name) => path.basename(name, ".md"))
-    .sort();
+function linkTarget(relative) {
+  const target = path.join(ROOT, relative);
+  assert.ok(fs.lstatSync(target).isSymbolicLink(), relative + " is not a symlink");
+  return path.resolve(path.dirname(target), fs.readlinkSync(target));
 }
 
-function assertContains(relative, markers) {
-  const text = read(relative);
-  for (const marker of markers) {
-    assert.ok(text.includes(marker), `${relative} is missing ${JSON.stringify(marker)}`);
-  }
-}
+function generated(relative) { return path.join("build", relative); }
 
+for (const relative of ["build/opencode", "build/pi", "build/codex"]) {
+  fs.rmSync(path.join(ROOT, relative), { recursive: true, force: true });
+}
+const beforeGeneration = run("git", ["status", "--porcelain"]).stdout;
+run(process.execPath, [path.join(ROOT, "scripts/generate.mjs")]);
 run(process.execPath, [path.join(ROOT, "scripts/generate.mjs"), "--check"]);
+assert.equal(run("git", ["status", "--porcelain"]).stdout, beforeGeneration,
+  "generation changed Git-tracked files");
 
 const manifest = json("workflow/manifest.json");
 const ROLES = Object.keys(manifest.roles);
@@ -61,109 +67,79 @@ for (const harness of ["opencode", "pi", "codex"]) {
   assert.deepEqual([...manifest.harnesses[harness].roles].sort(), [...ROLES].sort());
 }
 
-for (const role of [...ROLES, "orchestrator"]) {
-  assert.ok(names(".opencode/agents").includes(role), `missing OpenCode ${role}`);
-}
-assert.ok(names(".opencode/commands").includes("dev"), "missing OpenCode dev command");
-for (const role of ROLES) {
-  assert.ok(names("pi/agents").includes(role), `missing Pi ${role}`);
-}
-
-assertContains("workflow/guidance/implementation.md", [
-  "existing repository",
-  "approved change boundary",
-  "credentials or secrets",
-  "Preserve unrelated",
+contains("workflow/guidance/implementation.md", [
+  "existing repository", "approved change boundary", "credentials or secrets", "Preserve unrelated",
 ]);
-assertContains("workflow/guidance/verification.md", [
-  "observable completion criteria",
-  "repository-defined checks",
-  "regression coverage",
+contains("workflow/guidance/verification.md", [
+  "observable completion criteria", "repository-defined checks", "regression coverage",
   "Never introduce a test framework",
 ]);
-for (const role of ["builder-junior", "builder-senior"]) {
-  assertContains(`.opencode/agents/${role}.md`, [
-    "## Implementation guidance",
-    "## Verification guidance",
-  ]);
-  assertContains(`pi/agents/${role}.md`, [
-    "## Implementation guidance",
-    "## Verification guidance",
-  ]);
-}
-assertContains(".opencode/agents/reviewer.md", ["## Verification guidance"]);
-assertContains("pi/agents/reviewer.md", ["## Verification guidance"]);
-
-assertContains("templates/AGENTS.global.md", [
-  "Think Before Coding",
-  "Simplicity First",
-  "Surgical Changes",
-  "Goal-Driven Execution",
+contains("templates/AGENTS.global.md", [
+  "Think Before Coding", "Simplicity First", "Surgical Changes", "Goal-Driven Execution",
 ]);
-for (const forbidden of [
-  "/dev",
-  "builder-senior",
-  "docker compose",
-  ".worktrees",
-  "openai/",
-  "permission",
-]) {
-  assert.ok(
-    !read("templates/AGENTS.global.md").toLowerCase().includes(forbidden.toLowerCase()),
-    `templates/AGENTS.global.md must not contain workflow-specific marker ${forbidden}`,
-  );
+for (const forbidden of ["/dev", "builder-senior", "docker compose", ".worktrees", "openai/", "permission"]) {
+  assert.ok(!read("templates/AGENTS.global.md").toLowerCase().includes(forbidden.toLowerCase()),
+    "templates/AGENTS.global.md must not contain workflow-specific marker " + forbidden);
 }
-
 for (const role of ROLES) {
-  assert.match(
-    read(`workflow/roles/${role}.md`),
-    /do not[\s\S]{0,200}delegate/i,
-    `workflow/roles/${role}.md must forbid delegation`,
-  );
-  assert.match(frontmatter(`.opencode/agents/${role}.md`), /description:|name:/);
-  assert.match(frontmatter(`pi/agents/${role}.md`), new RegExp(`name: ${role}`));
+  assert.match(read("workflow/roles/" + role + ".md"), /do not[\s\S]{0,200}delegate/i,
+    "workflow/roles/" + role + ".md must forbid delegation");
 }
-
-assertContains("workflow/orchestrator.md", [
-  "QUICK",
-  "BUGFIX",
-  "FEATURE",
-  "explicit approval",
-  "shipping approval",
-  ".ai/work",
-  ".worktrees",
-  "architecture implementation brief",
+contains("workflow/orchestrator.md", [
+  "QUICK", "BUGFIX", "FEATURE", "explicit approval", "shipping approval", ".ai/work",
+  ".worktrees", "architecture implementation brief",
 ]);
-assertContains("workflow/roles/analyst.md", [
-  "problem-definition brief",
-  "orthogonal solution families",
-  "decision criteria",
+contains("workflow/roles/analyst.md", [
+  "problem-definition brief", "orthogonal solution families", "decision criteria",
   "belongs to the planner",
 ]);
-assertContains("workflow/roles/planner.md", [
-  "target components or modules",
-  "interfaces, contracts",
-  "data and state lifecycle",
+contains("workflow/roles/planner.md", [
+  "target components or modules", "interfaces, contracts", "data and state lifecycle",
   "ordered implementation slices",
 ]);
-assertContains(".opencode/agents/orchestrator.md", [
-  "mode: primary",
-  "model: openai/gpt-5.6-terra",
-  '"planner": allow',
+
+assert.deepEqual(names(generated("opencode/agents")),
+  [...ROLES, "orchestrator"].map((role) => role + ".md").sort());
+assert.deepEqual(names(generated("opencode/commands")), ["dev.md"]);
+assert.deepEqual(names(generated("pi/pi/agents")), ROLES.map((role) => role + ".md").sort());
+assert.deepEqual(names(generated("pi/pi/prompts")), ["dev.md"]);
+assert.ok(fs.existsSync(path.join(BUILD, "pi/package.json")));
+assert.ok(fs.existsSync(path.join(BUILD, "pi/package-lock.json")));
+assert.deepEqual(names(generated("pi/pi/extensions")), names("pi/extensions"));
+assert.ok(fs.existsSync(path.join(BUILD, "codex/AGENTS.md")));
+assert.ok(fs.existsSync(path.join(BUILD, "codex/.agents/plugins/marketplace.json")));
+assert.ok(fs.existsSync(path.join(BUILD,
+  "codex/plugins/ai-dev-workflow/.codex-plugin/plugin.json")));
+assert.ok(fs.existsSync(path.join(BUILD,
+  "codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml")));
+
+for (const role of ROLES) {
+  contains(generated("opencode/agents/" + role + ".md"), ["description:", "mode: subagent"]);
+  contains(generated("pi/pi/agents/" + role + ".md"), ["name: " + role, "maxSubagentDepth: 0"]);
+  assert.match(frontmatter(generated("opencode/agents/" + role + ".md")), /description:|name:/);
+  assert.match(frontmatter(generated("pi/pi/agents/" + role + ".md")),
+    new RegExp("name: " + role));
+}
+for (const role of ["builder-junior", "builder-senior"]) {
+  contains(generated("opencode/agents/" + role + ".md"), [
+    "## Implementation guidance", "## Verification guidance",
+  ]);
+  contains(generated("pi/pi/agents/" + role + ".md"), [
+    "## Implementation guidance", "## Verification guidance",
+  ]);
+}
+contains(generated("opencode/agents/reviewer.md"), ["## Verification guidance"]);
+contains(generated("pi/pi/agents/reviewer.md"), ["## Verification guidance"]);
+contains(generated("opencode/agents/orchestrator.md"), [
+  "mode: primary", "model: openai/gpt-5.6-terra", "\"planner\": allow",
 ]);
-assertContains(".opencode/agents/planner.md", [
-  "mode: subagent",
-  "model: openai/gpt-5.6-sol",
-  "edit: deny",
-  "bash: deny",
+contains(generated("opencode/agents/planner.md"), [
+  "mode: subagent", "model: openai/gpt-5.6-sol", "edit: deny", "bash: deny",
 ]);
-assertContains("pi/agents/planner.md", [
-  "name: planner",
-  "model: openai/gpt-5.6-sol",
-  "tools: read,grep,find,ls",
-  "maxSubagentDepth: 0",
+contains(generated("pi/pi/agents/planner.md"), [
+  "model: openai/gpt-5.6-sol", "tools: read,grep,find,ls",
 ]);
-const roleModels = {
+const models = {
   analyst: "openai/gpt-5.6-sol",
   planner: "openai/gpt-5.6-sol",
   explorer: "openai/gpt-5.4-mini",
@@ -172,16 +148,10 @@ const roleModels = {
   reviewer: "openai/gpt-5.6-terra",
   shipper: "openai/gpt-5.4-mini",
 };
-for (const [role, model] of Object.entries(roleModels)) {
-  assertContains(`.opencode/agents/${role}.md`, [`model: ${model}`]);
-  assertContains(`pi/agents/${role}.md`, [`model: ${model}`]);
+for (const [role, model] of Object.entries(models)) {
+  contains(generated("opencode/agents/" + role + ".md"), ["model: " + model]);
+  contains(generated("pi/pi/agents/" + role + ".md"), ["model: " + model]);
 }
-assertContains("pi/prompts/dev.md", [
-  "$ARGUMENTS",
-  ...ROLES,
-  "Use each role's pinned model without a per-run model override.",
-]);
-
 const packageJson = json("package.json");
 assert.equal(packageJson.dependencies["pi-subagents"], "0.35.1");
 assert.deepEqual(packageJson.pi.subagents.agents, ["./pi/agents"]);
@@ -195,86 +165,151 @@ const marketplace = json("codex/.agents/plugins/marketplace.json");
 assert.equal(marketplace.name, "ai-dev-workflow");
 assert.equal(marketplace.plugins.length, 1);
 assert.equal(marketplace.plugins[0].name, plugin.name);
-assertContains("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md", [
-  "name: dev-workflow",
-  "gpt-5.6-sol",
-  "gpt-5.6-terra",
-  "gpt-5.4-mini",
-  "gpt-5.6-luna",
-  "main session model is selected in Codex",
-  "explorer, builder-junior, and shipper",
-  "builder-senior with `gpt-5.6-luna`",
-  "shipping approval",
-  "planner",
-]);
-assertContains(
-  "codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml",
-  ["allow_implicit_invocation: false"],
-);
+assert.equal(marketplace.plugins[0].source.path, "./plugins/ai-dev-workflow");
 
+contains(generated("opencode/commands/dev.md"), [
+  "$ARGUMENTS", "generated into the `orchestrator`", "combined diff", "approved shipping",
+]);
+contains(generated("pi/pi/prompts/dev.md"), [
+  "$ARGUMENTS", "`pi-subagents`", "pinned model", "`<project-root>/.worktrees/`",
+  "`.ai/work/<branch-slug>.md`", "Use each role's pinned model without a per-run model override.",
+  ...ROLES,
+]);
+contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
+  "name: dev-workflow", "`gpt-5.6-sol`", "`gpt-5.6-terra`", "`gpt-5.6-luna`", "`gpt-5.4-mini`",
+  "`fork_turns: \"none\"`", "[roles.md](references/roles.md)",
+]);
+contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md"), [
+  "canonical `workflow/roles/` sources", "active worktree, `AGENTS.md`",
+]);
+contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml"),
+  ["allow_implicit_invocation: false"]);
+contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
+  "main session model is selected in Codex", "explorer, builder-junior, and shipper",
+  "builder-senior with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
+]);
 for (const obsolete of [
-  "scripts/install.sh",
-  "scripts/install-pi.sh",
-  "scripts/install-codex.sh",
-  "scripts/install.py",
-  "scripts/generate.py",
-  "scripts/validate.py",
+  "scripts/install.sh", "scripts/install-pi.sh", "scripts/install-codex.sh", "scripts/install.py",
+  "scripts/generate.py", "scripts/validate.py",
 ]) {
-  assert.equal(fs.existsSync(path.join(ROOT, obsolete)), false, `${obsolete} still exists`);
+  assert.equal(fs.existsSync(path.join(ROOT, obsolete)), false, obsolete + " still exists");
 }
 
-const temporaryConfig = fs.mkdtempSync(path.join(os.tmpdir(), "ai-dev-workflow-validate-"));
+const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "ai-dev-workflow-validate-"));
 try {
-  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
-    env: { ...process.env, XDG_CONFIG_HOME: temporaryConfig },
-  });
-  const installed = path.join(temporaryConfig, "opencode");
-  assert.ok(fs.lstatSync(path.join(installed, "AGENTS.md")).isSymbolicLink());
-  assert.deepEqual(
-    fs.readdirSync(path.join(installed, "agents")).sort(),
-    [...ROLES, "orchestrator"].map((role) => `${role}.md`).sort(),
-  );
-  assert.deepEqual(fs.readdirSync(path.join(installed, "commands")).sort(), ["dev.md"]);
-
-  const fakeCli = path.join(temporaryConfig, "fake-cli.mjs");
-  const fakeLog = path.join(temporaryConfig, "cli.log");
-  fs.writeFileSync(
-    fakeCli,
-    `#!${process.execPath}
-import fs from "node:fs";
-fs.appendFileSync(process.env.FAKE_CLI_LOG, JSON.stringify(process.argv.slice(2)) + "\\n");
-if (process.argv.includes("list")) console.log("pi-permission-system\\nai-dev-workflow");
-`,
-  );
+  const fakeCli = path.join(temporary, "fake-cli.mjs");
+  const fakeLog = path.join(temporary, "cli.log");
+  fs.writeFileSync(fakeCli, "#!" + process.execPath + "\n" +
+    "import fs from 'node:fs';\n" +
+    "fs.appendFileSync(process.env.FAKE_CLI_LOG, JSON.stringify(process.argv.slice(2)) + '\\n');\n" +
+    "if (process.argv.includes('list')) console.log('pi-permission-system\\nai-dev-workflow');\n");
   fs.chmodSync(fakeCli, 0o755);
 
+  fs.rmSync(path.join(BUILD, "opencode"), { recursive: true, force: true });
+  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
+    env: { ...process.env, XDG_CONFIG_HOME: temporary },
+  });
+  const installed = path.join(temporary, "opencode");
+  assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "AGENTS.md"))),
+    path.join(BUILD, "opencode/AGENTS.md"));
+  for (const role of [...ROLES, "orchestrator"]) {
+    assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "agents", role + ".md"))),
+      path.join(BUILD, "opencode/agents", role + ".md"));
+  }
+  assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "commands", "dev.md"))),
+    path.join(BUILD, "opencode/commands/dev.md"));
+
+  fs.rmSync(path.join(BUILD, "pi"), { recursive: true, force: true });
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "pi"], {
-    env: {
-      ...process.env,
-      NPM_BIN: fakeCli,
-      PI_BIN: fakeCli,
-      FAKE_CLI_LOG: fakeLog,
-    },
+    env: { ...process.env, NPM_BIN: fakeCli, PI_BIN: fakeCli, FAKE_CLI_LOG: fakeLog },
   });
-  const codexHome = path.join(temporaryConfig, "codex-home");
+  const codexHome = path.join(temporary, "codex-home");
+  fs.rmSync(path.join(BUILD, "codex"), { recursive: true, force: true });
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "codex"], {
-    env: {
-      ...process.env,
-      CODEX_BIN: fakeCli,
-      CODEX_HOME: codexHome,
-      FAKE_CLI_LOG: fakeLog,
-    },
+    env: { ...process.env, CODEX_BIN: fakeCli, CODEX_HOME: codexHome, FAKE_CLI_LOG: fakeLog },
   });
-  assert.ok(fs.lstatSync(path.join(codexHome, "AGENTS.md")).isSymbolicLink());
+  assert.equal(linkTarget(path.relative(ROOT, path.join(codexHome, "AGENTS.md"))),
+    path.join(BUILD, "codex/AGENTS.md"));
+
+  const codexLegacyHome = path.join(temporary, "codex-legacy");
+  fs.mkdirSync(codexLegacyHome, { recursive: true });
+  const codexLegacyAgents = path.join(codexLegacyHome, "AGENTS.md");
+  fs.symlinkSync(path.join(ROOT, "templates/AGENTS.global.md"), codexLegacyAgents);
+  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "codex"], {
+    env: { ...process.env, CODEX_BIN: fakeCli, CODEX_HOME: codexLegacyHome, FAKE_CLI_LOG: fakeLog },
+  });
+  assert.equal(linkTarget(path.relative(ROOT, codexLegacyAgents)), path.join(BUILD, "codex/AGENTS.md"));
+
+  const wrongCodexHome = path.join(temporary, "codex-wrong-legacy");
+  fs.mkdirSync(wrongCodexHome, { recursive: true });
+  const wrongCodexAgents = path.join(wrongCodexHome, "AGENTS.md");
+  fs.symlinkSync(path.join(ROOT, ".opencode/agents/analyst.md"), wrongCodexAgents);
+  fails(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "codex"], {
+    env: { ...process.env, CODEX_BIN: fakeCli, CODEX_HOME: wrongCodexHome, FAKE_CLI_LOG: fakeLog },
+  });
+  assert.equal(path.resolve(path.dirname(wrongCodexAgents), fs.readlinkSync(wrongCodexAgents)),
+    path.join(ROOT, ".opencode/agents/analyst.md"));
+
   const calls = fs.readFileSync(fakeLog, "utf8");
-  assertContains("scripts/install.mjs", [
-    "npm:@gotgenes/pi-permission-system",
-    "ai-dev-workflow@ai-dev-workflow",
-  ]);
-  assert.ok(calls.includes('"marketplace","add"'));
-  assert.ok(calls.includes('"install","npm:@gotgenes/pi-permission-system"'));
+  assert.ok(calls.includes(JSON.stringify(["install", "npm:@gotgenes/pi-permission-system"])));
+  assert.ok(calls.includes(JSON.stringify(["install", path.join(BUILD, "pi")])));
+  assert.ok(calls.includes(JSON.stringify(["plugin", "marketplace", "add", path.join(BUILD, "codex")])));
+
+  const legacyRoot = path.join(temporary, "legacy");
+  const legacyAgents = path.join(legacyRoot, "opencode", "agents");
+  fs.mkdirSync(legacyAgents, { recursive: true });
+  fs.symlinkSync(path.join(ROOT, ".opencode/agents/analyst.md"),
+    path.join(legacyAgents, "analyst.md"));
+  const obsolete = path.join(legacyRoot, "opencode", "agents", "builder.md");
+  fs.symlinkSync(path.join(ROOT, ".opencode/agents/builder.md"), obsolete);
+  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
+    env: { ...process.env, XDG_CONFIG_HOME: legacyRoot },
+  });
+  assert.equal(linkTarget(path.relative(ROOT, path.join(legacyAgents, "analyst.md"))),
+    path.join(BUILD, "opencode/agents/analyst.md"));
+  assert.equal(fs.existsSync(obsolete), false);
+  const wrongObsolete = path.join(legacyAgents, "builder.md");
+  fs.symlinkSync(path.join(ROOT, ".opencode/agents/analyst.md"), wrongObsolete);
+  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
+    env: { ...process.env, XDG_CONFIG_HOME: legacyRoot },
+  });
+  assert.equal(path.resolve(path.dirname(wrongObsolete), fs.readlinkSync(wrongObsolete)),
+    path.join(ROOT, ".opencode/agents/analyst.md"));
+
+  const wrongLegacyRoot = path.join(temporary, "wrong-legacy");
+  const wrongLegacyAgents = path.join(wrongLegacyRoot, "opencode", "agents");
+  fs.mkdirSync(wrongLegacyAgents, { recursive: true });
+  const wrongLegacy = path.join(wrongLegacyAgents, "explorer.md");
+  fs.symlinkSync(path.join(ROOT, ".opencode/agents/analyst.md"), wrongLegacy);
+  fails(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
+    env: { ...process.env, XDG_CONFIG_HOME: wrongLegacyRoot },
+  });
+  assert.equal(path.resolve(path.dirname(wrongLegacy), fs.readlinkSync(wrongLegacy)),
+    path.join(ROOT, ".opencode/agents/analyst.md"));
+
+  const conflictRoot = path.join(temporary, "conflict");
+  fs.mkdirSync(path.join(conflictRoot, "opencode"), { recursive: true });
+  fs.writeFileSync(path.join(conflictRoot, "opencode", "AGENTS.md"), "unrelated");
+  fails(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
+    env: { ...process.env, XDG_CONFIG_HOME: conflictRoot },
+  });
+  fs.writeFileSync(path.join(conflictRoot, "opencode", "AGENTS.md.backup"), "backup");
+  fails(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode", "--force"], {
+    env: { ...process.env, XDG_CONFIG_HOME: conflictRoot },
+  });
+
+  const forceRoot = path.join(temporary, "force");
+  const forceOpenCode = path.join(forceRoot, "opencode");
+  fs.mkdirSync(forceOpenCode, { recursive: true });
+  const forceTarget = path.join(forceOpenCode, "AGENTS.md");
+  fs.writeFileSync(forceTarget, "unrelated guidance");
+  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode", "--force"], {
+    env: { ...process.env, XDG_CONFIG_HOME: forceRoot },
+  });
+  assert.equal(fs.readFileSync(forceTarget + ".backup", "utf8"), "unrelated guidance");
+  assert.equal(linkTarget(path.relative(ROOT, forceTarget)), path.join(BUILD, "opencode/AGENTS.md"));
 } finally {
-  fs.rmSync(temporaryConfig, { recursive: true, force: true });
+  fs.rmSync(temporary, { recursive: true, force: true });
 }
 
-console.log("OK: generated adapters, native manifests, and unified installer integration");
+console.log("OK: build outputs, native metadata, and installer integration");
