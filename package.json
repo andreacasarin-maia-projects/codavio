@@ -2,9 +2,17 @@
   "name": "ai-dev-workflow",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.6.0"
+  },
   "description": "Pi package for the AI development workflow",
   "scripts": {
-    "test": "node --experimental-strip-types --test tests/pi-command-policy.test.ts"
+    "generate": "node scripts/generate.mjs",
+    "generate:check": "node scripts/generate.mjs --check",
+    "validate": "node scripts/validate.mjs",
+    "test": "node --experimental-strip-types --test tests/pi-command-policy.test.ts",
+    "check": "npm run validate && npm test"
   },
   "keywords": [
     "pi-package"

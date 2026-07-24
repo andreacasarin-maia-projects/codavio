@@ -2,14 +2,17 @@
 
 A lean, adaptive development workflow for OpenCode, Pi, and Codex. One coordinator guides work from analysis through approved shipping using role-specific subagents.
 
+Repository tooling and installation require Node.js 22.6 or newer.
+
 ## Workflow
 
 ```text
 /dev
   → coordinator opens the request, records live .ai/work state, and makes exact Git bookkeeping decisions
-  → explore and consult analyst when needed
-  → discuss and approve material decisions
-  → define and plan with approval gates when material choices remain
+  → analyst sharpens the problem and explores orthogonal solution families when needed
+  → discuss and approve the problem definition and solution direction
+  → planner turns the approved direction into software architecture and implementation slices
+  → approve the architecture plan when required
   → treat an explicit unambiguous QUICK request as its definition approval
   → proceed autonomously through high-confidence in-scope implementation, verification, and corrections within approved material boundaries
   → delegate implementation, test, and Docker execution
@@ -20,6 +23,8 @@ A lean, adaptive development workflow for OpenCode, Pi, and Codex. One coordinat
 
 Role behavior:
 
+- Analyst separates symptoms from the underlying problem, makes assumptions and unknowns explicit, and compares materially different solution families against decision criteria.
+- Planner converts the approved direction into component boundaries, interfaces, data and control flow, failure semantics, migration strategy, implementation slices, ownership, and architecture-level verification.
 - Builder-senior is the trusted-project default-allow command worker for normal implementation, test execution, integration verification, and approved Docker execution. It still keeps hard Git/sudo boundaries and visible direct-client prompts best-effort.
 - Builder-junior is mechanical/default-ask and escalates normal reasoning, test, and Docker work when appropriate.
 - Reviewer remains evidence-only and read-only.
@@ -30,7 +35,7 @@ Model routing:
 | Role | Model |
 |---|---|
 | Orchestration and review | `openai/gpt-5.6-terra` |
-| Architecture and hard analysis | `openai/gpt-5.6-sol` |
+| Problem framing, architecture planning, and hard analysis | `openai/gpt-5.6-sol` |
 | Senior implementation | `openai/gpt-5.6-luna` |
 | Exploration, junior implementation, and shipping | `openai/gpt-5.4-mini` |
 
@@ -47,7 +52,7 @@ Model routing:
 - Worktrees isolate features, risky work, or unrelated dirty changes; parallel writers require explicit disjoint ownership.
 - All isolated Git worktrees must be created under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
-- Orchestrator is coordination-only: it owns `.ai/work` state, exact Git bookkeeping, decisions, plans, and delegation.
+- Orchestrator is coordination-only: it owns approvals, `.ai/work` state, exact Git bookkeeping, combined-diff inspection, and execution delegation; analyst owns problem framing and planner owns architecture.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
 - Review corrections proceed autonomously when they stay inside approved behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk; changing one of those boundaries requires approval.
 
@@ -69,12 +74,12 @@ Trusted-project permissions are a curated safe list, not an OS sandbox:
 ```bash
 git clone https://github.com/andreacasarin-maia-projects/ai-dev-workflow.git
 cd ai-dev-workflow
-./scripts/install.sh
+node scripts/install.mjs opencode
 ```
 
 The installer symlinks this repository's agents, commands, and engineering policy into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them. Configuration changes require an OpenCode restart.
 
-Unrelated existing files are preserved. Obsolete workflow-owned symlinks are removed automatically. `./scripts/install.sh --force` moves other conflicts to a sibling `.backup` path before linking.
+Unrelated existing files are preserved. Obsolete workflow-owned symlinks are removed automatically. `node scripts/install.mjs opencode --force` moves other conflicts to a sibling `.backup` path before linking.
 
 Run OpenCode inside any Git project:
 
@@ -88,7 +93,7 @@ From the repository root, install the pinned source dependency, required permiss
 extension, and this workflow:
 
 ```bash
-./scripts/install-pi.sh
+node scripts/install.mjs pi
 pi
 ```
 
@@ -106,13 +111,13 @@ Pi must run in a trusted repository: its package extensions do not provide a san
 Install the tracked local marketplace, plugin, and shared global engineering guidance:
 
 ```bash
-./scripts/install-codex.sh
+node scripts/install.mjs codex
 ```
 
 The installer registers the marketplace under `codex/`, installs the
 `ai-dev-workflow` plugin, and links `templates/AGENTS.global.md` to
 `${CODEX_HOME:-$HOME/.codex}/AGENTS.md`. Existing global guidance aborts installation;
-use `./scripts/install-codex.sh --force` to move it to `AGENTS.md.backup` first. An
+use `node scripts/install.mjs codex --force` to move it to `AGENTS.md.backup` first. An
 existing backup is never overwritten.
 
 Start a new Codex task after installation and invoke the workflow explicitly:
@@ -121,7 +126,7 @@ Start a new Codex task after installation and invoke the workflow explicitly:
 $dev-workflow <request>
 ```
 
-Implicit invocation is disabled. Codex maps analyst and reviewer to `gpt-5.6-sol`;
+Implicit invocation is disabled. Codex maps analyst, planner, and reviewer to `gpt-5.6-sol`;
 explorer, builders, and shipper use `gpt-5.6-terra`. The same material-definition,
 FEATURE-plan, material-correction, and shipping approval rules apply.
 
@@ -132,6 +137,42 @@ FEATURE-plan, material-correction, and shipping approval rules apply.
 | OpenCode | `/dev` | Orchestrate analysis through approved shipping |
 | Pi | `/dev` | Orchestrate analysis through approved shipping |
 | Codex | `$dev-workflow` | Explicitly run the Codex plugin workflow |
+
+Install every supported harness after their CLIs are available:
+
+```bash
+node scripts/install.mjs all
+```
+
+The unified Node installer checks generated-adapter freshness and all required
+executables before changing any harness. It is the only installer; each target uses
+its native installation mechanism behind the same interface.
+
+## Canonical workflow sources
+
+Shared workflow behavior lives under `workflow/`:
+
+- `workflow/orchestrator.md` defines routing, approvals, planning, implementation,
+  verification, review, correction, and shipping behavior.
+- `workflow/roles/*.md` defines the seven reusable role contracts.
+- `workflow/manifest.json` declares the command, roles, and supported harnesses.
+
+`scripts/generate.mjs` combines those canonical sources with the native frontmatter
+already present in each harness adapter. This keeps OpenCode models and permissions,
+Pi tools and permission policies, and Codex skill metadata in their native formats
+without duplicating behavioral prompts.
+
+Generated adapters are tracked so installations do not require generation. After
+editing canonical sources or adapter frontmatter, regenerate and check them:
+
+```bash
+npm run generate
+npm run generate:check
+```
+
+The generator uses only Node built-ins. A general template engine is not needed
+because the adapters require composition and small harness-specific wrappers, not
+arbitrary presentation logic.
 
 ## Persistent context
 
@@ -158,8 +199,11 @@ Quick changes usually need no work file. A bug fix only gets one if it becomes m
 ## Validation
 
 ```bash
-python3 scripts/validate.py
+npm run validate
 ```
+
+Validation includes a generation drift check and fails when tracked harness adapters
+do not match the canonical workflow sources.
 
 ## Status
 

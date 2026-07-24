@@ -1,0 +1,37 @@
+{
+  "command": "dev",
+  "roles": {
+    "analyst": {
+      "description": "Frames problems, explores orthogonal solution families, and exposes decisions"
+    },
+    "planner": {
+      "description": "Produces approved-direction software architecture and implementation structure"
+    },
+    "explorer": {
+      "description": "Performs fast read-only repository exploration with file and line evidence"
+    },
+    "builder-junior": {
+      "description": "Executes explicit mechanical low-risk edits with minimal scope"
+    },
+    "builder-senior": {
+      "description": "Implements bounded normal development tasks and proportionate verification"
+    },
+    "reviewer": {
+      "description": "Performs an independent, read-only review against the approved definition and repository constraints"
+    },
+    "shipper": {
+      "description": "Verifies shipping preconditions, creates a focused commit, and pushes the current branch"
+    }
+  },
+  "harnesses": {
+    "opencode": {
+      "roles": ["analyst", "planner", "explorer", "builder-junior", "builder-senior", "reviewer", "shipper"]
+    },
+    "pi": {
+      "roles": ["analyst", "planner", "explorer", "builder-junior", "builder-senior", "reviewer", "shipper"]
+    },
+    "codex": {
+      "roles": ["analyst", "planner", "explorer", "builder-junior", "builder-senior", "reviewer", "shipper"]
+    }
+  }
+}

@@ -11,13 +11,13 @@
 
 ## Keep Definitions Aligned
 
-- `scripts/validate.py` requires exactly command `dev` and OpenCode agents `orchestrator`, `analyst`, `explorer`, `builder-junior`, `builder-senior`, `reviewer`, `shipper`; no workflow skills. Adding or renaming one requires updating validator expectations and every frontmatter/prompt reference. The Pi package has its own role prompts, extensions, and manifest declarations, so workflow changes usually need corresponding Pi-file edits too.
+- `scripts/validate.mjs` checks the generated adapters, native manifests, and a disposable installer integration for exactly command `dev` and roles `orchestrator`, `analyst`, `planner`, `explorer`, `builder-junior`, `builder-senior`, `reviewer`, `shipper`. Adding or renaming one requires updating `workflow/manifest.json`, generator output, and native frontmatter.
 - Keep the command, role files, Pi support files, and docs coordinated when routes, roles, models, verification, or shipping behavior changes.
 - Preserve YAML frontmatter. Agents require `description`, `mode`, and explicit `openai/...` `model`; commands require `description` and an existing `agent`.
 
 ## Verification
 
-- Run the complete repository check with `python3 scripts/validate.py`, `git diff --check`, and focused stale-claim inspection. It uses only Python standard library; there is no build, lint, or separate test suite.
+- Run the complete repository check with `npm run check`, `git diff --check`, and focused stale-claim inspection. Tooling uses Node built-ins; Promptfoo evals are intentionally out of scope for this repository.
 - For installer changes, set `XDG_CONFIG_HOME` to a disposable directory and verify every installed definition is a symlink back to this repository.
 
 ## Installer Gotchas
