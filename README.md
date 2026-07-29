@@ -25,10 +25,11 @@ Role behavior:
 
 - Analyst separates symptoms from the underlying problem, makes assumptions and unknowns explicit, and compares materially different solution families against decision criteria.
 - Planner converts the approved direction into component boundaries, interfaces, data and control flow, failure semantics, migration strategy, implementation slices, ownership, and architecture-level verification.
-- Builder-senior is the trusted-project default-allow command worker for normal implementation, test execution, integration verification, and approved Docker execution. It still keeps hard Git/sudo boundaries and visible direct-client prompts best-effort.
-- Builder-junior is mechanical/default-ask and escalates normal reasoning, test, and Docker work when appropriate.
+- Builder is the implementation worker for mechanical edits, normal development,
+  test execution, integration verification, and approved Docker execution. Multiple
+  builder instances may run concurrently only with disjoint ownership.
 - Reviewer remains evidence-only and read-only.
-- Builder-senior may auto-run verb-first `docker compose run`, `docker compose exec`, and `docker compose restart`; global selectors before the verb (`-p`, `--env-file`, `-f`, `--project-directory`, `--profile`, and `--project-name`) ask, and `docker compose pull`, `up`, `down`, and resource removal ask.
+- Builder may auto-run verb-first `docker compose run`, `docker compose exec`, and `docker compose restart`; global selectors before the verb (`-p`, `--env-file`, `-f`, `--project-directory`, `--profile`, and `--project-name`) ask, and `docker compose pull`, `up`, `down`, and resource removal ask.
 
 OpenCode model routing:
 
@@ -36,8 +37,8 @@ OpenCode model routing:
 |---|---|
 | Orchestration and review | `openai/gpt-5.6-terra` |
 | Problem framing, architecture planning, and hard analysis | `openai/gpt-5.6-sol` |
-| Senior implementation | `openai/gpt-5.6-luna` |
-| Exploration, junior implementation, and shipping | `openai/gpt-5.4-mini` |
+| Implementation | `openai/gpt-5.6-luna` |
+| Exploration and shipping | `openai/gpt-5.4-mini` |
 
 ## Principles
 
@@ -49,10 +50,13 @@ OpenCode model routing:
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
 - After definition and plan approval, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
 - Every change gets verification proportionate to its behavior and risk.
-- Builders execute every implementation, test, and Docker action; the coordinator never substitutes for them. In multi-builder work, a final sequential senior integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
+- Builders execute every implementation, test, and Docker action; the coordinator never substitutes for them. In multi-builder work, a final sequential integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
 - Baseline checks are encouraged for complex or high-risk work, not mandatory. If a baseline fails, a builder repairs it before continuing and retains the evidence.
 - Bug fixes add regression coverage only within an existing suitable test suite; otherwise they use and document the strongest existing verification.
 - Worktrees isolate features, risky work, or unrelated dirty changes; parallel writers require explicit disjoint ownership.
+- Explorer and builder roles are reusable capability profiles rather than singletons:
+  independent explorer lanes may run concurrently, and multiple builders may run
+  concurrently when their write scopes and side effects are disjoint.
 - All isolated Git worktrees must be created under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
 - Orchestrator is coordination-only: it owns approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not read diff content. Analyst owns problem framing, planner owns the detailed implementation plan, and the reviewer owns authoritative diff inspection.
@@ -65,9 +69,13 @@ Trusted-project permissions are a curated safe list, not an OS sandbox:
 
 - Repository reads (including `.env` files), edits, patch deletions, file listing, globbing, searching, and common project-local shell writes/deletions (`mkdir`, `touch`, `cp`, `mv`, `tee`, `sed`, `rm`, `rmdir`, `unlink`, `find`, and common redirection forms) run without prompts in the relevant roles.
 - Curated build/test/lint/typecheck/check commands and Docker build commands run without prompts in the relevant roles. Web access — OpenCode `webfetch`/`websearch` and Pi `web_search`/`fetch_content`/`get_search_content` — is allowed only for the research roles (analyst and planner) and denied for every other role.
-- Builder-senior may run approved implementation and integration-verification `docker exec`, `docker compose exec`, `docker compose restart`, and `docker compose run`; Docker pull still prompts, and there is no blanket Docker permission.
+- Builder may run approved implementation and integration-verification `docker exec`, `docker compose exec`, `docker compose restart`, and `docker compose run`; Docker pull still prompts, and there is no blanket Docker permission.
 - External-directory access is denied where OpenCode detects it; `sudo`, all builder Git access (builders never run Git; the reviewer and shipper own diff inspection), the Pi coordinator session's `git diff`/`git log`, force-push, and role boundaries remain denied. Bare shipper `git push` is the only push that asks.
-- Both builders are default-`ask`, scoped to file edits and a curated verification allowlist (test/lint/typecheck/build/check across ecosystems, plus read-only and integration-verification Docker for builder-senior). Anything outside that list prompts: general network clients, cloud/database CLIs, Docker pull/up/down, and resource removal. `git` and `sudo` are denied outright.
+- The builder is default-`ask`, scoped to file edits and a curated verification allowlist
+  (test/lint/typecheck/build/check across ecosystems, plus read-only and
+  integration-verification Docker). Anything outside that list prompts: general network
+  clients, cloud/database CLIs, Docker pull/up/down, and resource removal. `git` and
+  `sudo` are denied outright.
 - This is trusted-project convenience policy, not a sandbox: the write/deletion and network rules are best-effort lexical policy. Scripts, interpreters, wrappers, `find -exec`, redirection, and allowed tooling can bypass lexical/direct-path detection and may perform network or filesystem side effects. Native permissions do not infer GET/POST semantics.
 - These OpenCode permissions are intentionally not a parity claim for Pi. Pi uses `@gotgenes/pi-permission-system` to auto-approve its explicit low-risk command set, forward `ask` decisions from subagents to the parent UI, and deny hard role boundaries.
 
@@ -143,8 +151,8 @@ $dev-workflow <request>
 
 Implicit invocation is disabled. Select the main coordinator model in Codex. For
 subagents, Codex uses the same role mapping as OpenCode and Pi: analyst and planner use
-`gpt-5.6-sol`; explorer, builder-junior, and shipper use `gpt-5.4-mini`;
-builder-senior uses `gpt-5.6-luna`; and reviewer uses `gpt-5.6-terra`. The same
+`gpt-5.6-sol`; explorer and shipper use `gpt-5.4-mini`; builder uses
+`gpt-5.6-luna`; and reviewer uses `gpt-5.6-terra`. The same
 material-definition, FEATURE-plan, material-correction, and shipping approval rules
 apply.
 
@@ -172,7 +180,7 @@ Shared workflow behavior lives under `workflow/`:
 
 - `workflow/orchestrator.md` defines routing, approvals, planning, implementation,
   verification, review, correction, and shipping behavior.
-- `workflow/roles/*.md` defines the seven reusable role contracts.
+- `workflow/roles/*.md` defines the six reusable role contracts.
 - `workflow/guidance/*.md` contains focused implementation and verification guidance
   composed only into the roles that need it.
 - `workflow/manifest.json` declares the command, roles, and supported harnesses.
@@ -238,8 +246,8 @@ is a **local logging proxy** in front of every harness:
   (OpenCode/Pi/Codex all read the standard `OPENAI_BASE_URL` / provider base-URL
   setting).
 - Attribute each request to a role. The model tier already maps one-to-one to role
-  (`gpt-5.4-mini` → explorer/builder-junior/shipper, `gpt-5.6-sol` → analyst/planner,
-  `gpt-5.6-luna` → builder-senior, `gpt-5.6-terra` → orchestrator/reviewer), so grouping
+  (`gpt-5.4-mini` → explorer/shipper, `gpt-5.6-sol` → analyst/planner,
+  `gpt-5.6-luna` → builder, `gpt-5.6-terra` → orchestrator/reviewer), so grouping
   logged usage by model yields a per-role breakdown without any harness changes.
 
 This is intentionally out of the generated package: it is host configuration, not

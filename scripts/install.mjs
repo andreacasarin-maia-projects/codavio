@@ -10,7 +10,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD = path.join(ROOT, "build");
 const SUPPORTED = ["opencode", "pi", "codex"];
 const OBSOLETE_OPENCODE_PATHS = [
-  "agents/builder.md", "agents/explore.md", "agents/worker-mini.md", "agents/worker-luna.md",
+  "agents/builder-junior.md", "agents/builder-senior.md", "agents/explore.md",
+  "agents/worker-mini.md", "agents/worker-luna.md",
   "commands/analyze.md", "commands/build.md", "commands/plan.md", "commands/review.md",
   "commands/ship.md", "skills/testing-policy",
 ];
@@ -137,7 +138,10 @@ function installOpenCode(force) {
   for (const relative of OBSOLETE_OPENCODE_PATHS) {
     const destination = path.join(target, relative);
     const legacy = path.join(ROOT, ".opencode", relative);
-    if (exactTextLink(destination, legacy)) fs.unlinkSync(destination);
+    const generated = path.join(BUILD, "opencode", relative);
+    if (exactTextLink(destination, legacy) || exactTextLink(destination, generated)) {
+      fs.unlinkSync(destination);
+    }
   }
   console.log("Linked AI Dev Workflow into " + target);
   console.log("Start with: /dev <request>");

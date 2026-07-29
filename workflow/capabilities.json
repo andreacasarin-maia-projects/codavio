@@ -58,12 +58,7 @@
       "model": "gpt-5.4-mini", "mode": "subagent", "git": "none", "web": false,
       "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
-    "builder-junior": {
-      "description": "Executes explicit mechanical low-risk edits with minimal scope",
-      "model": "gpt-5.4-mini", "mode": "subagent", "git": "none", "web": false,
-      "edit": "owned", "shell": "verify", "delegate": false, "guard": "builder"
-    },
-    "builder-senior": {
+    "builder": {
       "description": "Implements bounded normal development tasks and proportionate verification",
       "model": "gpt-5.6-luna", "mode": "subagent", "git": "none", "web": false,
       "edit": "owned", "shell": "verify+integration", "delegate": false, "guard": "builder"

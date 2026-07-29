@@ -51,9 +51,8 @@ to approved material boundaries, and shipping. Silence is never approval.
 
 After definition approval:
 
-- QUICK: delegate directly to builder-junior only for explicitly mechanical work;
-  otherwise use builder-senior.
-- BUGFIX: delegate reproduction and the smallest root-cause fix to builder-senior. Use
+- QUICK: delegate the approved change directly to a builder.
+- BUGFIX: delegate reproduction and the smallest root-cause fix to a builder. Use
   the planner first when the fix crosses subsystem boundaries or needs an architecture
   decision. Add regression coverage only in an existing suitable test suite.
 - FEATURE: record the approved definition and direction, then invoke the planner to
@@ -73,9 +72,16 @@ interfaces, dependency direction, data flow, failure semantics, migration strate
 verification contract. The coordinator delegates each slice by pointing its builder to
 the relevant plan section rather than re-copying it; the task brief adds only what the
 plan does not already fix — the exact slice, owned paths, completion criterion, strongest
-practical verification, builder class, and exclusive ownership or parallel group. Prefer
+practical verification, and exclusive ownership or parallel group. Prefer
 vertical slices and parallelize writers only for disjoint paths without shared lockfiles,
 migrations, generated outputs, global formatters, or repository-wide side effects.
+
+Role definitions are capability profiles, not singletons. Invoke multiple explorers
+concurrently when they have independent investigation lanes. Invoke multiple builders
+concurrently when their owned paths are disjoint and they do not share lockfiles,
+migrations, generated outputs, global formatters, or repository-wide side effects.
+Give every parallel instance a distinct assignment and ownership boundary, then wait for
+the whole parallel group before integration or review.
 
 Create `.ai/work/<branch-slug>.md` only for planned or multi-session work. Keep it in
 the active worktree, compact it instead of appending a transcript, and record approved
@@ -94,7 +100,7 @@ completion; it does not read diff content. Stop for changed scope, paths outside
 scope, new material decisions, worker failure, or unexpected required-check failure.
 Conflicting-edit and content review belong to the reviewer.
 
-For multi-builder work, delegate one sequential final builder-senior
+For multi-builder work, delegate one sequential final builder
 integration-verification task. It may own approved cross-component test paths only in
 an existing suitable suite, write those tests, and run the combined check. It must not
 silently fix or re-scope failures. Complex or high-risk work baselines are encouraged, not mandatory;

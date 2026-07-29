@@ -10,10 +10,7 @@
     "explorer": {
       "description": "Performs fast read-only repository exploration with file and line evidence"
     },
-    "builder-junior": {
-      "description": "Executes explicit mechanical low-risk edits with minimal scope"
-    },
-    "builder-senior": {
+    "builder": {
       "description": "Implements bounded normal development tasks and proportionate verification"
     },
     "reviewer": {
@@ -25,13 +22,13 @@
   },
   "harnesses": {
     "opencode": {
-      "roles": ["analyst", "planner", "explorer", "builder-junior", "builder-senior", "reviewer", "shipper"]
+      "roles": ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]
     },
     "pi": {
-      "roles": ["analyst", "planner", "explorer", "builder-junior", "builder-senior", "reviewer", "shipper"]
+      "roles": ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]
     },
     "codex": {
-      "roles": ["analyst", "planner", "explorer", "builder-junior", "builder-senior", "reviewer", "shipper"]
+      "roles": ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]
     }
   }
 }

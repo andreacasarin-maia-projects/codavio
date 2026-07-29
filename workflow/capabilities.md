@@ -47,7 +47,7 @@ Command sets live in `constants.git`.
 
 - `none` — no general shell. (Git-only roles reach Git through `git`, not `shell`.)
 - `verify` — base `ask`, plus the auto-allowed convenience set in `constants.builderShell` (`fileOps` + `redirect` + `verification` + `dockerRead`). Anything else prompts.
-- `verify+integration` — `verify` plus `constants.builderShell.integration` (Docker `exec` / `compose exec|run|restart`) for builder-senior's integration verification.
+- `verify+integration` — `verify` plus `constants.builderShell.integration` (Docker `exec` / `compose exec|run|restart`) for builder integration verification.
 
 The `builderShell` convenience set is a **transitional list**: it exists so harnesses
 without an AI classifier don't prompt on every common test command. It is expected to
@@ -82,7 +82,7 @@ Guidance docs appended to a role body are **derived from its capabilities** (in
 - `shell` starts with `verify` **or** `git == "inspect"` → `verification.md`
 - `web == true` → `web-use.md`
 
-appended in that order (builders get implementation then verification; reviewer gets
+appended in that order (the builder gets implementation then verification; reviewer gets
 verification; analyst/planner get web research).
 
 ## Gray-zone adjudication
@@ -116,7 +116,7 @@ permission frontmatter has been deleted; only fixed command/prompt adapters rema
   old adapters: differences were consistent key ordering, harmless argument wildcards on
   read-only commands, and benign convergences (reviewer gains argument'd read-only Git).
 - **Pi** — full agent frontmatter via `piFrontmatter`. Non-builder roles were byte-identical
-  to the old adapters; builders converged additively from the npm-only set up to the unified
+  to the old adapters; the builder converged additively from the npm-only set up to the unified
   verification set (nothing removed; `git`/`sudo` still denied and the builder guard still
   enforces hard boundaries).
 - **Codex** — model assignments derived via `codexModelSentence` (byte-identical output);

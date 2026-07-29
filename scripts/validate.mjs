@@ -63,6 +63,7 @@ assert.equal(run("git", ["status", "--porcelain"]).stdout, beforeGeneration,
 const manifest = json("workflow/manifest.json");
 const ROLES = Object.keys(manifest.roles);
 assert.equal(manifest.command, "dev");
+assert.deepEqual(ROLES, ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]);
 for (const harness of ["opencode", "pi", "codex"]) {
   assert.deepEqual([...manifest.harnesses[harness].roles].sort(), [...ROLES].sort());
 }
@@ -80,7 +81,7 @@ contains("workflow/guidance/web-use.md", [
 contains("templates/AGENTS.global.md", [
   "Think Before Coding", "Simplicity First", "Surgical Changes", "Goal-Driven Execution",
 ]);
-for (const forbidden of ["/dev", "builder-senior", "docker compose", ".worktrees", "openai/", "permission"]) {
+for (const forbidden of ["/dev", "builder", "docker compose", ".worktrees", "openai/", "permission"]) {
   assert.ok(!read("templates/AGENTS.global.md").toLowerCase().includes(forbidden.toLowerCase()),
     "templates/AGENTS.global.md must not contain workflow-specific marker " + forbidden);
 }
@@ -93,6 +94,8 @@ contains("workflow/orchestrator.md", [
   ".worktrees", "Implementation plan", "Routing is a mandatory, visible gate",
   "The analyst is mandatory for every FEATURE", "actual builder invocation",
   "After every implementation path completes successful verification",
+  "Role definitions are capability profiles, not singletons",
+  "Invoke multiple explorers", "Invoke multiple builders",
 ]);
 contains("workflow/roles/analyst.md", [
   "problem-definition brief", "orthogonal solution families", "decision criteria",
@@ -125,14 +128,12 @@ for (const role of ROLES) {
   assert.match(frontmatter(generated("pi/pi/agents/" + role + ".md")),
     new RegExp("name: " + role));
 }
-for (const role of ["builder-junior", "builder-senior"]) {
-  contains(generated("opencode/agents/" + role + ".md"), [
-    "## Implementation guidance", "## Verification guidance",
-  ]);
-  contains(generated("pi/pi/agents/" + role + ".md"), [
-    "## Implementation guidance", "## Verification guidance",
-  ]);
-}
+contains(generated("opencode/agents/builder.md"), [
+  "model: openai/gpt-5.6-luna", "## Implementation guidance", "## Verification guidance",
+]);
+contains(generated("pi/pi/agents/builder.md"), [
+  "model: openai/gpt-5.6-luna", "## Implementation guidance", "## Verification guidance",
+]);
 contains(generated("opencode/agents/reviewer.md"), ["## Verification guidance"]);
 contains(generated("pi/pi/agents/reviewer.md"), ["## Verification guidance"]);
 for (const role of ["analyst", "planner"]) {
@@ -142,7 +143,7 @@ for (const role of ["analyst", "planner"]) {
 }
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md"),
   ["## Web research guidance"]);
-for (const role of ["explorer", "builder-junior", "builder-senior", "reviewer", "orchestrator", "shipper"]) {
+for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
 }
 contains(generated("opencode/agents/orchestrator.md"), [
@@ -193,9 +194,10 @@ contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml"),
   ["allow_implicit_invocation: false"]);
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
-  "main session model is selected in Codex", "explorer, builder-junior, and shipper",
-  "builder-senior with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
+  "main session model is selected in Codex", "explorer and shipper",
+  "builder with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
   "Route: QUICK", "The analyst is mandatory for every FEATURE", "actual builder invocation",
+  "Invoke multiple explorers", "Invoke multiple builders",
 ]);
 for (const obsolete of [
   "scripts/install.sh", "scripts/install-pi.sh", "scripts/install-codex.sh", "scripts/install.py",
@@ -284,15 +286,15 @@ try {
   fs.mkdirSync(legacyAgents, { recursive: true });
   fs.symlinkSync(path.join(ROOT, ".opencode/agents/analyst.md"),
     path.join(legacyAgents, "analyst.md"));
-  const obsolete = path.join(legacyRoot, "opencode", "agents", "builder.md");
-  fs.symlinkSync(path.join(ROOT, ".opencode/agents/builder.md"), obsolete);
+  const obsolete = path.join(legacyRoot, "opencode", "agents", "builder-senior.md");
+  fs.symlinkSync(path.join(BUILD, "opencode/agents/builder-senior.md"), obsolete);
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
     env: { ...process.env, XDG_CONFIG_HOME: legacyRoot },
   });
   assert.equal(linkTarget(path.relative(ROOT, path.join(legacyAgents, "analyst.md"))),
     path.join(BUILD, "opencode/agents/analyst.md"));
   assert.equal(fs.existsSync(obsolete), false);
-  const wrongObsolete = path.join(legacyAgents, "builder.md");
+  const wrongObsolete = path.join(legacyAgents, "builder-junior.md");
   fs.symlinkSync(path.join(ROOT, ".opencode/agents/analyst.md"), wrongObsolete);
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
     env: { ...process.env, XDG_CONFIG_HOME: legacyRoot },
