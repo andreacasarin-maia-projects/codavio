@@ -90,7 +90,9 @@ for (const role of ROLES) {
 }
 contains("workflow/orchestrator.md", [
   "QUICK", "BUGFIX", "FEATURE", "explicit approval", "shipping approval", ".ai/work",
-  ".worktrees", "Implementation plan",
+  ".worktrees", "Implementation plan", "Routing is a mandatory, visible gate",
+  "The analyst is mandatory for every FEATURE", "actual builder invocation",
+  "After every implementation path completes successful verification",
 ]);
 contains("workflow/roles/analyst.md", [
   "problem-definition brief", "orthogonal solution families", "decision criteria",
@@ -193,6 +195,7 @@ contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/ope
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
   "main session model is selected in Codex", "explorer, builder-junior, and shipper",
   "builder-senior with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
+  "Route: QUICK", "The analyst is mandatory for every FEATURE", "actual builder invocation",
 ]);
 for (const obsolete of [
   "scripts/install.sh", "scripts/install-pi.sh", "scripts/install-codex.sh", "scripts/install.py",

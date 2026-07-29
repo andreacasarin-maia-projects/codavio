@@ -10,22 +10,33 @@ Read the applicable `AGENTS.md`, current branch, short Git status, and active
 repeating completed approvals. Preserve unrelated user changes and stop or isolate when
 dirty changes overlap.
 
-Classify the request:
+Routing is a mandatory, visible gate. After orientation and before repository exploration,
+implementation, tests, or other task work, classify the request and send a user-facing
+update beginning `Route: QUICK`, `Route: BUGFIX`, or `Route: FEATURE`, with one sentence
+explaining why. Do not silently classify, combine this gate with implementation, or proceed
+without declaring the route. If later evidence changes the classification, declare the new
+route before continuing.
 
 - `QUICK`: obvious, localized, low-risk work with no material new behavior or decision.
 - `BUGFIX`: bounded broken behavior whose expected result can be established.
 - `FEATURE`: new behavior, ambiguity, multiple components, or API, schema, security,
   infrastructure, migration, destructive, or architectural impact.
 
-Use explorers as the repository's context front-end: for BUGFIX and FEATURE work run a
-focused explorer first and pass its distilled findings — relevant modules, existing
-patterns, and file:line evidence — to the analyst and planner, so they reason from a
-compact snapshot instead of reading the repository broadly. Use the analyst to improve problem
-definition and explore orthogonal solution families: usually skip it for QUICK work;
-use it when BUGFIX behavior or root cause is unclear; use it by default for FEATURE;
-always use it for material architecture, public API, schema, security, infrastructure,
-migration, destructive behavior, or hard escalation. Give the analyst the request,
-repository evidence, assumptions, and prior decisions. Do not ask it for a task plan.
+Follow the declared route in order:
+
+- QUICK: do not invoke analyst or planner unless new evidence requires reclassification.
+- BUGFIX: invoke a focused explorer first. Invoke the analyst when expected behavior,
+  root cause, or the solution boundary remains unclear after exploration.
+- FEATURE: invoke a focused explorer first, then always invoke the analyst before
+  presenting the definition. The analyst is mandatory for every FEATURE.
+
+The explorer is the repository's context front-end. Pass its distilled findings —
+relevant modules, existing patterns, and file:line evidence — to the analyst and planner,
+so they reason from a compact snapshot instead of reading the repository broadly. Use the
+analyst to improve problem definition and explore orthogonal solution families. Always
+use it for material architecture, public API, schema, security, infrastructure, migration,
+destructive behavior, or hard escalation. Give it the request, repository evidence,
+assumptions, and prior decisions. Do not ask it for a task plan.
 
 Present a compact definition containing route, goal, scope, non-goals, material
 alternatives, risks, verification, and whether a plan or worktree is required. Ask the
@@ -50,6 +61,12 @@ After definition approval:
   unresolved decisions and obtain explicit plan approval. On approval, record the plan as
   a durable `## Implementation plan` section in `.ai/work/<branch-slug>.md` that builders
   implement from directly.
+
+Every implementation, file change, and executable verification must be performed by an
+actual builder invocation. The coordinator must not implement, edit product files, run
+tests, or simulate a role's output. If the required role-agent mechanism is unavailable,
+stop and explain that the workflow cannot continue. A workflow that performs implementation
+without a builder invocation is invalid.
 
 The recorded `## Implementation plan` is the shared source of component boundaries,
 interfaces, dependency direction, data flow, failure semantics, migration strategy, and
@@ -83,7 +100,8 @@ an existing suitable suite, write those tests, and run the combined check. It mu
 silently fix or re-scope failures. Complex or high-risk work baselines are encouraged, not mandatory;
 preserve baseline failure evidence and repair it before continuing.
 
-After successful verification, invoke a fresh reviewer against the approved definition,
+After every implementation path completes successful verification, invoke a fresh reviewer
+against the approved definition,
 the recorded plan, and the actual evidence. The reviewer reads the branch diff itself,
 remains read-only, and does not execute tests or Docker. If blockers remain, autonomously
 delegate corrections that stay inside the approved behavior, scope, architecture,

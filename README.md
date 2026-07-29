@@ -8,15 +8,15 @@ Repository tooling and installation require Node.js 22.6 or newer.
 
 ```text
 /dev
-  → coordinator opens the request, records live .ai/work state, and makes exact Git bookkeeping decisions
-  → analyst sharpens the problem and explores orthogonal solution families when needed
+  → coordinator visibly declares QUICK, BUGFIX, or FEATURE before task work
+  → BUGFIX and FEATURE invoke an explorer first
+  → every FEATURE then invokes an analyst to sharpen the problem and explore orthogonal solution families
   → discuss and approve the problem definition and solution direction
-  → planner turns the approved direction into software architecture and implementation slices
+  → FEATURE invokes a planner to turn the approved direction into software architecture and implementation slices
   → approve the architecture plan when required
   → treat an explicit unambiguous QUICK request as its definition approval
-  → proceed autonomously through high-confidence in-scope implementation, verification, and corrections within approved material boundaries
-  → delegate implementation, test, and Docker execution
-  → verify and run independent review
+  → delegate every implementation, test, and Docker action to a builder
+  → invoke an independent reviewer after successful verification
   → request shipping approval
   → delegate commit and push
 ```
@@ -42,11 +42,14 @@ OpenCode model routing:
 ## Principles
 
 - Progressive ceremony: small changes stay small.
+- Routing is observable and ordered: the coordinator declares QUICK, BUGFIX, or FEATURE
+  before task work; BUGFIX and FEATURE start with an explorer, and FEATURE always continues
+  through an analyst before definition approval.
 - An explicit, unambiguous QUICK request can serve as definition approval when no material alternative remains, the working tree is clean or non-overlapping, and verification is obvious.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
 - After definition and plan approval, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
 - Every change gets verification proportionate to its behavior and risk.
-- Builders execute implementation, tests, and Docker. In multi-builder work, a final sequential senior integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
+- Builders execute every implementation, test, and Docker action; the coordinator never substitutes for them. In multi-builder work, a final sequential senior integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
 - Baseline checks are encouraged for complex or high-risk work, not mandatory. If a baseline fails, a builder repairs it before continuing and retains the evidence.
 - Bug fixes add regression coverage only within an existing suitable test suite; otherwise they use and document the strongest existing verification.
 - Worktrees isolate features, risky work, or unrelated dirty changes; parallel writers require explicit disjoint ownership.
