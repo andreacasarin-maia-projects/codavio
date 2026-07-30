@@ -164,13 +164,6 @@ function roleBody(role, harness) {
       "elsewhere. Use one direct ordinary repository command at a time and do " +
       "not use shell chains, wrappers, interpreters, or ad hoc command programs.";
   }
-  if (harness === "codex") {
-    body += "\n\nIf the assigned work requires outbound network access, including a private or " +
-      "LAN service, request a sandbox escalation for the one direct command needed. Set " +
-      CODE + 'sandbox_permissions: "require_escalated"' + CODE + " and provide a specific " +
-      CODE + "justification" + CODE + " that asks the user to approve that connection. Proceed " +
-      "only after approval; do not broaden global network settings or use unrelated network access.";
-  }
   if (harness === "codex" && role === "shipper") {
     body += "\n\nIn Codex, pushing requires a network sandbox escalation even after shipping " +
       "approval. Invoke one direct " + CODE + "git push" + CODE + " command with " +
