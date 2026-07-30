@@ -164,6 +164,14 @@ function roleBody(role, harness) {
       "elsewhere. Use one direct ordinary repository command at a time and do " +
       "not use shell chains, wrappers, interpreters, or ad hoc command programs.";
   }
+  if (harness === "codex" && role === "shipper") {
+    body += "\n\nIn Codex, pushing requires a network sandbox escalation even after shipping " +
+      "approval. Invoke one direct " + CODE + "git push" + CODE + " command with " +
+      CODE + 'sandbox_permissions: "require_escalated"' + CODE + " and a specific " +
+      CODE + "justification" + CODE + " that asks the user to allow pushing the approved branch " +
+      "to the approved remote. Do not retry an un-escalated push. If the escalation is declined " +
+      "or the command fails, report the exact result and stop.";
+  }
   return body;
 }
 

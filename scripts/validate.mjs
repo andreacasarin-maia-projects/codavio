@@ -190,6 +190,7 @@ contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md")
 ]);
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md"), [
   "canonical `workflow/roles/` sources", "active worktree, `AGENTS.md`",
+  "network sandbox escalation", "sandbox_permissions: \"require_escalated\"",
 ]);
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml"),
   ["allow_implicit_invocation: false"]);

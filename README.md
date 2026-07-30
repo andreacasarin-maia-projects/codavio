@@ -154,7 +154,10 @@ subagents, Codex uses the same role mapping as OpenCode and Pi: analyst and plan
 `gpt-5.6-sol`; explorer and shipper use `gpt-5.4-mini`; builder uses
 `gpt-5.6-luna`; and reviewer uses `gpt-5.6-terra`. The same
 material-definition, FEATURE-plan, material-correction, and shipping approval rules
-apply.
+apply. Codex's shipper then requests a scoped network sandbox escalation for its one
+direct `git push`; the role brief supplies a clear approval question. A successful
+approval authorizes the sandbox escalation, but Git authentication and remote branch
+rules remain independent checks.
 
 ## Entry points
 
