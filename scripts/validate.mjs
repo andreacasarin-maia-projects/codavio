@@ -195,7 +195,7 @@ contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml"),
   ["allow_implicit_invocation: false"]);
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
-  "main session model is selected in Codex", "explorer and shipper",
+  "main session model is selected in Codex", "explorer and builder",
   "builder with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
   "Route: QUICK", "The analyst is mandatory for every FEATURE", "actual builder invocation",
   "Invoke multiple explorers", "Invoke multiple builders",
