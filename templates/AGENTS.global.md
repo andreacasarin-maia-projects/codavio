@@ -4,6 +4,9 @@ Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-s
 
 **Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
+When a repository-root `MEMORY.md` exists, read it after the applicable `AGENTS.md` files.
+`AGENTS.md` is authoritative; treat conflicting memory as stale repository context.
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**

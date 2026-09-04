@@ -153,7 +153,7 @@ function piFrontmatter(role) {
 function roleBody(role, harness) {
   let body = read("workflow/roles/" + role + ".md");
   const c = CAPABILITIES.roles[role];
-  const docs = [];
+  const docs = ["memory"];
   if (c.edit === "owned") docs.push("implementation");
   if (c.shell.startsWith("verify") || c.git === "inspect") docs.push("verification");
   if (c.web) docs.push("web-use");
@@ -173,6 +173,10 @@ function roleBody(role, harness) {
       "or the command fails, report the exact result and stop.";
   }
   return body;
+}
+
+function orchestratorBody() {
+  return read("workflow/orchestrator.md") + "\n\n" + read("workflow/guidance/memory.md");
 }
 
 function openCodeCommand() {
@@ -197,7 +201,7 @@ function piPrompt(roles) {
     "For delegated command work, specify the narrowest direct repository command required.",
     "Create worktrees only under " + CODE + "<project-root>/.worktrees/" + CODE + " and keep compact state at",
     CODE + ".ai/work/<branch-slug>.md" + CODE + " in the active worktree.",
-    "", read("workflow/orchestrator.md"),
+    "", orchestratorBody(),
   ].join("\n");
 }
 
@@ -229,7 +233,7 @@ function codexSkill(roles) {
     "Load the matching canonical brief from [roles.md](references/roles.md) for every",
     "delegation. If collaboration tools are unavailable, stop and explain that the workflow",
     "requires Codex subagents.",
-    "", read("workflow/orchestrator.md"),
+    "", orchestratorBody(),
   ].join("\n");
 }
 
@@ -257,7 +261,7 @@ function outputs(manifest) {
       generatedFrom(openCodeFrontmatter(role), roleBody(role, "opencode")));
   }
   add(result, "build/opencode/agents/orchestrator.md",
-    generatedFrom(openCodeFrontmatter("orchestrator"), read("workflow/orchestrator.md")));
+    generatedFrom(openCodeFrontmatter("orchestrator"), orchestratorBody()));
   add(result, "build/opencode/commands/dev.md",
     generated("adapters/opencode/commands/dev.md", openCodeCommand()));
   add(result, "build/opencode/AGENTS.md", read("templates/AGENTS.global.md") + "\n");

@@ -5,10 +5,10 @@ branch and worktree bookkeeping. It does not read diff content; the reviewer own
 authoritative diff inspection. The analyst owns problem framing and option exploration;
 the planner owns the detailed implementation plan.
 
-Read the applicable `AGENTS.md`, current branch, short Git status, and active
-`.ai/work/<branch-slug>.md` before routing. Resume compact recorded state instead of
-repeating completed approvals. Preserve unrelated user changes and stop or isolate when
-dirty changes overlap.
+Load repository context as directed by the repository-memory guidance, then read the
+current branch, short Git status, and active `.ai/work/<branch-slug>.md` before routing.
+Resume compact recorded state instead of repeating completed approvals. Preserve unrelated
+user changes and stop or isolate when dirty changes overlap.
 
 Routing is a mandatory, visible gate. After orientation and before repository exploration,
 implementation, tests, or other task work, classify the request and send a user-facing
@@ -106,13 +106,26 @@ an existing suitable suite, write those tests, and run the combined check. It mu
 silently fix or re-scope failures. Complex or high-risk work baselines are encouraged, not mandatory;
 preserve baseline failure evidence and repair it before continuing.
 
-After every implementation path completes successful verification, invoke a fresh reviewer
-against the approved definition,
-the recorded plan, and the actual evidence. The reviewer reads the branch diff itself,
-remains read-only, and does not execute tests or Docker. If blockers remain, autonomously
-delegate corrections that stay inside the approved behavior, scope, architecture,
-dependencies, migrations, acceptance criteria, and risk. Reverify and review again.
-Ask before any correction that changes one of those material boundaries.
+After every implementation path completes successful verification, perform a repository
+memory closeout before final review. Read all of root `MEMORY.md` when it exists and use
+the approved definition, plan, work state, and returned role evidence to identify zero to
+three new durable architectural or philosophical choices. Zero is valid. Keep only
+surprising context that can change future work; exclude task summaries, changed-file
+lists, verification results, speculation, and facts readily discoverable from code.
+Delegate a bounded builder to create or rewrite `MEMORY.md` only when needed. Keep it a
+dense living bullet list, merge overlaps, rewrite inaccurate entries, and remove obsolete
+ones rather than preserving history. Each bullet should normally be one sentence holding
+the choice and its essential consequence or rationale; keep the file under a soft limit
+of 1,000 words. `AGENTS.md` remains authoritative. Obtain approval before recording a new
+material rule that the approved work did not already establish.
+
+Then invoke a fresh reviewer against the approved definition, the recorded plan, the
+actual evidence, and the complete diff including any `MEMORY.md` change. The reviewer
+reads the branch diff itself, remains read-only, and does not execute tests or Docker. If
+blockers remain, autonomously delegate corrections that stay inside the approved
+behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk.
+Reverify and review again. Repeat the memory closeout when a correction makes its content
+stale. Ask before any correction that changes one of those material boundaries.
 
 After a clean review, confirm final branch, short status, approved files, commit
 message, and remote; the reviewer has read the diff and the shipper re-inspects it

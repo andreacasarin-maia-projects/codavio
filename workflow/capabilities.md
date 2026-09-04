@@ -75,15 +75,18 @@ Constants applied uniformly (not per role): `constants.opencode` / `constants.pi
 (`external_directory: deny`, Pi inherit flags). Each command in a set renders as both its
 bare form and its `<cmd> *` wildcard, except `redirect` entries which are used verbatim.
 
-Guidance docs appended to a role body are **derived from its capabilities** (in
-`roleBody`), so they cannot contradict the policy:
+Repository-memory guidance is appended to every role body. The remaining guidance docs
+are **derived from role capabilities** (in `roleBody`), so they cannot contradict the
+policy:
 
+- every role → `memory.md`
 - `edit == "owned"` → `implementation.md`
 - `shell` starts with `verify` **or** `git == "inspect"` → `verification.md`
 - `web == true` → `web-use.md`
 
-appended in that order (the builder gets implementation then verification; reviewer gets
-verification; analyst/planner get web research).
+They are appended in that order (the builder gets memory, implementation, then
+verification; reviewer gets memory then verification; analyst/planner get memory then web
+research).
 
 ## Gray-zone adjudication
 

@@ -1,5 +1,8 @@
 # Repository Instructions
 
+Read root `MEMORY.md` after this file. This file is authoritative if they conflict; report
+conflicting memory as stale.
+
 ## Purpose
 
 This project builds a stable, testable, and repeatable AI development workflow that does not depend on always using the most capable model. The end goal is to leverage cheaper models to reach roughly 80% of what the best model could achieve at about 20% of the token cost. Prefer predictable structure, hard-enforced role boundaries, and minimal per-agent context over maximal model capability. Favor a single canonical source per concern, expanded per harness by the generator, over duplicated definitions that can silently diverge.

@@ -16,6 +16,7 @@ Repository tooling and installation require Node.js 22.6 or newer.
   → approve the architecture plan when required
   → treat an explicit unambiguous QUICK request as its definition approval
   → delegate every implementation, test, and Docker action to a builder
+  → compact durable architectural and philosophical context into MEMORY.md
   → invoke an independent reviewer after successful verification
   → request shipping approval
   → delegate commit and push
@@ -60,6 +61,7 @@ OpenCode model routing:
   concurrently when their write scopes and side effects are disjoint.
 - All isolated Git worktrees must be created under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
 - The conversation is not the source of truth. Multi-session work uses one compact living work file.
+- Root `MEMORY.md` is dense, living repository context rather than history. Every role reads it after the applicable `AGENTS.md`, which remains authoritative, and the coordinator rewrites it before final review when shipped work makes durable context new, stale, or redundant.
 - Orchestrator is coordination-only: it owns approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not read diff content. Analyst owns problem framing, planner owns the detailed implementation plan, and the reviewer owns authoritative diff inspection.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
 - Review corrections proceed autonomously when they stay inside approved behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk; changing one of those boundaries requires approval.
@@ -185,8 +187,8 @@ Shared workflow behavior lives under `workflow/`:
 - `workflow/orchestrator.md` defines routing, approvals, planning, implementation,
   verification, review, correction, and shipping behavior.
 - `workflow/roles/*.md` defines the six reusable role contracts.
-- `workflow/guidance/*.md` contains focused implementation and verification guidance
-  composed only into the roles that need it.
+- `workflow/guidance/*.md` contains focused repository-memory, implementation,
+  verification, and web-research guidance composed only into the roles that need it.
 - `workflow/manifest.json` declares the command, roles, and supported harnesses.
 
 `scripts/generate.mjs` combines those canonical sources with frontmatter-only native
@@ -196,10 +198,11 @@ permissions, Pi tools and permission policies, and Codex skill metadata without
 duplicating behavioral prompts.
 
 `templates/AGENTS.global.md` intentionally contains only universal behavioral
-guidelines: think before coding, prefer simplicity, make surgical changes, and work
-toward verifiable goals. Workflow routing, architecture, permissions, implementation
-quality, and verification policy stay in canonical coordinator, role, guidance, or
-harness-specific files rather than leaking into every global session.
+guidelines: load repository memory with lower precedence than `AGENTS.md`, think before
+coding, prefer simplicity, make surgical changes, and work toward verifiable goals.
+Workflow routing, architecture, permissions, implementation quality, and verification
+policy stay in canonical coordinator, role, guidance, or harness-specific files rather
+than leaking into every global session.
 
 Only definitions and source metadata are tracked. Generated harness artifacts are
 ignored, and the installer regenerates them before making changes. After editing
@@ -215,6 +218,20 @@ because the adapters require composition and small harness-specific wrappers, no
 arbitrary presentation logic.
 
 ## Persistent context
+
+Durable cross-task context lives in a tracked root file when the repository has something
+worth preserving:
+
+```text
+MEMORY.md
+```
+
+Every role reads it after the applicable `AGENTS.md`; `AGENTS.md` wins on conflict. Before
+final review, the coordinator considers zero to three new durable architectural or
+philosophical choices, then uses a bounded builder to update the file only when needed.
+The file is a dense living bullet list under a 1,000-word soft limit: merge overlaps,
+rewrite inaccurate entries, and remove obsolete guidance instead of retaining a task
+history. New unapproved material rules still require user approval.
 
 Only multi-session or planned work needs a file:
 

@@ -78,8 +78,15 @@ contains("workflow/guidance/verification.md", [
 contains("workflow/guidance/web-use.md", [
   "Web research guidance", "official or primary sources", "Never paste whole pages",
 ]);
+contains("workflow/guidance/memory.md", [
+  "Repository memory", "read the applicable `AGENTS.md` first", "`AGENTS.md` is authoritative",
+]);
+contains("workflow/capabilities.md", [
+  "every role → `memory.md`", "builder gets memory, implementation", "reviewer gets memory",
+]);
 contains("templates/AGENTS.global.md", [
   "Think Before Coding", "Simplicity First", "Surgical Changes", "Goal-Driven Execution",
+  "repository-root `MEMORY.md`", "`AGENTS.md` is authoritative",
 ]);
 for (const forbidden of ["/dev", "builder", "docker compose", ".worktrees", "openai/", "permission"]) {
   assert.ok(!read("templates/AGENTS.global.md").toLowerCase().includes(forbidden.toLowerCase()),
@@ -95,8 +102,10 @@ contains("workflow/orchestrator.md", [
   "The analyst is mandatory for every FEATURE", "actual builder invocation",
   "After every implementation path completes successful verification",
   "Role definitions are capability profiles, not singletons",
-  "Invoke multiple explorers", "Invoke multiple builders",
+  "Invoke multiple explorers", "Invoke multiple builders", "memory closeout",
+  "Zero is valid", "dense living bullet list",
 ]);
+contains("MEMORY.md", ["# Repository memory", "compact living context", "defer to `AGENTS.md`"]);
 contains("workflow/roles/analyst.md", [
   "problem-definition brief", "orthogonal solution families", "decision criteria",
   "belongs to the planner",
@@ -124,6 +133,8 @@ assert.ok(fs.existsSync(path.join(BUILD,
 for (const role of ROLES) {
   contains(generated("opencode/agents/" + role + ".md"), ["description:", "mode: subagent"]);
   contains(generated("pi/pi/agents/" + role + ".md"), ["name: " + role, "maxSubagentDepth: 0"]);
+  contains(generated("opencode/agents/" + role + ".md"), ["## Repository memory"]);
+  contains(generated("pi/pi/agents/" + role + ".md"), ["## Repository memory"]);
   assert.match(frontmatter(generated("opencode/agents/" + role + ".md")), /description:|name:/);
   assert.match(frontmatter(generated("pi/pi/agents/" + role + ".md")),
     new RegExp("name: " + role));
@@ -148,6 +159,7 @@ for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"
 }
 contains(generated("opencode/agents/orchestrator.md"), [
   "mode: primary", "model: openai/gpt-5.6-terra", "\"planner\": allow",
+  "## Repository memory", "`AGENTS.md` is authoritative",
 ]);
 contains(generated("opencode/agents/planner.md"), [
   "mode: subagent", "model: openai/gpt-5.6-sol", "edit: deny", "bash: deny",
@@ -198,7 +210,8 @@ contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md")
   "main session model is selected in Codex", "explorer and builder",
   "builder with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
   "Route: QUICK", "The analyst is mandatory for every FEATURE", "actual builder invocation",
-  "Invoke multiple explorers", "Invoke multiple builders",
+  "Invoke multiple explorers", "Invoke multiple builders", "memory closeout",
+  "## Repository memory",
 ]);
 for (const obsolete of [
   "scripts/install.sh", "scripts/install-pi.sh", "scripts/install-codex.sh", "scripts/install.py",

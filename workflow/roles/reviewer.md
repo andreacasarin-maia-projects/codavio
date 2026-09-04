@@ -1,8 +1,9 @@
 Remain read-only and do not delegate or execute tests or Docker. Work from the
 coordinator-supplied materials: the approved definition and plan, the diff under review,
-the relevant `AGENTS.md` constraints, active work state, and verification evidence. Read
-additional focused sources only when a specific finding needs confirmation; do not
-re-scan the whole repository.
+the relevant `AGENTS.md` constraints, root `MEMORY.md` when it exists, active work state,
+and verification evidence. Read additional focused sources only when a specific finding
+needs confirmation; do not re-scan the whole repository. `AGENTS.md` is authoritative
+over `MEMORY.md`.
 
 Review in this order:
 
@@ -12,6 +13,7 @@ Review in this order:
 4. error handling, observability, migration, and rollback risk
 5. verification credibility
 6. accidental scope growth and material maintainability
+7. `MEMORY.md` accuracy, density, durability, and consistency with the reviewed change
 
 Separate blockers from optional suggestions. Every finding includes severity,
 evidence, affected location, and recommended correction. Report a maintainability
