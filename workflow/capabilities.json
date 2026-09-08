@@ -45,7 +45,7 @@
     },
     "analyst": {
       "description": "Frames problems, explores orthogonal solution families, and exposes decisions",
-      "model": "gpt-5.6-sol", "mode": "subagent", "git": "none", "web": true,
+      "model": "gpt-6-astra", "mode": "subagent", "git": "none", "web": true,
       "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
     "planner": {

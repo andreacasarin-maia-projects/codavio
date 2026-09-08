@@ -37,7 +37,8 @@ OpenCode model routing:
 | Role | Model |
 |---|---|
 | Orchestration and review | `openai/gpt-5.6-terra` |
-| Problem framing, architecture planning, and hard analysis | `openai/gpt-5.6-sol` |
+| Problem framing and hard analysis | `openai/gpt-6-astra` |
+| Architecture planning | `openai/gpt-5.6-sol` |
 | Implementation | `openai/gpt-5.6-luna` |
 | Exploration and implementation | `openai/gpt-5.6-luna` |
 | Shipping | `openai/gpt-5.4-mini` |
@@ -153,9 +154,9 @@ $dev-workflow <request>
 ```
 
 Implicit invocation is disabled. Select the main coordinator model in Codex. For
-subagents, Codex uses the same role mapping as OpenCode and Pi: analyst and planner use
-`gpt-5.6-sol`; explorer and builder use `gpt-5.6-luna`; shipper uses
-`gpt-5.4-mini`; and reviewer uses `gpt-5.6-terra`. The same
+subagents, Codex uses the same role mapping as OpenCode and Pi: analyst uses
+`gpt-6-astra`; planner uses `gpt-5.6-sol`; explorer and builder use `gpt-5.6-luna`;
+shipper uses `gpt-5.4-mini`; and reviewer uses `gpt-5.6-terra`. The same
 material-definition, FEATURE-plan, material-correction, and shipping approval rules
 apply. Codex's shipper then requests a scoped network sandbox escalation for its one
 direct `git push`; the role brief supplies a clear approval question. A successful
@@ -266,10 +267,10 @@ is a **local logging proxy** in front of every harness:
 - Point each harness at the proxy by setting its OpenAI base URL to the proxy address
   (OpenCode/Pi/Codex all read the standard `OPENAI_BASE_URL` / provider base-URL
   setting).
-- Attribute each request to a role. The model tier already maps one-to-one to role
-  (`gpt-5.4-mini` → shipper, `gpt-5.6-sol` → analyst/planner,
+- Attribute each request to a role or paired role group. The model tier identifies it
+  (`gpt-5.4-mini` → shipper, `gpt-6-astra` → analyst, `gpt-5.6-sol` → planner,
   `gpt-5.6-luna` → explorer/builder, `gpt-5.6-terra` → orchestrator/reviewer), so grouping
-  logged usage by model yields a per-role breakdown without any harness changes.
+  logged usage by model yields that breakdown without any harness changes.
 
 This is intentionally out of the generated package: it is host configuration, not
 workflow source. Use the breakdown to see whether cost concentrates in the reasoning

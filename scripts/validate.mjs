@@ -197,7 +197,7 @@ contains(generated("pi/pi/prompts/dev.md"), [
   ...ROLES,
 ]);
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
-  "name: dev-workflow", "`gpt-5.6-sol`", "`gpt-5.6-terra`", "`gpt-5.6-luna`", "`gpt-5.4-mini`",
+  "name: dev-workflow", "`gpt-6-astra`", "`gpt-5.6-sol`", "`gpt-5.6-terra`", "`gpt-5.6-luna`", "`gpt-5.4-mini`",
   "`fork_turns: \"none\"`", "[roles.md](references/roles.md)",
 ]);
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md"), [
