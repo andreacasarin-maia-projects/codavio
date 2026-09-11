@@ -41,7 +41,7 @@ OpenCode model routing:
 | Architecture planning | `openai/gpt-5.6-sol` |
 | Implementation | `openai/gpt-5.6-luna` |
 | Exploration and implementation | `openai/gpt-5.6-luna` |
-| Shipping | `openai/gpt-5.4-mini` |
+| Shipping | `openai/gpt-5.6-luna` |
 
 ## Principles
 
@@ -156,7 +156,7 @@ $dev-workflow <request>
 Implicit invocation is disabled. Select the main coordinator model in Codex. For
 subagents, Codex uses the same role mapping as OpenCode and Pi: analyst uses
 `gpt-6-astra`; planner uses `gpt-5.6-sol`; explorer and builder use `gpt-5.6-luna`;
-shipper uses `gpt-5.4-mini`; and reviewer uses `gpt-5.6-terra`. The same
+shipper uses `gpt-5.6-luna`; and reviewer uses `gpt-5.6-terra`. The same
 material-definition, FEATURE-plan, material-correction, and shipping approval rules
 apply. Codex's shipper then requests a scoped network sandbox escalation for its one
 direct `git push`; the role brief supplies a clear approval question. A successful
@@ -268,8 +268,8 @@ is a **local logging proxy** in front of every harness:
   (OpenCode/Pi/Codex all read the standard `OPENAI_BASE_URL` / provider base-URL
   setting).
 - Attribute each request to a role or paired role group. The model tier identifies it
-  (`gpt-5.4-mini` → shipper, `gpt-6-astra` → analyst, `gpt-5.6-sol` → planner,
-  `gpt-5.6-luna` → explorer/builder, `gpt-5.6-terra` → orchestrator/reviewer), so grouping
+  (`gpt-6-astra` → analyst, `gpt-5.6-sol` → planner,
+  `gpt-5.6-luna` → explorer/builder/shipper, `gpt-5.6-terra` → orchestrator/reviewer), so grouping
   logged usage by model yields that breakdown without any harness changes.
 
 This is intentionally out of the generated package: it is host configuration, not

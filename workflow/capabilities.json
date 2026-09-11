@@ -70,7 +70,7 @@
     },
     "shipper": {
       "description": "Verifies shipping preconditions, creates a focused commit, and pushes the current branch",
-      "model": "gpt-5.4-mini", "mode": "subagent", "git": "commit", "web": false,
+      "model": "gpt-5.6-luna", "mode": "subagent", "git": "commit", "web": false,
       "edit": "none", "shell": "none", "delegate": false, "guard": "shipper"
     }
   }

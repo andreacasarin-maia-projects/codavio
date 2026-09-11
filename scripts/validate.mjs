@@ -197,7 +197,7 @@ contains(generated("pi/pi/prompts/dev.md"), [
   ...ROLES,
 ]);
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
-  "name: dev-workflow", "`gpt-6-astra`", "`gpt-5.6-sol`", "`gpt-5.6-terra`", "`gpt-5.6-luna`", "`gpt-5.4-mini`",
+  "name: dev-workflow", "`gpt-6-astra`", "`gpt-5.6-sol`", "`gpt-5.6-terra`", "`gpt-5.6-luna`",
   "`fork_turns: \"none\"`", "[roles.md](references/roles.md)",
 ]);
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md"), [
@@ -207,8 +207,8 @@ contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml"),
   ["allow_implicit_invocation: false"]);
 contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
-  "main session model is selected in Codex", "explorer and builder",
-  "builder with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
+  "main session model is selected in Codex", "explorer, builder, and shipper",
+  "shipper with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
   "Route: QUICK", "The analyst is mandatory for every FEATURE", "actual builder invocation",
   "Invoke multiple explorers", "Invoke multiple builders", "memory closeout",
   "## Repository memory",
