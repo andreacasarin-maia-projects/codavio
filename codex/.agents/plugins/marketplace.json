@@ -1,14 +1,14 @@
 {
-  "name": "ai-dev-workflow",
+  "name": "codavio",
   "interface": {
-    "displayName": "AI Dev Workflow"
+    "displayName": "Codavio"
   },
   "plugins": [
     {
-      "name": "ai-dev-workflow",
+      "name": "codavio",
       "source": {
         "source": "local",
-        "path": "./plugins/ai-dev-workflow"
+        "path": "./plugins/codavio"
       },
       "policy": {
         "installation": "AVAILABLE",

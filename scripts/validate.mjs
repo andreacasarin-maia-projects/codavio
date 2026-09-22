@@ -62,7 +62,7 @@ assert.equal(run("git", ["status", "--porcelain"]).stdout, beforeGeneration,
 
 const manifest = json("workflow/manifest.json");
 const ROLES = Object.keys(manifest.roles);
-assert.equal(manifest.command, "dev");
+assert.equal(manifest.command, "codavio");
 assert.deepEqual(ROLES, ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]);
 for (const harness of ["opencode", "pi", "codex"]) {
   assert.deepEqual([...manifest.harnesses[harness].roles].sort(), [...ROLES].sort());
@@ -88,7 +88,7 @@ contains("templates/AGENTS.global.md", [
   "Think Before Coding", "Simplicity First", "Surgical Changes", "Goal-Driven Execution",
   "repository-root `MEMORY.md`", "`AGENTS.md` is authoritative",
 ]);
-for (const forbidden of ["/dev", "builder", "docker compose", ".worktrees", "openai/", "permission"]) {
+for (const forbidden of ["/codavio", "/dev", "builder", "docker compose", ".worktrees", "openai/", "permission"]) {
   assert.ok(!read("templates/AGENTS.global.md").toLowerCase().includes(forbidden.toLowerCase()),
     "templates/AGENTS.global.md must not contain workflow-specific marker " + forbidden);
 }
@@ -117,18 +117,18 @@ contains("workflow/roles/planner.md", [
 
 assert.deepEqual(names(generated("opencode/agents")),
   [...ROLES, "orchestrator"].map((role) => role + ".md").sort());
-assert.deepEqual(names(generated("opencode/commands")), ["dev.md"]);
+assert.deepEqual(names(generated("opencode/commands")), ["codavio.md"]);
 assert.deepEqual(names(generated("pi/pi/agents")), ROLES.map((role) => role + ".md").sort());
-assert.deepEqual(names(generated("pi/pi/prompts")), ["dev.md"]);
+assert.deepEqual(names(generated("pi/pi/prompts")), ["codavio.md"]);
 assert.ok(fs.existsSync(path.join(BUILD, "pi/package.json")));
 assert.ok(fs.existsSync(path.join(BUILD, "pi/package-lock.json")));
 assert.deepEqual(names(generated("pi/pi/extensions")), names("pi/extensions"));
 assert.ok(fs.existsSync(path.join(BUILD, "codex/AGENTS.md")));
 assert.ok(fs.existsSync(path.join(BUILD, "codex/.agents/plugins/marketplace.json")));
 assert.ok(fs.existsSync(path.join(BUILD,
-  "codex/plugins/ai-dev-workflow/.codex-plugin/plugin.json")));
+  "codex/plugins/codavio/.codex-plugin/plugin.json")));
 assert.ok(fs.existsSync(path.join(BUILD,
-  "codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml")));
+  "codex/plugins/codavio/skills/codavio/agents/openai.yaml")));
 
 for (const role of ROLES) {
   contains(generated("opencode/agents/" + role + ".md"), ["description:", "mode: subagent"]);
@@ -152,7 +152,7 @@ for (const role of ["analyst", "planner"]) {
   contains(generated("pi/pi/agents/" + role + ".md"),
     ["## Web research guidance", "web_search", "fetch_content"]);
 }
-contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md"),
+contains(generated("codex/plugins/codavio/skills/codavio/references/roles.md"),
   ["## Web research guidance"]);
 for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
@@ -174,39 +174,44 @@ for (const role of ROLES) {
   contains(generated("pi/pi/agents/" + role + ".md"), ["model: " + model]);
 }
 const packageJson = json("package.json");
+assert.equal(packageJson.name, "codavio");
+assert.equal(packageJson.license, "MIT");
+assert.equal(packageJson.repository.url,
+  "git+https://github.com/andreacasarin-maia-projects/codavio.git");
 assert.equal(packageJson.dependencies["pi-subagents"], "0.35.1");
 assert.deepEqual(packageJson.pi.subagents.agents, ["./pi/agents"]);
 assert.equal(packageJson.scripts.generate, "node scripts/generate.mjs");
 assert.equal(packageJson.scripts.validate, "node scripts/validate.mjs");
 
-const plugin = json("codex/plugins/ai-dev-workflow/.codex-plugin/plugin.json");
-assert.equal(plugin.name, "ai-dev-workflow");
+const plugin = json("codex/plugins/codavio/.codex-plugin/plugin.json");
+assert.equal(plugin.name, "codavio");
 assert.equal(plugin.skills, "./skills/");
 const marketplace = json("codex/.agents/plugins/marketplace.json");
-assert.equal(marketplace.name, "ai-dev-workflow");
+assert.equal(marketplace.name, "codavio");
 assert.equal(marketplace.plugins.length, 1);
 assert.equal(marketplace.plugins[0].name, plugin.name);
-assert.equal(marketplace.plugins[0].source.path, "./plugins/ai-dev-workflow");
+assert.equal(marketplace.plugins[0].source.path, "./plugins/codavio");
 
-contains(generated("opencode/commands/dev.md"), [
+contains(generated("opencode/commands/codavio.md"), [
   "$ARGUMENTS", "generated into the `orchestrator`", "combined diff", "approved shipping",
 ]);
-contains(generated("pi/pi/prompts/dev.md"), [
+contains(generated("pi/pi/prompts/codavio.md"), [
   "$ARGUMENTS", "`pi-subagents`", "pinned model", "`<project-root>/.worktrees/`",
   "`.ai/work/<branch-slug>.md`", "Use each role's pinned model without a per-run model override.",
   ...ROLES,
 ]);
-contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
-  "name: dev-workflow", "`gpt-6-astra`", "`gpt-5.6-sol`", "`gpt-5.6-terra`", "`gpt-5.6-luna`",
+contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
+  "name: codavio", "$codavio", "# Codavio", "`gpt-6-astra`", "`gpt-5.6-sol`",
+  "`gpt-5.6-terra`", "`gpt-5.6-luna`",
   "`fork_turns: \"none\"`", "[roles.md](references/roles.md)",
 ]);
-contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md"), [
+contains(generated("codex/plugins/codavio/skills/codavio/references/roles.md"), [
   "canonical `workflow/roles/` sources", "active worktree, `AGENTS.md`",
   "network sandbox escalation", "sandbox_permissions: \"require_escalated\"",
 ]);
-contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml"),
+contains(generated("codex/plugins/codavio/skills/codavio/agents/openai.yaml"),
   ["allow_implicit_invocation: false"]);
-contains(generated("codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md"), [
+contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
   "main session model is selected in Codex", "explorer, builder, and shipper",
   "shipper with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
   "Route: QUICK", "The analyst is mandatory for every FEATURE", "actual builder invocation",
@@ -220,15 +225,15 @@ for (const obsolete of [
   assert.equal(fs.existsSync(path.join(ROOT, obsolete)), false, obsolete + " still exists");
 }
 
-const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "ai-dev-workflow-validate-"));
+const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "codavio-validate-"));
 try {
   const fakeCli = path.join(temporary, "fake-cli.mjs");
   const fakeLog = path.join(temporary, "cli.log");
   fs.writeFileSync(fakeCli, "#!" + process.execPath + "\n" +
     "import fs from 'node:fs';\n" +
     "fs.appendFileSync(process.env.FAKE_CLI_LOG, JSON.stringify(process.argv.slice(2)) + '\\n');\n" +
-    "if (process.argv.includes('--json')) console.log(JSON.stringify({ marketplaces: process.env.FAKE_MARKETPLACE_ROOT ? [{ name: 'ai-dev-workflow', root: process.env.FAKE_MARKETPLACE_ROOT }] : [] }));\n" +
-    "if (process.argv.includes('list') && !process.argv.includes('--json')) console.log('pi-permission-system\\nai-dev-workflow');\n");
+    "if (process.argv.includes('--json')) console.log(JSON.stringify({ marketplaces: process.env.FAKE_MARKETPLACE_ROOT ? [{ name: 'codavio', root: process.env.FAKE_MARKETPLACE_ROOT }] : [] }));\n" +
+    "if (process.argv.includes('list') && !process.argv.includes('--json')) console.log('pi-permission-system\\ncodavio');\n");
   fs.chmodSync(fakeCli, 0o755);
 
   fs.rmSync(path.join(BUILD, "opencode"), { recursive: true, force: true });
@@ -242,8 +247,8 @@ try {
     assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "agents", role + ".md"))),
       path.join(BUILD, "opencode/agents", role + ".md"));
   }
-  assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "commands", "dev.md"))),
-    path.join(BUILD, "opencode/commands/dev.md"));
+  assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "commands", "codavio.md"))),
+    path.join(BUILD, "opencode/commands/codavio.md"));
 
   fs.rmSync(path.join(BUILD, "pi"), { recursive: true, force: true });
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "pi"], {
@@ -293,7 +298,7 @@ try {
     },
   });
   const staleCalls = fs.readFileSync(fakeLog, "utf8");
-  assert.ok(staleCalls.includes(JSON.stringify(["plugin", "marketplace", "remove", "ai-dev-workflow"])));
+  assert.ok(staleCalls.includes(JSON.stringify(["plugin", "marketplace", "remove", "codavio"])));
 
   const legacyRoot = path.join(temporary, "legacy");
   const legacyAgents = path.join(legacyRoot, "opencode", "agents");

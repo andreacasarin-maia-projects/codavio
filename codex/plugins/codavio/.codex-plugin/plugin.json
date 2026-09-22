@@ -1,0 +1,27 @@
+{
+  "name": "codavio",
+  "version": "0.1.0",
+  "description": "An adaptable development workflow for coding agents",
+  "author": {
+    "name": "Andrea Casarin",
+    "url": "https://github.com/andreacasarin-maia-projects"
+  },
+  "homepage": "https://github.com/andreacasarin-maia-projects/codavio",
+  "repository": "https://github.com/andreacasarin-maia-projects/codavio",
+  "license": "MIT",
+  "keywords": ["development", "workflow", "review", "multi-agent"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codavio",
+    "shortDescription": "An adaptable development workflow for coding agents.",
+    "longDescription": "Guides repository work from intent through analysis, planning, implementation, verification, independent review, and approved Git shipping with focused Codex subagents.",
+    "developerName": "Andrea Casarin",
+    "category": "Developer Tools",
+    "capabilities": ["Interactive", "Write"],
+    "defaultPrompt": [
+      "Use $codavio to implement this change end to end.",
+      "Use $codavio to diagnose and fix this bug.",
+      "Use $codavio to plan and build this feature."
+    ]
+  }
+}

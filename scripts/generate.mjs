@@ -223,7 +223,7 @@ function codexModelSentence(roles) {
 }
 function codexSkill(roles) {
   return [
-    "# AI development workflow", "",
+    "# Codavio", "",
     "Use Codex collaboration agents; do not create user-owned threads for workflow roles.",
     "The main session model is selected in Codex and is not overridden by this workflow.",
     codexModelSentence(roles) + " Use",
@@ -262,8 +262,8 @@ function outputs(manifest) {
   }
   add(result, "build/opencode/agents/orchestrator.md",
     generatedFrom(openCodeFrontmatter("orchestrator"), orchestratorBody()));
-  add(result, "build/opencode/commands/dev.md",
-    generated("adapters/opencode/commands/dev.md", openCodeCommand()));
+  add(result, "build/opencode/commands/" + manifest.command + ".md",
+    generated("adapters/opencode/commands/" + manifest.command + ".md", openCodeCommand()));
   add(result, "build/opencode/AGENTS.md", read("templates/AGENTS.global.md") + "\n");
 
   for (const relative of ["package.json", "package-lock.json"]) {
@@ -277,20 +277,20 @@ function outputs(manifest) {
     add(result, "build/pi/pi/agents/" + role + ".md",
       generatedFrom(piFrontmatter(role), roleBody(role, "pi")));
   }
-  add(result, "build/pi/pi/prompts/dev.md",
-    generated("adapters/pi/prompts/dev.md", piPrompt(manifest.harnesses.pi.roles)));
+  add(result, "build/pi/pi/prompts/" + manifest.command + ".md",
+    generated("adapters/pi/prompts/" + manifest.command + ".md", piPrompt(manifest.harnesses.pi.roles)));
 
   add(result, "build/codex/AGENTS.md", read("templates/AGENTS.global.md") + "\n");
   for (const relative of [
     "codex/.agents/plugins/marketplace.json",
-    "codex/plugins/ai-dev-workflow/.codex-plugin/plugin.json",
-    "codex/plugins/ai-dev-workflow/skills/dev-workflow/agents/openai.yaml",
+    "codex/plugins/codavio/.codex-plugin/plugin.json",
+    "codex/plugins/codavio/skills/codavio/agents/openai.yaml",
   ]) {
     add(result, "build/" + relative, fs.readFileSync(absolute(relative), "utf8"));
   }
-  add(result, "build/codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md",
-    generated("adapters/codex/plugins/ai-dev-workflow/skills/dev-workflow/SKILL.md", codexSkill(manifest.harnesses.codex.roles)));
-  add(result, "build/codex/plugins/ai-dev-workflow/skills/dev-workflow/references/roles.md",
+  add(result, "build/codex/plugins/codavio/skills/codavio/SKILL.md",
+    generated("adapters/codex/plugins/codavio/skills/codavio/SKILL.md", codexSkill(manifest.harnesses.codex.roles)));
+  add(result, "build/codex/plugins/codavio/skills/codavio/references/roles.md",
     NOTICE + "\n\n" + codexRoles(manifest.harnesses.codex.roles));
   return result;
 }

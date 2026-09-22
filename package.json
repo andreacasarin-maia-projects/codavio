@@ -1,12 +1,22 @@
 {
-  "name": "ai-dev-workflow",
+  "name": "codavio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=22.6.0"
   },
-  "description": "Pi package for the AI development workflow",
+  "description": "An adaptable development workflow for coding agents",
+  "author": "Andrea Casarin",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andreacasarin-maia-projects/codavio.git"
+  },
+  "homepage": "https://github.com/andreacasarin-maia-projects/codavio#readme",
+  "bugs": {
+    "url": "https://github.com/andreacasarin-maia-projects/codavio/issues"
+  },
   "scripts": {
     "generate": "node scripts/generate.mjs",
     "generate:check": "node scripts/generate.mjs --check",
@@ -15,7 +25,12 @@
     "check": "npm run validate && npm test"
   },
   "keywords": [
-    "pi-package"
+    "ai",
+    "coding-agents",
+    "development-workflow",
+    "opencode",
+    "pi-package",
+    "codex"
   ],
   "dependencies": {
     "pi-subagents": "0.35.1"

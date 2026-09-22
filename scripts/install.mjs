@@ -13,7 +13,7 @@ const OBSOLETE_OPENCODE_PATHS = [
   "agents/builder-junior.md", "agents/builder-senior.md", "agents/explore.md",
   "agents/worker-mini.md", "agents/worker-luna.md",
   "commands/analyze.md", "commands/build.md", "commands/plan.md", "commands/review.md",
-  "commands/ship.md", "skills/testing-policy",
+  "commands/ship.md", "commands/dev.md", "skills/testing-policy",
 ];
 
 function usage() { console.error("Usage: node scripts/install.mjs <opencode|pi|codex|all> [--force]"); }
@@ -117,13 +117,15 @@ function manifest() {
 
 function openCodePaths(target) {
   const pairs = [];
+  const command = manifest().command;
   for (const role of [...manifest().harnesses.opencode.roles, "orchestrator"]) {
     pairs.push([path.join(BUILD, "opencode/agents", role + ".md"),
       path.join(target, "agents", role + ".md"),
       path.join(ROOT, ".opencode/agents", role + ".md")]);
   }
-  pairs.push([path.join(BUILD, "opencode/commands/dev.md"), path.join(target, "commands/dev.md"),
-    path.join(ROOT, ".opencode/commands/dev.md")]);
+  pairs.push([path.join(BUILD, "opencode/commands", command + ".md"),
+    path.join(target, "commands", command + ".md"),
+    path.join(ROOT, ".opencode/commands", command + ".md")]);
   pairs.push([path.join(BUILD, "opencode/AGENTS.md"), path.join(target, "AGENTS.md"),
     path.join(ROOT, "templates/AGENTS.global.md")]);
   return pairs;
@@ -143,8 +145,8 @@ function installOpenCode(force) {
       fs.unlinkSync(destination);
     }
   }
-  console.log("Linked AI Dev Workflow into " + target);
-  console.log("Start with: /dev <request>");
+  console.log("Linked Codavio into " + target);
+  console.log("Start with: /codavio <request>");
   console.log("Restart OpenCode after repository updates.");
 }
 
@@ -158,23 +160,23 @@ function installPi(commands) {
   if (!listing.includes("pi-permission-system")) {
     throw new Error("Pi did not list pi-permission-system after installation");
   }
-  if (!listing.includes("ai-dev-workflow") && !listing.includes(packageRoot)) {
-    throw new Error("Pi did not list ai-dev-workflow after installation");
+  if (!listing.includes("codavio") && !listing.includes(packageRoot)) {
+    throw new Error("Pi did not list codavio after installation");
   }
   process.stdout.write(listing.endsWith("\n") ? listing : listing + "\n");
-  console.log("Installed AI Dev Workflow with Pi permission enforcement from " + packageRoot);
-  console.log("Start Pi, run /subagents-doctor, then invoke: /dev <request>");
+  console.log("Installed Codavio with Pi permission enforcement from " + packageRoot);
+  console.log("Start Pi, run /subagents-doctor, then invoke: /codavio <request>");
 }
 
 function installMarketplace(force, commands, marketplace) {
   const listing = JSON.parse(run(commands.codex, ["plugin", "marketplace", "list", "--json"], { capture: true }));
-  const existing = listing.marketplaces.find((entry) => entry.name === "ai-dev-workflow");
+  const existing = listing.marketplaces.find((entry) => entry.name === "codavio");
   if (existing && path.resolve(existing.root) !== path.resolve(marketplace)) {
     if (!force) {
-      throw new Error("ai-dev-workflow marketplace is already registered from " + existing.root +
+      throw new Error("codavio marketplace is already registered from " + existing.root +
         "; rerun with --force to replace it with " + marketplace);
     }
-    run(commands.codex, ["plugin", "marketplace", "remove", "ai-dev-workflow"]);
+    run(commands.codex, ["plugin", "marketplace", "remove", "codavio"]);
   }
   if (!existing || path.resolve(existing.root) !== path.resolve(marketplace)) {
     run(commands.codex, ["plugin", "marketplace", "add", marketplace]);
@@ -190,10 +192,10 @@ function installCodex(force, commands) {
   linkDestination(sourceAgents, globalAgents, force, legacyAgents);
   const marketplace = path.join(BUILD, "codex");
   installMarketplace(force, commands, marketplace);
-  run(commands.codex, ["plugin", "add", "ai-dev-workflow@ai-dev-workflow"]);
+  run(commands.codex, ["plugin", "add", "codavio@codavio"]);
   console.log("Linked global guidance into " + globalAgents);
-  console.log("Installed ai-dev-workflow from " + marketplace);
-  console.log("Start a new Codex task and invoke: $dev-workflow <request>");
+  console.log("Installed codavio from " + marketplace);
+  console.log("Start a new Codex task and invoke: $codavio <request>");
 }
 
 const { force, targets } = parseArgs();
@@ -204,7 +206,7 @@ try {
     else if (target === "pi") installPi(commands);
     else installCodex(force, commands);
   }
-  console.log("Installed AI Dev Workflow for: " + targets.join(", "));
+  console.log("Installed Codavio for: " + targets.join(", "));
 } catch (error) {
   console.error("Installation failed: " + error.message);
   process.exit(1);

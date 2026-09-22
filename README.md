@@ -1,13 +1,42 @@
-# AI Dev Workflow
+# Codavio
 
-A lean, adaptive development workflow for OpenCode, Pi, and Codex. One coordinator guides work from analysis through approved shipping using role-specific subagents.
+**A steady path from a coding request to a reviewed change.**
+
+Codavio is an adaptable development workflow for coding agents. It helps carry a request
+from its first description through repository analysis, planning, implementation,
+verification, independent review, and optional Git shipping. One coordinator keeps the
+work coherent while focused agents handle each part with the context and permissions they
+need.
+
+The name joins **code** with **via**: the Italian and Latin word for a way or path. Codavio
+is meant to feel like a capable companion in the development process—present when the work
+needs structure, quiet when it does not.
+
+Codavio currently supports OpenCode, Pi, and Codex from one set of canonical workflow
+sources. Each harness receives native commands, role definitions, model assignments, and
+permission rules generated for its own runtime.
 
 Repository tooling and installation require Node.js 22.6 or newer.
 
-## Workflow
+## Why Codavio
+
+- **One request, one visible path.** The coordinator makes the route and approval gates
+  explicit, so the work can be followed from intent to evidence.
+- **Structure that fits the task.** Quick changes stay compact; bug fixes and features add
+  analysis, planning, isolation, and review as their risk grows.
+- **Focused roles.** Analysis, architecture, implementation, review, and shipping have
+  separate responsibilities, tools, and model choices.
+- **Human decisions stay visible.** Material architecture, API, schema, security,
+  infrastructure, migration, and shipping choices remain approval points.
+- **Portable by design.** Shared behavior lives in one canonical source and is rendered
+  into native artifacts for each supported coding agent.
+- **Built for continuity.** Compact work files and repository memory preserve decisions
+  that need to survive long tasks or new sessions.
+
+## How it works
 
 ```text
-/dev
+/codavio
   → coordinator visibly declares QUICK, BUGFIX, or FEATURE before task work
   → BUGFIX and FEATURE invoke an explorer first
   → every FEATURE then invokes an analyst to sharpen the problem and explore orthogonal solution families
@@ -86,8 +115,8 @@ Trusted-project permissions are a curated safe list, not an OS sandbox:
 ## Install globally
 
 ```bash
-git clone https://github.com/andreacasarin-maia-projects/ai-dev-workflow.git
-cd ai-dev-workflow
+git clone https://github.com/andreacasarin-maia-projects/codavio.git
+cd codavio
 node scripts/install.mjs opencode
 ```
 
@@ -98,7 +127,7 @@ Unrelated existing files are preserved. Obsolete workflow-owned symlinks are rem
 Run OpenCode inside any Git project:
 
 ```text
-/dev <request>
+/codavio <request>
 ```
 
 ## Use with Pi
@@ -130,7 +159,7 @@ not an OS sandbox. Log in to OpenAI in Pi and choose the main coordinator model 
 Each delegated role pins the same model shown in the OpenCode routing table; use
 `/subagents-models` after restarting Pi to inspect the live mapping.
 
-Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/dev <request>`, inspect state with `/workflow-status`, and use `.ai/work/<branch-slug>.md` for multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
+Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/codavio <request>`, inspect state with `/workflow-status`, and use `.ai/work/<branch-slug>.md` for multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
 
 ## Install in Codex
 
@@ -141,16 +170,16 @@ node scripts/install.mjs codex
 ```
 
 The installer generates and registers the marketplace under `build/codex/`, installs the
-`ai-dev-workflow` plugin, and links its generated global guidance to
+`codavio` plugin, and links its generated global guidance to
 `${CODEX_HOME:-$HOME/.codex}/AGENTS.md`. Existing global guidance aborts installation;
 use `node scripts/install.mjs codex --force` to move it to `AGENTS.md.backup` first. An
-existing backup is never overwritten. If `ai-dev-workflow` is already registered from a
+existing backup is never overwritten. If `codavio` is already registered from a
 different marketplace path, `--force` replaces that marketplace entry as well.
 
 Start a new Codex task after installation and invoke the workflow explicitly:
 
 ```text
-$dev-workflow <request>
+$codavio <request>
 ```
 
 Implicit invocation is disabled. Select the main coordinator model in Codex. For
@@ -167,9 +196,13 @@ rules remain independent checks.
 
 | Harness | Entry point | Purpose |
 |---|---|---|
-| OpenCode | `/dev` | Orchestrate analysis through approved shipping |
-| Pi | `/dev` | Orchestrate analysis through approved shipping |
-| Codex | `$dev-workflow` | Explicitly run the Codex plugin workflow |
+| OpenCode | `/codavio` | Orchestrate analysis through approved shipping |
+| Pi | `/codavio` | Orchestrate analysis through approved shipping |
+| Codex | `$codavio` | Explicitly run the Codex skill |
+
+Codex reserves slash commands for its own interface. Installed workflows are skills, so
+Codavio uses the platform-native `$codavio` mention there; `/skills` opens the Codex skill
+selector.
 
 Install every supported harness after their CLIs are available:
 
@@ -287,7 +320,9 @@ content, and exercises installer integrations against those build outputs.
 
 ## Status
 
-Three-harness package for OpenCode, Pi, and Codex. Deliberately small: no daemon or hidden state machine.
+Codavio supports OpenCode, Pi, and Codex. It stays deliberately small: canonical Markdown
+and JSON sources, a Node.js generator and installer, and native artifacts for each
+harness—without a daemon or hidden state machine.
 
 ## License
 

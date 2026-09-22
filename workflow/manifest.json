@@ -1,5 +1,5 @@
 {
-  "command": "dev",
+  "command": "codavio",
   "roles": {
     "analyst": {
       "description": "Frames problems, explores orthogonal solution families, and exposes decisions"

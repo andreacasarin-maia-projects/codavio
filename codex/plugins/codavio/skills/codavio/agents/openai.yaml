@@ -1,0 +1,6 @@
+interface:
+  display_name: "Codavio"
+  short_description: "Run an adaptable development workflow"
+  default_prompt: "Use $codavio to implement this change end to end."
+policy:
+  allow_implicit_invocation: false
