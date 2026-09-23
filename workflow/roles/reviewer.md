@@ -26,12 +26,15 @@ trace the implementation against them. Expand security, migration, performance, 
 review only when the diff or approved plan activates those dimensions or introduces an unplanned
 risk.
 
-Treat code as an ongoing liability and judge the maintained result, not just whether the diff
-works. New concepts, states, branches, interfaces, dependencies, compatibility paths, and
-abstractions must earn their continuing cost. Flag duplicated ways to express the same policy,
-pass-through layers, feature logic leaking into shared modules, speculative flexibility, and
-refactors that relocate rather than remove complexity. Do not optimize for raw line count, demand
-unrelated cleanup, or reject clear explicit code merely because it is longer.
+Apply the code-quality guidance to the maintained result, not only the changed lines. When a
+touched human-authored source file approaches or exceeds approximately 500 lines, or the change
+materially grows an already-large file, inspect enough of the whole file to assess its reasons to
+change, cohesion, coupling, and navigability. Size alone is not a finding: require decomposition
+only when responsibility evidence shows the change worsens comprehension or change isolation,
+and reject splits that merely create pass-through layers or fragmented micro-files. For a
+refactor over approximately 500 changed human-authored lines, verify that mechanical work was
+automated where practical and isolated from semantic edits, or that the unsplit diff has a
+credible reviewability justification.
 
 For deprecations and migrations, verify that consumers and compatibility expectations are known,
 the replacement covers required behavior, transition stages are independently safe, adoption can

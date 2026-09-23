@@ -85,13 +85,14 @@ to the orchestrator before repository-memory guidance. The remaining guidance do
 
 - orchestrator → `work-state.md`, then `memory.md`
 - every role → `memory.md`
+- planner, builder, and reviewer → `code-quality.md`
 - `edit == "owned"` → `implementation.md`
 - `shell` starts with `verify` **or** `git == "inspect"` → `verification.md`
 - `web == true` → `web-use.md`
 
-Worker guidance is appended in that order (the builder gets memory, implementation, then
-verification; reviewer gets memory then verification; analyst/planner get memory then web
-research).
+Worker guidance is appended in that order (the builder gets memory, code quality, implementation,
+then verification; reviewer gets memory, code quality, then verification; planner gets memory,
+code quality, then web research; analyst gets memory then web research).
 
 ## Gray-zone adjudication
 

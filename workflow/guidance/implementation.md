@@ -1,8 +1,5 @@
 ## Implementation guidance
 
-- Treat code as an ongoing liability. Implement the smallest maintainable change that fully
-  satisfies the approved behavior, minimizing new concepts, branches, interfaces, dependencies,
-  and compatibility paths rather than raw line count. Do not add speculative flexibility.
 - Prefer built-in platform capabilities, official tools, and existing repository
   utilities over bespoke implementations.
 - Inspect an analogous implementation before introducing a new pattern. Match the

@@ -163,6 +163,7 @@ function roleBody(role, harness) {
   let body = read("workflow/roles/" + role + ".md");
   const c = CAPABILITIES.roles[role];
   const docs = ["memory"];
+  if (["planner", "builder", "reviewer"].includes(role)) docs.push("code-quality");
   if (c.edit === "owned") docs.push("implementation");
   if (c.shell.startsWith("verify") || c.git === "inspect") docs.push("verification");
   if (c.web) docs.push("web-use");

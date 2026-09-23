@@ -20,14 +20,6 @@ behavior-preserving simplification, deprecation or replacement, data or schema m
 security or trust-boundary change, performance or resource sensitivity, and dependency change.
 Expand only the activated dimensions; do not manufacture ceremony for irrelevant ones.
 
-Treat code as an ongoing liability: it carries maintenance, verification, security, dependency,
-and comprehension cost. Prefer the smallest maintained surface that completely satisfies the
-approved behavior. Minimize new concepts, states, branches, interfaces, dependencies, and
-parallel compatibility paths, not raw line count; dense or clever code that is harder to
-understand is not simpler. Require every new abstraction or retained legacy path to justify its
-cost against a concrete driver, and prefer deleting or reusing code over adding a second way to
-do the same thing.
-
 Cover the applicable items:
 
 - approved outcomes, behavior, non-goals, constraints, invariants, acceptance scenarios, and
@@ -47,6 +39,14 @@ Cover the applicable items:
 - a commit plan mapping completed task IDs into the smallest reasonable ordered series of
   coherent, reviewable, and preferably independently verifiable commits
 - unresolved decisions, risks, and conditions that require returning to the user
+
+Apply the code-quality guidance when assigning responsibilities and file ownership. If the plan
+creates or materially grows a human-authored source file near or beyond approximately 500 lines,
+include an explicit cohesion assessment: name its single reason or tightly coupled reasons to
+change, or plan a split along stable responsibility boundaries. If a task or commit is expected to
+touch more than approximately 500 human-authored lines, split it into coherent independently
+reviewable steps when possible; for a large mechanical refactor, plan automation and keep semantic
+edits separate. Record why any large atomic change remains more comprehensible or safer unsplit.
 
 For a deprecation or replacement, identify known consumers, replacement readiness, compatibility
 window, advisory or compulsory policy, incremental cutover, adoption evidence, rollback, and the

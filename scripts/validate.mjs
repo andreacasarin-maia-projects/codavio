@@ -87,8 +87,12 @@ for (const harness of ["opencode", "pi", "codex"]) {
 }
 
 contains("workflow/guidance/implementation.md", [
-  "ongoing liability", "smallest maintainable change", "existing repository",
-  "approved change boundary", "credentials or secrets", "Preserve unrelated",
+  "existing repository", "approved change boundary", "credentials or secrets", "Preserve unrelated",
+]);
+contains("workflow/guidance/code-quality.md", [
+  "ongoing liability", "reasons to change", "cognitive load", "change blast radius",
+  "approximately 500 human-authored lines", "responsibility-review trigger",
+  "volatile design decisions", "automate the", "semantic edits", "fragmented micro-files",
 ]);
 contains("workflow/guidance/verification.md", [
   "observable completion criteria", "repository-defined checks", "regression coverage",
@@ -106,8 +110,9 @@ contains("workflow/guidance/work-state.md", [
   "### Commit plan", "minimal task envelope",
 ]);
 contains("workflow/capabilities.md", [
-  "orchestrator → `work-state.md`", "every role → `memory.md`", "builder gets memory, implementation",
-  "reviewer gets memory",
+  "orchestrator → `work-state.md`", "every role → `memory.md`",
+  "planner, builder, and reviewer → `code-quality.md`",
+  "builder gets memory, code quality, implementation", "reviewer gets memory, code quality",
 ]);
 contains("templates/AGENTS.global.md", [
   "Think Before Coding", "Simplicity First", "Surgical Changes", "Goal-Driven Execution",
@@ -142,12 +147,14 @@ contains("workflow/roles/planner.md", [
   "approved feature definition", "focused exploration brief", "target components or modules",
   "interfaces, contracts", "data and state lifecycle", "executable task graph",
   "### Architecture decisions", "### Task graph", "### Integration verification", "### Commit plan",
-  "acceptance scenario", "owning component", "ongoing liability", "activated dimensions",
+  "acceptance scenario", "owning component", "activated dimensions", "explicit cohesion assessment",
+  "approximately 500 human-authored lines", "large mechanical refactor",
   "advisory or compulsory policy", "destructive contraction", "acceptable regression threshold",
 ]);
 contains("workflow/roles/reviewer.md", [
-  "readability and simplicity", "performance and resource bounds", "ongoing liability",
-  "maintained result", "`BLOCKER`, `OPTIONAL`, or `FYI`", "smallest acceptable correction",
+  "readability and simplicity", "performance and resource bounds", "maintained result",
+  "approximately 500 lines", "Size alone is not a finding", "fragmented micro-files",
+  "`BLOCKER`, `OPTIONAL`, or `FYI`", "smallest acceptable correction",
   "commit plan maps cleanly",
 ]);
 contains("workflow/roles/explorer.md", ["`DISCOVERY`", "`PLANNING`", "`BUGFIX`", "supply evidence"]);
@@ -184,18 +191,24 @@ for (const role of ROLES) {
     new RegExp("name: " + role));
 }
 contains(generated("opencode/agents/builder.md"), [
-  "## Implementation guidance", "## Verification guidance",
+  "## Code quality guidance", "## Implementation guidance", "## Verification guidance",
 ]);
 contains(generated("pi/pi/agents/builder.md"), [
-  "## Implementation guidance", "## Verification guidance",
+  "## Code quality guidance", "## Implementation guidance", "## Verification guidance",
 ]);
-contains(generated("opencode/agents/reviewer.md"), ["## Verification guidance"]);
-contains(generated("pi/pi/agents/reviewer.md"), ["## Verification guidance"]);
+contains(generated("opencode/agents/reviewer.md"),
+  ["## Code quality guidance", "## Verification guidance"]);
+contains(generated("pi/pi/agents/reviewer.md"),
+  ["## Code quality guidance", "## Verification guidance"]);
 for (const relative of [
+  "opencode/agents/builder.md", "pi/pi/agents/builder.md",
   "opencode/agents/planner.md", "pi/pi/agents/planner.md",
   "opencode/agents/reviewer.md", "pi/pi/agents/reviewer.md",
 ]) {
-  contains(generated(relative), ["ongoing liability", "raw line count"]);
+  contains(generated(relative), [
+    "## Code quality guidance", "ongoing liability", "raw line count",
+    "approximately 500 human-authored lines",
+  ]);
 }
 for (const role of ["analyst", "planner"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["## Web research guidance"]);
@@ -203,7 +216,8 @@ for (const role of ["analyst", "planner"]) {
     ["## Web research guidance", "web_search", "fetch_content"]);
 }
 contains(generated("codex/plugins/codavio/skills/codavio/references/roles.md"),
-  ["## Web research guidance", "ongoing liability", "`BLOCKER`, `OPTIONAL`, or `FYI`"]);
+  ["## Web research guidance", "## Code quality guidance", "ongoing liability",
+    "approximately 500 human-authored lines", "`BLOCKER`, `OPTIONAL`, or `FYI`"]);
 for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
 }

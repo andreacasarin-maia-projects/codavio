@@ -82,7 +82,9 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 - Progressive ceremony: small changes stay small.
 - Code is an ongoing liability: planning, implementation, and review prefer the smallest
   maintainable surface that satisfies approved behavior, minimizing concepts and compatibility
-  paths rather than optimizing for raw line count.
+  paths rather than optimizing for raw line count. Approximately 500 human-authored lines in one
+  source file or refactor trigger responsibility and reviewability assessment, not automatic
+  rejection.
 - Routing is observable and ordered: the coordinator declares QUICK, BUGFIX, or FEATURE
   before task work; BUGFIX starts with an explorer, while FEATURE starts with the analyst
   and cannot enter repository-specific planning before feature-definition approval.
@@ -234,8 +236,9 @@ Shared workflow behavior lives under `workflow/`:
 - `workflow/orchestrator.md` defines routing, approvals, planning, implementation,
   verification, review, correction, and shipping behavior.
 - `workflow/roles/*.md` defines the six reusable role contracts.
-- `workflow/guidance/*.md` contains focused work-state, repository-memory, implementation,
-  verification, and web-research guidance composed only into the roles that need it.
+- `workflow/guidance/*.md` contains focused work-state, repository-memory, code-quality,
+  implementation, verification, and web-research guidance composed only into the roles that need
+  it.
 - `workflow/manifest.json` declares the command, roles, and supported harnesses.
 
 `scripts/generate.mjs` combines those canonical sources with frontmatter-only native
