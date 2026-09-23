@@ -69,7 +69,8 @@ for (const harness of ["opencode", "pi", "codex"]) {
 }
 
 contains("workflow/guidance/implementation.md", [
-  "existing repository", "approved change boundary", "credentials or secrets", "Preserve unrelated",
+  "ongoing liability", "smallest maintainable change", "existing repository",
+  "approved change boundary", "credentials or secrets", "Preserve unrelated",
 ]);
 contains("workflow/guidance/verification.md", [
   "observable completion criteria", "repository-defined checks", "regression coverage",
@@ -121,7 +122,12 @@ contains("workflow/roles/analyst.md", [
 contains("workflow/roles/planner.md", [
   "approved feature definition", "focused exploration brief", "target components or modules",
   "interfaces, contracts", "data and state lifecycle", "ordered implementation slices",
-  "acceptance scenario", "owning component",
+  "acceptance scenario", "owning component", "ongoing liability", "activated dimensions",
+  "advisory or compulsory policy", "destructive contraction", "acceptable regression threshold",
+]);
+contains("workflow/roles/reviewer.md", [
+  "readability and simplicity", "performance and resource bounds", "ongoing liability",
+  "maintained result", "`BLOCKER`, `OPTIONAL`, or `FYI`", "smallest acceptable correction",
 ]);
 contains("workflow/roles/explorer.md", ["`DISCOVERY`", "`PLANNING`", "`BUGFIX`", "supply evidence"]);
 contains("pi/extensions/workflow.ts", [
@@ -161,13 +167,19 @@ contains(generated("pi/pi/agents/builder.md"), [
 ]);
 contains(generated("opencode/agents/reviewer.md"), ["## Verification guidance"]);
 contains(generated("pi/pi/agents/reviewer.md"), ["## Verification guidance"]);
+for (const relative of [
+  "opencode/agents/planner.md", "pi/pi/agents/planner.md",
+  "opencode/agents/reviewer.md", "pi/pi/agents/reviewer.md",
+]) {
+  contains(generated(relative), ["ongoing liability", "raw line count"]);
+}
 for (const role of ["analyst", "planner"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["## Web research guidance"]);
   contains(generated("pi/pi/agents/" + role + ".md"),
     ["## Web research guidance", "web_search", "fetch_content"]);
 }
 contains(generated("codex/plugins/codavio/skills/codavio/references/roles.md"),
-  ["## Web research guidance"]);
+  ["## Web research guidance", "ongoing liability", "`BLOCKER`, `OPTIONAL`, or `FYI`"]);
 for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
 }

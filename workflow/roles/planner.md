@@ -15,7 +15,20 @@ rescan the repository when focused explorer evidence is the better boundary.
 After sufficient evidence arrives, inspect only the focused sources needed to confirm it and
 produce the detailed implementation plan. Scale the brief to the change: for bounded work cover
 only items carrying a real decision, and reserve the full contract for architecturally material
-work. Cover the applicable items:
+work. First classify which dimensions the change actually activates: new behavior,
+behavior-preserving simplification, deprecation or replacement, data or schema migration,
+security or trust-boundary change, performance or resource sensitivity, and dependency change.
+Expand only the activated dimensions; do not manufacture ceremony for irrelevant ones.
+
+Treat code as an ongoing liability: it carries maintenance, verification, security, dependency,
+and comprehension cost. Prefer the smallest maintained surface that completely satisfies the
+approved behavior. Minimize new concepts, states, branches, interfaces, dependencies, and
+parallel compatibility paths, not raw line count; dense or clever code that is harder to
+understand is not simpler. Require every new abstraction or retained legacy path to justify its
+cost against a concrete driver, and prefer deleting or reusing code over adding a second way to
+do the same thing.
+
+Cover the applicable items:
 
 - approved outcomes, behavior, non-goals, constraints, invariants, acceptance scenarios, and
   architecture drivers
@@ -32,9 +45,23 @@ work. Cover the applicable items:
 - architecture-level verification for each slice and final integration
 - unresolved decisions, risks, and conditions that require returning to the user
 
+For a deprecation or replacement, identify known consumers, replacement readiness, compatibility
+window, advisory or compulsory policy, incremental cutover, adoption evidence, rollback, and the
+condition for removing old code, tests, configuration, documentation, and flags. For persistent
+data changes, default to additive, independently deployable stages with destructive contraction
+last; define recovery explicitly when reversal is unsafe or impossible.
+
+For a security-sensitive change, trace untrusted inputs, validation, authentication,
+authorization, sensitive data, logging, persistence, privileged operations, and outbound
+integrations across each changed trust boundary. For a performance-sensitive change, state the
+representative workload, current evidence, relevant budget or invariant, measurement method, and
+acceptable regression threshold. Do not prescribe speculative optimization without evidence.
+
 Trace every material event flow, policy, invariant, exception, and acceptance scenario to its
 owning component, implementation slice, and verification evidence. Prefer vertical slices that
-deliver observable behavior rather than layers that only become useful after later work.
+deliver observable behavior rather than layers that only become useful after later work. Separate
+behavior-preserving preparation from behavior changes when each can be independently verified;
+do not add preparatory refactoring that the approved implementation does not need.
 
 Use diagrams only when they materially clarify boundaries or flow. Prefer the simplest
 architecture satisfying the approved drivers. Name decisions explicitly and explain why rejected

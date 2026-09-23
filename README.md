@@ -79,6 +79,9 @@ OpenCode model routing:
 ## Principles
 
 - Progressive ceremony: small changes stay small.
+- Code is an ongoing liability: planning, implementation, and review prefer the smallest
+  maintainable surface that satisfies approved behavior, minimizing concepts and compatibility
+  paths rather than optimizing for raw line count.
 - Routing is observable and ordered: the coordinator declares QUICK, BUGFIX, or FEATURE
   before task work; BUGFIX starts with an explorer, while FEATURE starts with the analyst
   and cannot enter repository-specific planning before feature-definition approval.
