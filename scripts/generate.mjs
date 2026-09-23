@@ -160,7 +160,7 @@ function roleBody(role, harness) {
   for (const name of docs) body += "\n\n" + read("workflow/guidance/" + name + ".md");
   if (harness === "pi") {
     body += "\n\nWork only in the assigned active worktree. Preserve " +
-      CODE + ".ai/work/<branch-slug>.md" + CODE + "; do not create worktrees or runtime state " +
+      CODE + ".ai/work/<work-id>.md" + CODE + "; do not create worktrees or runtime state " +
       "elsewhere. Use one direct ordinary repository command at a time and do " +
       "not use shell chains, wrappers, interpreters, or ad hoc command programs.";
   }
@@ -176,16 +176,17 @@ function roleBody(role, harness) {
 }
 
 function orchestratorBody() {
-  return read("workflow/orchestrator.md") + "\n\n" + read("workflow/guidance/memory.md");
+  return read("workflow/orchestrator.md") + "\n\n" + read("workflow/guidance/work-state.md") +
+    "\n\n" + read("workflow/guidance/memory.md");
 }
 
 function openCodeCommand() {
   return [
     "Begin with the coordinator.", "", "Analyze this request:", "", "$ARGUMENTS", "",
     "Route the request through the canonical workflow generated into the " + CODE + "orchestrator" + CODE,
-    "agent. The coordinator owns approvals, work state, execution delegation, combined diff",
-    "inspection, and Git bookkeeping; the analyst owns problem framing, the planner owns",
-    "architecture, and other role agents own bounded implementation, verification, review,",
+    "agent. The coordinator owns routing, approvals, work state, execution delegation, and Git",
+    "bookkeeping; the analyst owns product discovery and feature definition, the planner owns",
+    "architecture and implementation planning, and other role agents own bounded implementation, verification, review,",
     "and approved shipping.",
   ].join("\n");
 }
@@ -200,7 +201,7 @@ function piPrompt(roles) {
     "",
     "For delegated command work, specify the narrowest direct repository command required.",
     "Create worktrees only under " + CODE + "<project-root>/.worktrees/" + CODE + " and keep compact state at",
-    CODE + ".ai/work/<branch-slug>.md" + CODE + " in the active worktree.",
+    CODE + ".ai/work/<work-id>.md" + CODE + " in the active worktree.",
     "", orchestratorBody(),
   ].join("\n");
 }

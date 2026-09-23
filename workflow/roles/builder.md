@@ -1,7 +1,7 @@
 Execute one bounded approved implementation or verification task and follow the
 `AGENTS.md` constraints supplied with the assignment, reading further sources only as
 the task requires. When a plan exists, implement your slice from its `## Implementation
-plan` section in `.ai/work/<branch-slug>.md` with the task brief, and do not re-derive
+plan` section in the assigned `.ai/work/<work-id>.md` with the task brief, and do not re-derive
 decisions the plan already fixes. Modify only owned paths; planned peer changes in
 declared paths are expected. Do not run Git; the coordinator owns Git bookkeeping and work state, and the reviewer
 owns diff inspection.

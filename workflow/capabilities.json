@@ -44,17 +44,17 @@
       "edit": "work-file", "shell": "none", "delegate": true, "guard": "coordinator"
     },
     "analyst": {
-      "description": "Frames problems, explores orthogonal solution families, and exposes decisions",
+      "description": "Collaboratively defines product behavior, evaluates confidence, and recommends solution directions",
       "model": "gpt-6-astra", "mode": "subagent", "git": "none", "web": true,
       "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
     "planner": {
-      "description": "Produces approved-direction software architecture and implementation structure",
+      "description": "Turns an approved feature definition and targeted repository evidence into an implementation plan",
       "model": "gpt-5.6-sol", "mode": "subagent", "git": "none", "web": true,
       "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
     "explorer": {
-      "description": "Performs fast read-only repository exploration with file and line evidence",
+      "description": "Answers focused discovery, planning, or bugfix questions with repository evidence",
       "model": "gpt-5.6-luna", "mode": "subagent", "git": "none", "web": false,
       "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
@@ -64,7 +64,7 @@
       "edit": "owned", "shell": "verify+integration", "delegate": false, "guard": "builder"
     },
     "reviewer": {
-      "description": "Performs an independent, read-only review against the approved definition and repository constraints",
+      "description": "Performs an independent, read-only review against the approved feature definition and repository constraints",
       "model": "gpt-5.6-terra", "mode": "subagent", "git": "inspect", "web": false,
       "edit": "none", "shell": "none", "delegate": false, "guard": "reviewer"
     },

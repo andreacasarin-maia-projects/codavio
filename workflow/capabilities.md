@@ -75,16 +75,17 @@ Constants applied uniformly (not per role): `constants.opencode` / `constants.pi
 (`external_directory: deny`, Pi inherit flags). Each command in a set renders as both its
 bare form and its `<cmd> *` wildcard, except `redirect` entries which are used verbatim.
 
-Repository-memory guidance is appended to every role body. The remaining guidance docs
-are **derived from role capabilities** (in `roleBody`), so they cannot contradict the
-policy:
+Repository-memory guidance is appended to every role body. Work-state guidance is appended
+to the orchestrator before repository-memory guidance. The remaining guidance docs are
+**derived from role capabilities** (in `roleBody`), so they cannot contradict the policy:
 
+- orchestrator → `work-state.md`, then `memory.md`
 - every role → `memory.md`
 - `edit == "owned"` → `implementation.md`
 - `shell` starts with `verify` **or** `git == "inspect"` → `verification.md`
 - `web == true` → `web-use.md`
 
-They are appended in that order (the builder gets memory, implementation, then
+Worker guidance is appended in that order (the builder gets memory, implementation, then
 verification; reviewer gets memory then verification; analyst/planner get memory then web
 research).
 

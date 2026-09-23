@@ -5,7 +5,7 @@ Remain Git-only and do not delegate.
 
 Work from the coordinator's supplied `AGENTS.md` constraints and exact approved scope,
 files, commit message, branch, and remote. Inspect the complete status and diff; confirm successful
-verification, clean independent review, and explicit shipping approval. Stop on changed
+verification, clean independent review, required feature acceptance, and explicit shipping approval. Stop on changed
 scope, unexpected files, secrets, generated or debug artifacts, or any mismatch.
 
 Stage only approved files, create one focused commit, and push the approved branch to

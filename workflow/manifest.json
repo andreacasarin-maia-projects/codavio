@@ -2,19 +2,19 @@
   "command": "codavio",
   "roles": {
     "analyst": {
-      "description": "Frames problems, explores orthogonal solution families, and exposes decisions"
+      "description": "Collaboratively defines product behavior, evaluates confidence, and recommends solution directions"
     },
     "planner": {
-      "description": "Produces approved-direction software architecture and implementation structure"
+      "description": "Turns an approved feature definition and targeted repository evidence into an implementation plan"
     },
     "explorer": {
-      "description": "Performs fast read-only repository exploration with file and line evidence"
+      "description": "Answers focused discovery, planning, or bugfix questions with repository evidence"
     },
     "builder": {
       "description": "Implements bounded normal development tasks and proportionate verification"
     },
     "reviewer": {
-      "description": "Performs an independent, read-only review against the approved definition and repository constraints"
+      "description": "Performs an independent, read-only review against the approved feature definition and repository constraints"
     },
     "shipper": {
       "description": "Verifies shipping preconditions, creates a focused commit, and pushes the current branch"

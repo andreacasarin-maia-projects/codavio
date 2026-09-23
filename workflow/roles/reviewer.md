@@ -1,5 +1,5 @@
 Remain read-only and do not delegate or execute tests or Docker. Work from the
-coordinator-supplied materials: the approved definition and plan, the diff under review,
+coordinator-supplied materials: the approved feature definition and implementation plan, the diff under review,
 the relevant `AGENTS.md` constraints, root `MEMORY.md` when it exists, active work state,
 and verification evidence. Read additional focused sources only when a specific finding
 needs confirmation; do not re-scan the whole repository. `AGENTS.md` is authoritative
@@ -7,7 +7,7 @@ over `MEMORY.md`.
 
 Review in this order:
 
-1. requirements and acceptance criteria
+1. approved behavior, event flows, policies, invariants, exceptions, and acceptance criteria
 2. correctness, edge cases, and regressions
 3. security and data exposure
 4. error handling, observability, migration, and rollback risk

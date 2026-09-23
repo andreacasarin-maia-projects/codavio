@@ -81,8 +81,13 @@ contains("workflow/guidance/web-use.md", [
 contains("workflow/guidance/memory.md", [
   "Repository memory", "read the applicable `AGENTS.md` first", "`AGENTS.md` is authoritative",
 ]);
+contains("workflow/guidance/work-state.md", [
+  "`.ai/work/<work-id>.md`", "stable, lowercase, hyphenated feature name",
+  "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist",
+]);
 contains("workflow/capabilities.md", [
-  "every role → `memory.md`", "builder gets memory, implementation", "reviewer gets memory",
+  "orchestrator → `work-state.md`", "every role → `memory.md`", "builder gets memory, implementation",
+  "reviewer gets memory",
 ]);
 contains("templates/AGENTS.global.md", [
   "Think Before Coding", "Simplicity First", "Surgical Changes", "Goal-Driven Execution",
@@ -100,6 +105,8 @@ contains("workflow/orchestrator.md", [
   "QUICK", "BUGFIX", "FEATURE", "explicit approval", "shipping approval", ".ai/work",
   ".worktrees", "Implementation plan", "Routing is a mandatory, visible gate",
   "The analyst is mandatory for every FEATURE", "actual builder invocation",
+  "always invoke the analyst first", "definition confidence", "`DISCOVERY` exploration brief",
+  "`PLANNING` exploration brief", "explicit feature acceptance", "<work-id>",
   "After every implementation path completes successful verification",
   "Role definitions are capability profiles, not singletons",
   "Invoke multiple explorers", "Invoke multiple builders", "memory closeout",
@@ -107,12 +114,19 @@ contains("workflow/orchestrator.md", [
 ]);
 contains("MEMORY.md", ["# Repository memory", "compact living context", "defer to `AGENTS.md`"]);
 contains("workflow/roles/analyst.md", [
-  "problem-definition brief", "orthogonal solution families", "decision criteria",
+  "product analyst and solution-design partner", "definition confidence", "`HIGH`", "`MEDIUM`",
+  "`LOW`", "Event Storming", "flow analysis", "recommended answer", "proposed feature definition",
   "belongs to the planner",
 ]);
 contains("workflow/roles/planner.md", [
-  "target components or modules", "interfaces, contracts", "data and state lifecycle",
-  "ordered implementation slices",
+  "approved feature definition", "focused exploration brief", "target components or modules",
+  "interfaces, contracts", "data and state lifecycle", "ordered implementation slices",
+  "acceptance scenario", "owning component",
+]);
+contains("workflow/roles/explorer.md", ["`DISCOVERY`", "`PLANNING`", "`BUGFIX`", "supply evidence"]);
+contains("pi/extensions/workflow.ts", [
+  "work_id", "Report or list AI workflow work-item status", "legacy branch-named state",
+  "Work items:",
 ]);
 
 assert.deepEqual(names(generated("opencode/agents")),
@@ -193,11 +207,11 @@ assert.equal(marketplace.plugins[0].name, plugin.name);
 assert.equal(marketplace.plugins[0].source.path, "./plugins/codavio");
 
 contains(generated("opencode/commands/codavio.md"), [
-  "$ARGUMENTS", "generated into the `orchestrator`", "combined diff", "approved shipping",
+  "$ARGUMENTS", "generated into the `orchestrator`", "feature definition", "approved shipping",
 ]);
 contains(generated("pi/pi/prompts/codavio.md"), [
   "$ARGUMENTS", "`pi-subagents`", "pinned model", "`<project-root>/.worktrees/`",
-  "`.ai/work/<branch-slug>.md`", "Use each role's pinned model without a per-run model override.",
+  "`.ai/work/<work-id>.md`", "Use each role's pinned model without a per-run model override.",
   ...ROLES,
 ]);
 contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
@@ -215,6 +229,7 @@ contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
   "main session model is selected in Codex", "explorer, builder, and shipper",
   "shipper with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
   "Route: QUICK", "The analyst is mandatory for every FEATURE", "actual builder invocation",
+  "definition confidence", "explicit feature acceptance", ".ai/work/<work-id>.md",
   "Invoke multiple explorers", "Invoke multiple builders", "memory closeout",
   "## Repository memory",
 ]);

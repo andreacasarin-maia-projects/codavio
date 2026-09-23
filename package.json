@@ -21,7 +21,7 @@
     "generate": "node scripts/generate.mjs",
     "generate:check": "node scripts/generate.mjs --check",
     "validate": "node scripts/validate.mjs",
-    "test": "node --experimental-strip-types --test tests/pi-command-policy.test.ts",
+    "test": "node --experimental-strip-types --test tests/pi-command-policy.test.ts tests/workflow-status.test.ts",
     "check": "npm run validate && npm test"
   },
   "keywords": [

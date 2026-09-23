@@ -30,7 +30,7 @@ Repository tooling and installation require Node.js 22.6 or newer.
   infrastructure, migration, and shipping choices remain approval points.
 - **Portable by design.** Shared behavior lives in one canonical source and is rendered
   into native artifacts for each supported coding agent.
-- **Built for continuity.** Compact work files and repository memory preserve decisions
+- **Built for continuity.** Compact work items and repository memory preserve decisions
   that need to survive long tasks or new sessions.
 
 ## How it works
@@ -38,23 +38,27 @@ Repository tooling and installation require Node.js 22.6 or newer.
 ```text
 /codavio
   → coordinator visibly declares QUICK, BUGFIX, or FEATURE before task work
-  → BUGFIX and FEATURE invoke an explorer first
-  → every FEATURE then invokes an analyst to sharpen the problem and explore orthogonal solution families
-  → discuss and approve the problem definition and solution direction
-  → FEATURE invokes a planner to turn the approved direction into software architecture and implementation slices
+  → BUGFIX invokes a focused explorer first
+  → FEATURE invokes an analyst first to assess confidence and collaboratively design the functionality
+  → analyst may request high-level DISCOVERY exploration when repository evidence could change the feature
+  → discuss and approve the feature definition and product direction
+  → planner identifies technical unknowns and may request targeted PLANNING exploration
+  → planner turns the approved definition and returned evidence into architecture and implementation slices
   → approve the architecture plan when required
   → treat an explicit unambiguous QUICK request as its definition approval
   → delegate every implementation, test, and Docker action to a builder
   → compact durable architectural and philosophical context into MEMORY.md
   → invoke an independent reviewer after successful verification
+  → accept the outcome of a material FEATURE
   → request shipping approval
   → delegate commit and push
 ```
 
 Role behavior:
 
-- Analyst separates symptoms from the underlying problem, makes assumptions and unknowns explicit, and compares materially different solution families against decision criteria.
-- Planner converts the approved direction into component boundaries, interfaces, data and control flow, failure semantics, migration strategy, implementation slices, ownership, and architecture-level verification.
+- Analyst acts as the product discovery and solution-design partner: it evaluates definition confidence, asks only decision-changing questions with recommendations, uses Event Storming and flow analysis when useful, and proposes the feature definition.
+- Explorer answers focused `DISCOVERY`, `PLANNING`, or `BUGFIX` questions with repository evidence; it never chooses product behavior or architecture.
+- Planner converts the approved feature definition and targeted repository evidence into component boundaries, interfaces, data and control flow, failure semantics, migration strategy, traceable implementation slices, ownership, and architecture-level verification.
 - Builder is the implementation worker for mechanical edits, normal development,
   test execution, integration verification, and approved Docker execution. Multiple
   builder instances may run concurrently only with disjoint ownership.
@@ -66,7 +70,7 @@ OpenCode model routing:
 | Role | Model |
 |---|---|
 | Orchestration and review | `openai/gpt-5.6-terra` |
-| Problem framing and hard analysis | `openai/gpt-6-astra` |
+| Product discovery and solution design | `openai/gpt-6-astra` |
 | Architecture planning | `openai/gpt-5.6-sol` |
 | Implementation | `openai/gpt-5.6-luna` |
 | Exploration and implementation | `openai/gpt-5.6-luna` |
@@ -76,8 +80,8 @@ OpenCode model routing:
 
 - Progressive ceremony: small changes stay small.
 - Routing is observable and ordered: the coordinator declares QUICK, BUGFIX, or FEATURE
-  before task work; BUGFIX and FEATURE start with an explorer, and FEATURE always continues
-  through an analyst before definition approval.
+  before task work; BUGFIX starts with an explorer, while FEATURE starts with the analyst
+  and cannot enter repository-specific planning before feature-definition approval.
 - An explicit, unambiguous QUICK request can serve as definition approval when no material alternative remains, the working tree is clean or non-overlapping, and verification is obvious.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
 - After definition and plan approval, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
@@ -90,9 +94,9 @@ OpenCode model routing:
   independent explorer lanes may run concurrently, and multiple builders may run
   concurrently when their write scopes and side effects are disjoint.
 - All isolated Git worktrees must be created under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
-- The conversation is not the source of truth. Multi-session work uses one compact living work file.
+- The conversation is not the source of truth. Planned, parallel, or multi-session work uses a compact living feature-named work item independent of its branch name.
 - Root `MEMORY.md` is dense, living repository context rather than history. Every role reads it after the applicable `AGENTS.md`, which remains authoritative, and the coordinator rewrites it before final review when shipped work makes durable context new, stale, or redundant.
-- Orchestrator is coordination-only: it owns approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not read diff content. Analyst owns problem framing, planner owns the detailed implementation plan, and the reviewer owns authoritative diff inspection.
+- Orchestrator is coordination-only: it owns routing, approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not perform product discovery, architecture, or diff inspection. Analyst owns the feature definition, planner owns the detailed implementation plan, and reviewer owns authoritative diff inspection.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
 - Review corrections proceed autonomously when they stay inside approved behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk; changing one of those boundaries requires approval.
 
@@ -159,7 +163,7 @@ not an OS sandbox. Log in to OpenAI in Pi and choose the main coordinator model 
 Each delegated role pins the same model shown in the OpenCode routing table; use
 `/subagents-models` after restarting Pi to inspect the live mapping.
 
-Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/codavio <request>`, inspect state with `/workflow-status`, and use `.ai/work/<branch-slug>.md` for multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
+Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/codavio <request>`, inspect or list state with `/workflow-status [work-id]`, and use `.ai/work/<work-id>.md` for planned, parallel, or multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
 
 ## Install in Codex
 
@@ -186,7 +190,7 @@ Implicit invocation is disabled. Select the main coordinator model in Codex. For
 subagents, Codex uses the same role mapping as OpenCode and Pi: analyst uses
 `gpt-6-astra`; planner uses `gpt-5.6-sol`; explorer and builder use `gpt-5.6-luna`;
 shipper uses `gpt-5.6-luna`; and reviewer uses `gpt-5.6-terra`. The same
-material-definition, FEATURE-plan, material-correction, and shipping approval rules
+feature-definition, FEATURE-plan, feature-acceptance, material-correction, and shipping approval rules
 apply. Codex's shipper then requests a scoped network sandbox escalation for its one
 direct `git push`; the role brief supplies a clear approval question. A successful
 approval authorizes the sandbox escalation, but Git authentication and remote branch
@@ -221,7 +225,7 @@ Shared workflow behavior lives under `workflow/`:
 - `workflow/orchestrator.md` defines routing, approvals, planning, implementation,
   verification, review, correction, and shipping behavior.
 - `workflow/roles/*.md` defines the six reusable role contracts.
-- `workflow/guidance/*.md` contains focused repository-memory, implementation,
+- `workflow/guidance/*.md` contains focused work-state, repository-memory, implementation,
   verification, and web-research guidance composed only into the roles that need it.
 - `workflow/manifest.json` declares the command, roles, and supported harnesses.
 
@@ -267,13 +271,15 @@ The file is a dense living bullet list under a 1,000-word soft limit: merge over
 rewrite inaccurate entries, and remove obsolete guidance instead of retaining a task
 history. New unapproved material rules still require user approval.
 
-Only multi-session or planned work needs a file:
+Only planned, parallel, or multi-session work needs a file:
 
 ```text
-.ai/work/<branch-slug>.md
+.ai/work/<work-id>.md
 ```
 
-It contains the approved definition, a durable `## Implementation plan` section, task checklist, current state, verification, and open review findings. The coordinator records the planner's approved plan there in enough detail that each builder implements its slice by reading its plan section plus a short task brief — so delegations carry task-specific scope, not the whole plan. The compact state sections are rewritten and compacted; the plan section stays durable, never an append-only transcript.
+The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, route, status, branch, and worktree when available. The file contains the leadership brief, discovery map, approved feature definition, decisions, durable `## Implementation plan`, delivery state, verification, review, acceptance, and shipping state. The coordinator records the planner's approved plan in enough detail that each builder implements its slice from that section plus a short task brief. Compact sections are rewritten rather than appended as a transcript.
+
+Multiple work items may coexist. Codavio resolves an explicit work ID first, then matching branch or worktree metadata, then a sole active item; ambiguous candidates require selection. Existing `.ai/work/<branch-slug>.md` files remain recognized as legacy state and are never silently overwritten or renamed.
 
 The workflow creates `.ai/work/` on demand under the active Git worktree. Global installation never creates runtime project state.
 
