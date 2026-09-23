@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { builderCommandBlocked, coordinatorCommandBlocked, isNormalPush, isReviewerCommand, isShipperCommand } from "../pi/extensions/command-policy.ts";
+import { builderCommandBlocked, coordinatorCommandBlocked, isReviewerCommand, isShipperCommand } from "../pi/extensions/command-policy.ts";
 
 test("reviewer allows only direct inspection Git commands", () => {
   for (const command of ["git status", "git diff --stat", "git log -1", "git worktree", "git worktree list"]) {
@@ -47,6 +47,4 @@ test("shipper permits normal Git actions and rejects arbitrary or forced pushes"
   for (const command of ["git checkout main", "git reset --hard", "git worktree add ../other", "git push -f", "git push --force", "git push --force=origin/main", "git push --force-with-lease", "git push -ff", "git push --force-if-includes", "git commit --no-verify -m ok", "git commit -n -m ok", "git push --no-verify"]) {
     assert.equal(isShipperCommand(command), false, command);
   }
-  assert.equal(isNormalPush("git push origin main"), true);
-  assert.equal(isNormalPush("git push --force"), false);
 });

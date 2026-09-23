@@ -1,7 +1,7 @@
 ## Verification guidance
 
 - Define observable completion criteria before implementation and tie every non-trivial
-  slice to concrete evidence.
+  task to concrete evidence.
 - Treat repository-defined checks and CI requirements as authoritative. Choose the
   strongest practical evidence: integration or end-to-end tests, focused tests,
   build/type/lint/schema checks, dry runs, smoke tests, or concrete manual verification.

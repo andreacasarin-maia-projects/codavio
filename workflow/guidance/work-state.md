@@ -46,6 +46,17 @@ Keep only applicable sections:
 - `## Review`
 - `## Acceptance and shipping`
 
+For planned work, keep every durable planning artifact inside `## Implementation plan` using
+these stable subsections: `### Architecture decisions`, `### Task graph`, `### Integration
+verification`, and `### Commit plan`. Use stable decision (`D1`), task (`T1`), acceptance (`A1`),
+and commit-group (`C1`) IDs so later sections can reference rather than duplicate the planner's
+task definitions. `## Delivery state` records compact status and evidence by task ID without
+copying those definitions.
+
+The work file is the canonical durable artifact, not the default context payload. Coordinators
+project only role-relevant sections into minimal task envelopes; they do not make workers read the
+full file when a bounded projection is sufficient.
+
 Multiple work items may coexist. Material FEATURE implementation normally uses one branch and
 isolated worktree per work item. Merely using separate files does not make parallel writes safe;
 shared-worktree writers still require explicit disjoint ownership and no repository-wide side

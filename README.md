@@ -43,7 +43,7 @@ Repository tooling and installation require Node.js 22.6 or newer.
   → analyst may request high-level DISCOVERY exploration when repository evidence could change the feature
   → discuss and approve the feature definition and product direction
   → planner identifies technical unknowns and may request targeted PLANNING exploration
-  → planner turns the approved definition and returned evidence into architecture and implementation slices
+  → planner turns the approved definition and returned evidence into architecture, a task graph, and a commit plan
   → approve the architecture plan when required
   → treat an explicit unambiguous QUICK request as its definition approval
   → delegate every implementation, test, and Docker action to a builder
@@ -51,30 +51,31 @@ Repository tooling and installation require Node.js 22.6 or newer.
   → invoke an independent reviewer after successful verification
   → accept the outcome of a material FEATURE
   → request shipping approval
-  → delegate commit and push
+  → delegate the approved focused commit series and push
 ```
 
 Role behavior:
 
 - Analyst acts as the product discovery and solution-design partner: it evaluates definition confidence, asks only decision-changing questions with recommendations, uses Event Storming and flow analysis when useful, and proposes the feature definition.
 - Explorer answers focused `DISCOVERY`, `PLANNING`, or `BUGFIX` questions with repository evidence; it never chooses product behavior or architecture.
-- Planner converts the approved feature definition and targeted repository evidence into component boundaries, interfaces, data and control flow, failure semantics, migration strategy, traceable implementation slices, ownership, and architecture-level verification.
+- Planner converts the approved feature definition and targeted repository evidence into component boundaries, interfaces, data and control flow, failure semantics, migration strategy, a traceable builder-sized task graph, integration verification, and an ordered commit plan.
 - Builder is the implementation worker for mechanical edits, normal development,
   test execution, integration verification, and approved Docker execution. Multiple
   builder instances may run concurrently only with disjoint ownership.
 - Reviewer remains evidence-only and read-only.
 - Builder may auto-run verb-first `docker compose run`, `docker compose exec`, and `docker compose restart`; global selectors before the verb (`-p`, `--env-file`, `-f`, `--project-directory`, `--profile`, and `--project-name`) ask, and `docker compose pull`, `up`, `down`, and resource removal ask.
 
-OpenCode model routing:
+Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 
-| Role | Model |
-|---|---|
-| Orchestration and review | `openai/gpt-5.6-terra` |
-| Product discovery and solution design | `openai/gpt-6-astra` |
-| Architecture planning | `openai/gpt-5.6-sol` |
-| Implementation | `openai/gpt-5.6-luna` |
-| Exploration and implementation | `openai/gpt-5.6-luna` |
-| Shipping | `openai/gpt-5.6-luna` |
+| Role | Model | Reasoning |
+|---|---|---|
+| Orchestration | `openai/gpt-6-sol` | `medium` |
+| Product discovery and solution design | `openai/gpt-6-astra` | `medium` |
+| Architecture and task planning | `openai/gpt-6-sol` | `medium` |
+| Exploration | `openai/gpt-6-luna` | `low` |
+| Implementation | `openai/gpt-6-luna` | `medium` |
+| Review | `openai/gpt-6-sol` | `high` |
+| Shipping | `openai/gpt-6-luna` | `low` |
 
 ## Principles
 
@@ -98,6 +99,11 @@ OpenCode model routing:
   concurrently when their write scopes and side effects are disjoint.
 - All isolated Git worktrees must be created under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
 - The conversation is not the source of truth. Planned, parallel, or multi-session work uses a compact living feature-named work item independent of its branch name.
+- The work file is the single durable planning artifact. Coordinators project minimal role-specific
+  task envelopes from it instead of sending lower-capability workers the whole plan or history.
+- Planned work uses a dependency-aware task graph with stable IDs and a commit plan. One focused
+  commit remains the default; multiple commits are used only when they improve comprehension,
+  review, verification, or reversibility.
 - Root `MEMORY.md` is dense, living repository context rather than history. Every role reads it after the applicable `AGENTS.md`, which remains authoritative, and the coordinator rewrites it before final review when shipped work makes durable context new, stale, or redundant.
 - Orchestrator is coordination-only: it owns routing, approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not perform product discovery, architecture, or diff inspection. Analyst owns the feature definition, planner owns the detailed implementation plan, and reviewer owns authoritative diff inspection.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
@@ -129,7 +135,7 @@ node scripts/install.mjs opencode
 
 The installer first generates ignored `build/opencode` artifacts, then symlinks its agents, command, and minimal global behavioral baseline into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them. Configuration changes require an OpenCode restart.
 
-Unrelated existing files are preserved. Obsolete workflow-owned symlinks are removed automatically. `node scripts/install.mjs opencode --force` moves other conflicts to a sibling `.backup` path before linking.
+Unrelated existing files are preserved. `node scripts/install.mjs opencode --force` moves conflicts at current managed destinations to a sibling `.backup` path before linking.
 
 Run OpenCode inside any Git project:
 
@@ -162,8 +168,9 @@ documentation lookup and search; the installer adds the
 blocks the main Pi session's `git diff`/`git log` so diff inspection stays with the
 reviewer. The global
 package applies only to repositories you trust: Pi permissions are a curated safe list,
-not an OS sandbox. Log in to OpenAI in Pi and choose the main coordinator model there.
-Each delegated role pins the same model shown in the OpenCode routing table; use
+not an OS sandbox. Log in to OpenAI in Pi and choose `gpt-6-sol` with `medium` reasoning for the
+main coordinator when available. Each delegated role pins the model and reasoning shown in the
+role routing table; use
 `/subagents-models` after restarting Pi to inspect the live mapping.
 
 Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/codavio <request>`, inspect or list state with `/workflow-status [work-id]`, and use `.ai/work/<work-id>.md` for planned, parallel, or multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
@@ -189,10 +196,9 @@ Start a new Codex task after installation and invoke the workflow explicitly:
 $codavio <request>
 ```
 
-Implicit invocation is disabled. Select the main coordinator model in Codex. For
-subagents, Codex uses the same role mapping as OpenCode and Pi: analyst uses
-`gpt-6-astra`; planner uses `gpt-5.6-sol`; explorer and builder use `gpt-5.6-luna`;
-shipper uses `gpt-5.6-luna`; and reviewer uses `gpt-5.6-terra`. The same
+Implicit invocation is disabled. Select `gpt-6-sol` with `medium` reasoning for the main
+coordinator in Codex when available; Codavio does not override the main session selection.
+Subagents use the role model routing above. The same
 feature-definition, FEATURE-plan, feature-acceptance, material-correction, and shipping approval rules
 apply. Codex's shipper then requests a scoped network sandbox escalation for its one
 direct `git push`; the role brief supplies a clear approval question. A successful
@@ -280,7 +286,7 @@ Only planned, parallel, or multi-session work needs a file:
 .ai/work/<work-id>.md
 ```
 
-The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, route, status, branch, and worktree when available. The file contains the leadership brief, discovery map, approved feature definition, decisions, durable `## Implementation plan`, delivery state, verification, review, acceptance, and shipping state. The coordinator records the planner's approved plan in enough detail that each builder implements its slice from that section plus a short task brief. Compact sections are rewritten rather than appended as a transcript.
+The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, route, status, branch, and worktree when available. The file contains the leadership brief, discovery map, approved feature definition, durable `## Implementation plan`, delivery state, verification, review, acceptance, and shipping state. The implementation plan contains architecture decisions, builder-sized task cards, integration verification, and the commit plan, all connected by stable IDs. The coordinator keeps this file canonical and sends each worker only a minimal projection containing its task and relevant references. Compact sections are rewritten rather than appended as a transcript.
 
 Multiple work items may coexist. Codavio resolves an explicit work ID first, then matching branch or worktree metadata, then a sole active item; ambiguous candidates require selection. Existing `.ai/work/<branch-slug>.md` files remain recognized as legacy state and are never silently overwritten or renamed.
 
@@ -309,10 +315,11 @@ is a **local logging proxy** in front of every harness:
 - Point each harness at the proxy by setting its OpenAI base URL to the proxy address
   (OpenCode/Pi/Codex all read the standard `OPENAI_BASE_URL` / provider base-URL
   setting).
-- Attribute each request to a role or paired role group. The model tier identifies it
-  (`gpt-6-astra` → analyst, `gpt-5.6-sol` → planner,
-  `gpt-5.6-luna` → explorer/builder/shipper, `gpt-5.6-terra` → orchestrator/reviewer), so grouping
-  logged usage by model yields that breakdown without any harness changes.
+- Attribute each request to a role or paired role group. Model plus reasoning identifies most
+  lanes (`gpt-6-astra`/`medium` → analyst, `gpt-6-sol`/`medium` → orchestrator/planner,
+  `gpt-6-sol`/`high` → reviewer, `gpt-6-luna`/`medium` → builder, and
+  `gpt-6-luna`/`low` → explorer/shipper), so grouping logged usage by both fields yields that
+  breakdown without harness changes.
 
 This is intentionally out of the generated package: it is host configuration, not
 workflow source. Use the breakdown to see whether cost concentrates in the reasoning

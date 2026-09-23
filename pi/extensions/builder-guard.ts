@@ -6,6 +6,6 @@ export default function builderGuard(pi: ExtensionAPI): void {
   pi.on("tool_call", async (event) => {
     if (event.toolName !== "bash") return;
     const command = String(event.input.command ?? "");
-    if (builderCommandBlocked(command)) return { block: true, reason: "Builder guard blocks unsafe shell syntax, Git, and destructive commands." };
+    if (builderCommandBlocked(command)) return { block: true, reason: "Builder guard blocks unsafe shell syntax, Git, sudo, and command-string interpreters." };
   });
 }

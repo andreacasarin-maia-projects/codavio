@@ -61,9 +61,27 @@ assert.equal(run("git", ["status", "--porcelain"]).stdout, beforeGeneration,
   "generation changed Git-tracked files");
 
 const manifest = json("workflow/manifest.json");
+const capabilities = json("workflow/capabilities.json");
 const ROLES = Object.keys(manifest.roles);
 assert.equal(manifest.command, "codavio");
 assert.deepEqual(ROLES, ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]);
+assert.deepEqual(Object.keys(capabilities.roles), ["orchestrator", ...ROLES]);
+for (const [role, capability] of Object.entries(capabilities.roles)) {
+  assert.ok(["gpt-6-astra", "gpt-6-sol", "gpt-6-luna"].includes(capability.model),
+    role + " has an unsupported model");
+  assert.ok(["low", "medium", "high"].includes(capability.reasoning),
+    role + " has an unsupported reasoning level");
+  if (role === "orchestrator") {
+    assert.equal(typeof capability.description, "string", "orchestrator has no description");
+  } else {
+    assert.equal("description" in capability, false,
+      role + " description belongs only in workflow/manifest.json");
+  }
+}
+for (const [role, definition] of Object.entries(manifest.roles)) {
+  assert.equal(typeof definition.description, "string", role + " has no description");
+  assert.ok(definition.description.length > 0, role + " has an empty description");
+}
 for (const harness of ["opencode", "pi", "codex"]) {
   assert.deepEqual([...manifest.harnesses[harness].roles].sort(), [...ROLES].sort());
 }
@@ -84,7 +102,8 @@ contains("workflow/guidance/memory.md", [
 ]);
 contains("workflow/guidance/work-state.md", [
   "`.ai/work/<work-id>.md`", "stable, lowercase, hyphenated feature name",
-  "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist",
+  "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist", "### Task graph",
+  "### Commit plan", "minimal task envelope",
 ]);
 contains("workflow/capabilities.md", [
   "orchestrator → `work-state.md`", "every role → `memory.md`", "builder gets memory, implementation",
@@ -121,13 +140,15 @@ contains("workflow/roles/analyst.md", [
 ]);
 contains("workflow/roles/planner.md", [
   "approved feature definition", "focused exploration brief", "target components or modules",
-  "interfaces, contracts", "data and state lifecycle", "ordered implementation slices",
+  "interfaces, contracts", "data and state lifecycle", "executable task graph",
+  "### Architecture decisions", "### Task graph", "### Integration verification", "### Commit plan",
   "acceptance scenario", "owning component", "ongoing liability", "activated dimensions",
   "advisory or compulsory policy", "destructive contraction", "acceptable regression threshold",
 ]);
 contains("workflow/roles/reviewer.md", [
   "readability and simplicity", "performance and resource bounds", "ongoing liability",
   "maintained result", "`BLOCKER`, `OPTIONAL`, or `FYI`", "smallest acceptable correction",
+  "commit plan maps cleanly",
 ]);
 contains("workflow/roles/explorer.md", ["`DISCOVERY`", "`PLANNING`", "`BUGFIX`", "supply evidence"]);
 contains("pi/extensions/workflow.ts", [
@@ -151,8 +172,11 @@ assert.ok(fs.existsSync(path.join(BUILD,
   "codex/plugins/codavio/skills/codavio/agents/openai.yaml")));
 
 for (const role of ROLES) {
-  contains(generated("opencode/agents/" + role + ".md"), ["description:", "mode: subagent"]);
-  contains(generated("pi/pi/agents/" + role + ".md"), ["name: " + role, "maxSubagentDepth: 0"]);
+  const description = manifest.roles[role].description;
+  contains(generated("opencode/agents/" + role + ".md"),
+    ["description: " + description, "mode: subagent"]);
+  contains(generated("pi/pi/agents/" + role + ".md"),
+    ["name: " + role, "description: " + description, "maxSubagentDepth: 0"]);
   contains(generated("opencode/agents/" + role + ".md"), ["## Repository memory"]);
   contains(generated("pi/pi/agents/" + role + ".md"), ["## Repository memory"]);
   assert.match(frontmatter(generated("opencode/agents/" + role + ".md")), /description:|name:/);
@@ -160,10 +184,10 @@ for (const role of ROLES) {
     new RegExp("name: " + role));
 }
 contains(generated("opencode/agents/builder.md"), [
-  "model: openai/gpt-5.6-luna", "## Implementation guidance", "## Verification guidance",
+  "## Implementation guidance", "## Verification guidance",
 ]);
 contains(generated("pi/pi/agents/builder.md"), [
-  "model: openai/gpt-5.6-luna", "## Implementation guidance", "## Verification guidance",
+  "## Implementation guidance", "## Verification guidance",
 ]);
 contains(generated("opencode/agents/reviewer.md"), ["## Verification guidance"]);
 contains(generated("pi/pi/agents/reviewer.md"), ["## Verification guidance"]);
@@ -184,20 +208,23 @@ for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"
   contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
 }
 contains(generated("opencode/agents/orchestrator.md"), [
-  "mode: primary", "model: openai/gpt-5.6-terra", "\"planner\": allow",
+  "mode: primary", "\"planner\": allow",
   "## Repository memory", "`AGENTS.md` is authoritative",
 ]);
 contains(generated("opencode/agents/planner.md"), [
-  "mode: subagent", "model: openai/gpt-5.6-sol", "edit: deny", "bash: deny",
+  "mode: subagent", "edit: deny", "bash: deny",
 ]);
 contains(generated("pi/pi/agents/planner.md"), [
-  "model: openai/gpt-5.6-sol", "tools: read,grep,find,ls",
+  "tools: read,grep,find,ls",
 ]);
-const capabilities = json("workflow/capabilities.json");
 for (const role of ROLES) {
   const model = "openai/" + capabilities.roles[role].model;
   contains(generated("opencode/agents/" + role + ".md"), ["model: " + model]);
   contains(generated("pi/pi/agents/" + role + ".md"), ["model: " + model]);
+  contains(generated("opencode/agents/" + role + ".md"),
+    ["reasoningEffort: " + capabilities.roles[role].reasoning]);
+  contains(generated("pi/pi/agents/" + role + ".md"),
+    ["thinking: " + capabilities.roles[role].reasoning]);
 }
 const packageJson = json("package.json");
 assert.equal(packageJson.name, "codavio");
@@ -223,23 +250,24 @@ contains(generated("opencode/commands/codavio.md"), [
 ]);
 contains(generated("pi/pi/prompts/codavio.md"), [
   "$ARGUMENTS", "`pi-subagents`", "pinned model", "`<project-root>/.worktrees/`",
-  "`.ai/work/<work-id>.md`", "Use each role's pinned model without a per-run model override.",
+  "`.ai/work/<work-id>.md`", "Use each role's pinned model and reasoning without a per-run override.",
   ...ROLES,
 ]);
 contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
-  "name: codavio", "$codavio", "# Codavio", "`gpt-6-astra`", "`gpt-5.6-sol`",
-  "`gpt-5.6-terra`", "`gpt-5.6-luna`",
+  "name: codavio", "$codavio", "# Codavio", "`gpt-6-astra`", "`gpt-6-sol`",
+  "`gpt-6-luna`", "`medium` reasoning", "`high` reasoning", "`low` reasoning",
   "`fork_turns: \"none\"`", "[roles.md](references/roles.md)",
 ]);
 contains(generated("codex/plugins/codavio/skills/codavio/references/roles.md"), [
   "canonical `workflow/roles/` sources", "active worktree, `AGENTS.md`",
+  "only the referenced decisions and acceptance scenarios", "peer path boundaries",
   "network sandbox escalation", "sandbox_permissions: \"require_escalated\"",
 ]);
 contains(generated("codex/plugins/codavio/skills/codavio/agents/openai.yaml"),
   ["allow_implicit_invocation: false"]);
 contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
-  "main session model is selected in Codex", "explorer, builder, and shipper",
-  "shipper with " + CODE + "gpt-5.6-luna" + CODE, "shipping approval", "planner",
+  "main session model is selected in Codex", "explorer and shipper",
+  "shipper with " + CODE + "gpt-6-luna" + CODE, "shipping approval", "planner",
   "Route: QUICK", "The analyst is mandatory for every FEATURE", "actual builder invocation",
   "definition confidence", "explicit feature acceptance", ".ai/work/<work-id>.md",
   "Invoke multiple explorers", "Invoke multiple builders", "memory closeout",
@@ -332,21 +360,11 @@ try {
   fs.mkdirSync(legacyAgents, { recursive: true });
   fs.symlinkSync(path.join(ROOT, ".opencode/agents/analyst.md"),
     path.join(legacyAgents, "analyst.md"));
-  const obsolete = path.join(legacyRoot, "opencode", "agents", "builder-senior.md");
-  fs.symlinkSync(path.join(BUILD, "opencode/agents/builder-senior.md"), obsolete);
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
     env: { ...process.env, XDG_CONFIG_HOME: legacyRoot },
   });
   assert.equal(linkTarget(path.relative(ROOT, path.join(legacyAgents, "analyst.md"))),
     path.join(BUILD, "opencode/agents/analyst.md"));
-  assert.equal(fs.existsSync(obsolete), false);
-  const wrongObsolete = path.join(legacyAgents, "builder-junior.md");
-  fs.symlinkSync(path.join(ROOT, ".opencode/agents/analyst.md"), wrongObsolete);
-  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
-    env: { ...process.env, XDG_CONFIG_HOME: legacyRoot },
-  });
-  assert.equal(path.resolve(path.dirname(wrongObsolete), fs.readlinkSync(wrongObsolete)),
-    path.join(ROOT, ".opencode/agents/analyst.md"));
 
   const wrongLegacyRoot = path.join(temporary, "wrong-legacy");
   const wrongLegacyAgents = path.join(wrongLegacyRoot, "opencode", "agents");

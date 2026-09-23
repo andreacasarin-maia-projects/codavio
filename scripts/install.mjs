@@ -9,12 +9,6 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD = path.join(ROOT, "build");
 const SUPPORTED = ["opencode", "pi", "codex"];
-const OBSOLETE_OPENCODE_PATHS = [
-  "agents/builder-junior.md", "agents/builder-senior.md", "agents/explore.md",
-  "agents/worker-mini.md", "agents/worker-luna.md",
-  "commands/analyze.md", "commands/build.md", "commands/plan.md", "commands/review.md",
-  "commands/ship.md", "commands/dev.md", "skills/testing-policy",
-];
 
 function usage() { console.error("Usage: node scripts/install.mjs <opencode|pi|codex|all> [--force]"); }
 
@@ -137,14 +131,6 @@ function installOpenCode(force) {
   const pairs = openCodePaths(target);
   for (const [source, destination, legacy] of pairs) checkDestination(source, destination, force, legacy);
   for (const [source, destination, legacy] of pairs) linkDestination(source, destination, force, legacy);
-  for (const relative of OBSOLETE_OPENCODE_PATHS) {
-    const destination = path.join(target, relative);
-    const legacy = path.join(ROOT, ".opencode", relative);
-    const generated = path.join(BUILD, "opencode", relative);
-    if (exactTextLink(destination, legacy) || exactTextLink(destination, generated)) {
-      fs.unlinkSync(destination);
-    }
-  }
   console.log("Linked Codavio into " + target);
   console.log("Start with: /codavio <request>");
   console.log("Restart OpenCode after repository updates.");

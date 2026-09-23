@@ -1,6 +1,6 @@
 # Role capabilities
 
-`capabilities.json` is the single source for each role's **policy and wiring**. The
+`capabilities.json` is the single source for each role's **model policy and wiring**. The
 generator expands it into every harness's native dialect (OpenCode permission frontmatter,
 Pi frontmatter + guards, Codex prose), so the same policy can never drift between harnesses.
 
@@ -11,13 +11,16 @@ plus each harness's native adjudication (ask tier, or an AI classifier where one
 See [Gray-zone adjudication](#gray-zone-adjudication).
 
 Role *behaviour* (what each role should do) lives in `workflow/roles/*.md`, already single
-sourced. `capabilities.json` covers *only* the config/permission layer.
+sourced. Worker display descriptions live in `workflow/manifest.json`; only the orchestrator's
+description remains here because it is not a manifest worker role. `capabilities.json` otherwise
+covers model selection, reasoning effort, and the config/permission layer.
 
 ## Role fields
 
 | field | values | meaning |
 | --- | --- | --- |
 | `model` | bare model id | renderers add the `openai/` prefix for OpenCode and Pi |
+| `reasoning` | `low` \| `medium` \| `high` | role-specific reasoning effort rendered in each harness's native dialect |
 | `mode` | `primary` \| `subagent` | OpenCode agent mode; only the orchestrator is `primary` |
 | `git` | `none` \| `orient` \| `inspect` \| `commit` | Git access level (see below) |
 | `web` | boolean | web research tools + the `web-use` guidance |
@@ -57,7 +60,8 @@ without an AI classifier don't prompt on every common test command. It is expect
 
 | field | → OpenCode | → Pi | → Codex |
 | --- | --- | --- | --- |
-| `model` | `model: openai/<id>` | `model: openai/<id>` | model assignment in `roles.md` prose |
+| `model` | `model: openai/<id>` | `model: openai/<id>` | model assignment in generated skill delegation prose |
+| `reasoning` | `reasoningEffort: <level>` | `thinking: <level>` | `thinking: <level>` delegation argument in generated skill prose |
 | `mode` | `mode: <value>` | (main session vs subagent) | n/a |
 | `git: <level>` | `bash` base `deny` + `constants.git[level]` allows (each as `"<cmd>"` and `"<cmd> *"`) | `bash` tool + role guard restricting to the level | prose ("reads the diff" / "Git-only shipping") |
 | `web: true` | `webfetch/websearch: allow` | `web_search,fetch_content,get_search_content` in `tools:` | — |

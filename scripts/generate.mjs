@@ -27,6 +27,13 @@ function generatedFrom(frontmatter, body) {
 }
 
 const CAPABILITIES = JSON.parse(read("workflow/capabilities.json"));
+const MANIFEST = JSON.parse(read("workflow/manifest.json"));
+
+function roleDescription(role) {
+  return role === "orchestrator"
+    ? CAPABILITIES.roles.orchestrator.description
+    : MANIFEST.roles[role].description;
+}
 
 function ocExpand(commands) {
   return commands.flatMap((cmd) => [`    "${cmd}": allow`, `    "${cmd} *": allow`]);
@@ -64,9 +71,10 @@ function openCodeFrontmatter(role) {
   const web = c.web ? "allow" : "deny";
   return [
     "---",
-    "description: " + c.description,
+    "description: " + roleDescription(role),
     "mode: " + c.mode,
     "model: openai/" + c.model,
+    "reasoningEffort: " + c.reasoning,
     "temperature: 0.1",
     "permission:",
     "  read:",
@@ -133,8 +141,9 @@ function piFrontmatter(role) {
   return [
     "---",
     "name: " + role,
-    "description: " + c.description,
+    "description: " + roleDescription(role),
     "model: openai/" + c.model,
+    "thinking: " + c.reasoning,
     "tools: " + piTools(role).join(","),
     "permission:",
     "  tools:",
@@ -196,7 +205,7 @@ function piPrompt(roles) {
     "Analyze this request:", "", "$ARGUMENTS", "",
     "You are the current main Pi session and the workflow coordinator; do not pretend that",
     "an orchestrator subagent exists. Invoke only these " + CODE + "pi-subagents" + CODE + " roles:",
-    roles.join(", ") + ". Use each role's pinned model without a per-run model override.",
+    roles.join(", ") + ". Use each role's pinned model and reasoning without a per-run override.",
     "Do not delegate to any other role or allow nested delegation.",
     "",
     "For delegated command work, specify the narrowest direct repository command required.",
@@ -215,20 +224,27 @@ function codexModelSentence(roles) {
   const order = [];
   const groups = new Map();
   for (const role of roles) {
-    const model = CAPABILITIES.roles[role].model;
-    if (!groups.has(model)) { groups.set(model, []); order.push(model); }
-    groups.get(model).push(role);
+    const { model, reasoning } = CAPABILITIES.roles[role];
+    const key = model + "\0" + reasoning;
+    if (!groups.has(key)) { groups.set(key, { model, reasoning, roles: [] }); order.push(key); }
+    groups.get(key).roles.push(role);
   }
-  const parts = order.map((model) => oxford(groups.get(model)) + " with " + CODE + model + CODE);
+  const parts = order.map((key) => {
+    const group = groups.get(key);
+    return oxford(group.roles) + " with " + CODE + group.model + CODE + " at " +
+      CODE + group.reasoning + CODE + " reasoning";
+  });
   return "Spawn " + parts.slice(0, -1).join("; ") + "; and " + parts[parts.length - 1] + ".";
 }
 function codexSkill(roles) {
   return [
     "# Codavio", "",
     "Use Codex collaboration agents; do not create user-owned threads for workflow roles.",
-    "The main session model is selected in Codex and is not overridden by this workflow.",
+    "The main session model is selected in Codex and is not overridden by this workflow; use " +
+      CODE + CAPABILITIES.roles.orchestrator.model + CODE + " at " +
+      CODE + CAPABILITIES.roles.orchestrator.reasoning + CODE + " reasoning when selecting it.",
     codexModelSentence(roles) + " Use",
-    CODE + 'fork_turns: "none"' + CODE + " or a bounded positive turn count whenever setting a model",
+    CODE + 'fork_turns: "none"' + CODE + " or a bounded positive turn count whenever setting a model or reasoning",
     "override, include all necessary context, and tell every role not to spawn subagents.",
     "",
     "Load the matching canonical brief from [roles.md](references/roles.md) for every",
@@ -243,7 +259,8 @@ function codexRoles(roles) {
     "# Role briefs",
     "These role briefs are generated from the canonical " + CODE + "workflow/roles/" + CODE + " sources. " +
       "Append the concrete assignment, owned paths, active worktree, " + CODE + "AGENTS.md" + CODE + " " +
-      "constraints, approved decisions, peer scopes, and required return evidence " +
+      "constraints, only the referenced decisions and acceptance scenarios, peer path boundaries, " +
+      "and required return evidence " +
       "whenever spawning a role.",
   ];
   for (const role of roles) {
@@ -255,16 +272,16 @@ function codexRoles(roles) {
 
 function add(result, relative, body) { result.set(relative, body); }
 
-function outputs(manifest) {
+function outputs() {
   const result = new Map();
-  for (const role of manifest.harnesses.opencode.roles) {
+  for (const role of MANIFEST.harnesses.opencode.roles) {
     add(result, "build/opencode/agents/" + role + ".md",
       generatedFrom(openCodeFrontmatter(role), roleBody(role, "opencode")));
   }
   add(result, "build/opencode/agents/orchestrator.md",
     generatedFrom(openCodeFrontmatter("orchestrator"), orchestratorBody()));
-  add(result, "build/opencode/commands/" + manifest.command + ".md",
-    generated("adapters/opencode/commands/" + manifest.command + ".md", openCodeCommand()));
+  add(result, "build/opencode/commands/" + MANIFEST.command + ".md",
+    generated("adapters/opencode/commands/" + MANIFEST.command + ".md", openCodeCommand()));
   add(result, "build/opencode/AGENTS.md", read("templates/AGENTS.global.md") + "\n");
 
   for (const relative of ["package.json", "package-lock.json"]) {
@@ -274,12 +291,12 @@ function outputs(manifest) {
     add(result, "build/pi/pi/extensions/" + name,
       fs.readFileSync(absolute("pi/extensions/" + name), "utf8"));
   }
-  for (const role of manifest.harnesses.pi.roles) {
+  for (const role of MANIFEST.harnesses.pi.roles) {
     add(result, "build/pi/pi/agents/" + role + ".md",
       generatedFrom(piFrontmatter(role), roleBody(role, "pi")));
   }
-  add(result, "build/pi/pi/prompts/" + manifest.command + ".md",
-    generated("adapters/pi/prompts/" + manifest.command + ".md", piPrompt(manifest.harnesses.pi.roles)));
+  add(result, "build/pi/pi/prompts/" + MANIFEST.command + ".md",
+    generated("adapters/pi/prompts/" + MANIFEST.command + ".md", piPrompt(MANIFEST.harnesses.pi.roles)));
 
   add(result, "build/codex/AGENTS.md", read("templates/AGENTS.global.md") + "\n");
   for (const relative of [
@@ -290,9 +307,9 @@ function outputs(manifest) {
     add(result, "build/" + relative, fs.readFileSync(absolute(relative), "utf8"));
   }
   add(result, "build/codex/plugins/codavio/skills/codavio/SKILL.md",
-    generated("adapters/codex/plugins/codavio/skills/codavio/SKILL.md", codexSkill(manifest.harnesses.codex.roles)));
+    generated("adapters/codex/plugins/codavio/skills/codavio/SKILL.md", codexSkill(MANIFEST.harnesses.codex.roles)));
   add(result, "build/codex/plugins/codavio/skills/codavio/references/roles.md",
-    NOTICE + "\n\n" + codexRoles(manifest.harnesses.codex.roles));
+    NOTICE + "\n\n" + codexRoles(MANIFEST.harnesses.codex.roles));
   return result;
 }
 
@@ -326,7 +343,7 @@ if (process.argv.length > 3 || (process.argv.length === 3 && !check)) {
   console.error("Usage: node scripts/generate.mjs [--check]");
   process.exit(2);
 }
-const declared = outputs(JSON.parse(read("workflow/manifest.json")));
+const declared = outputs();
 const stale = [];
 for (const [relative, body] of declared) {
   const target = absolute(relative);

@@ -1,8 +1,12 @@
-export type ParsedCommand = { argv: string[] } | { error: string };
+type ParsedCommand = { argv: string[] } | { error: string };
 
 const unsafeShellSyntax = /[\r\n;|&`$<>\\{}()!~*?]/;
+const commandStringInterpreters = new Set([
+  "sh", "bash", "zsh", "dash", "ksh", "fish", "python", "python3", "node", "ruby", "perl",
+  "php", "lua",
+]);
 
-export function parseCommand(command: string): ParsedCommand {
+function parseCommand(command: string): ParsedCommand {
   if (!command.trim() || unsafeShellSyntax.test(command)) return { error: "unsafe shell syntax" };
 
   const argv: string[] = [];
@@ -61,16 +65,10 @@ export function isShipperCommand(command: string): boolean {
   return isInspection(parsed.argv) || action === "add" || action === "commit" || action === "push";
 }
 
-export function isNormalPush(command: string): boolean {
-  const parsed = parseCommand(command);
-  return isGitCommand(parsed) && parsed.argv[1] === "push" && !isForcePush(parsed.argv);
-}
-
 export function builderCommandBlocked(command: string): boolean {
   const parsed = parseCommand(command);
   if ("error" in parsed) return true;
   const lowered = parsed.argv.map((argument) => argument.toLowerCase());
-  const commandStringInterpreters = new Set(["sh", "bash", "zsh", "dash", "ksh", "fish", "python", "python3", "node", "ruby", "perl", "php", "lua"]);
   if (lowered.some((argument, index) => commandStringInterpreters.has(argument.split("/").at(-1) ?? "") && lowered.slice(index + 1).some((flag) => flag === "-c" || flag === "-e" || flag === "--eval"))) return true;
   if (lowered.some((argument) => argument === "sudo")) return true;
   if (lowered[0] === "git") return true;

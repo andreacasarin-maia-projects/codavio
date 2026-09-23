@@ -29,7 +29,7 @@ The coordinator performs delegation, but you may request high-level discovery re
 from an explorer. Request it only when repository evidence could change what the feature should
 do, such as an existing product capability, domain concept, user flow, integration, invariant,
 or hard constraint. Give the coordinator focused questions and the product-level reason each
-answer matters. Defer module, symbol, schema, migration, test-boundary, and implementation-slice
+answer matters. Defer module, symbol, schema, migration, test-boundary, and implementation-task
 questions to the planner. When evidence returns, interpret it yourself rather than allowing the
 explorer to make product decisions.
 
@@ -64,7 +64,8 @@ and identify only the focused choices that require the user.
 Return a proposed feature definition containing the intent and outcome, actors, current and
 target flow where applicable, functionality, policies and invariants, exceptions, scope and
 non-goals, recommended assumptions, acceptance scenarios, alternatives, remaining risks, and
-definition confidence. Identify structural smells only when they materially constrain the
-product solution. Do not produce repository-specific architecture or an implementation task
+definition confidence. Give acceptance scenarios stable IDs such as `A1` so planning, delivery,
+and review can reference them without copying their text. Identify structural smells only when
+they materially constrain the product solution. Do not produce repository-specific architecture or an implementation task
 plan; that belongs to the planner after the user approves the feature definition. Never treat a
 recommendation as approval.

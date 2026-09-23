@@ -18,7 +18,7 @@ This project builds a stable, testable, and repeatable AI development workflow t
 
 ## Keep Definitions Aligned
 
-- `scripts/validate.mjs` checks ignored build outputs, native metadata, and a disposable installer integration for exactly command `codavio` and roles `orchestrator`, `analyst`, `planner`, `explorer`, `builder-junior`, `builder-senior`, `reviewer`, `shipper`. Adding or renaming one requires updating `workflow/manifest.json` and the role entry in `workflow/capabilities.json`.
+- `scripts/validate.mjs` checks ignored build outputs, native metadata, and a disposable installer integration for exactly command `codavio` and roles `orchestrator`, `analyst`, `planner`, `explorer`, `builder`, `reviewer`, `shipper`. Adding or renaming one requires updating `workflow/manifest.json` and the role entry in `workflow/capabilities.json`.
 - OpenCode and Pi agent frontmatter is generated from `workflow/capabilities.json` (see `workflow/capabilities.md` for the field vocabulary and per-harness rendering rules); do not hand-edit generated `build/` frontmatter. Codex role config is prose derived from the role bodies plus the model assignment in `capabilities.json`.
 - Keep the command, role files, Pi support files, and docs coordinated when routes, roles, models, verification, or shipping behavior changes.
 - Commands still carry hand-written frontmatter and require `description` and an existing `agent`.
@@ -31,4 +31,4 @@ This project builds a stable, testable, and repeatable AI development workflow t
 ## Installer Gotchas
 
 - Installer links individual agents, commands, and generated `build/opencode/AGENTS.md` into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`, preserving unrelated global OpenCode files.
-- Existing destinations abort installation. `--force` moves each conflict to `<destination>.backup`; an existing backup also aborts rather than being overwritten. Exact obsolete workflow-owned symlinks are removed automatically. After adding or renaming commands, rerun the installer and then restart OpenCode; configuration changes require a restart.
+- Existing destinations abort installation. `--force` moves each conflict at a current managed destination to `<destination>.backup`; an existing backup also aborts rather than being overwritten. After adding or renaming commands, rerun the installer and then restart OpenCode; configuration changes require a restart.

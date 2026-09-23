@@ -5,7 +5,7 @@
       "description": "Collaboratively defines product behavior, evaluates confidence, and recommends solution directions"
     },
     "planner": {
-      "description": "Turns an approved feature definition and targeted repository evidence into an implementation plan"
+      "description": "Turns an approved feature definition and targeted repository evidence into an executable task graph and commit plan"
     },
     "explorer": {
       "description": "Answers focused discovery, planning, or bugfix questions with repository evidence"
@@ -17,7 +17,7 @@
       "description": "Performs an independent, read-only review against the approved feature definition and repository constraints"
     },
     "shipper": {
-      "description": "Verifies shipping preconditions, creates a focused commit, and pushes the current branch"
+      "description": "Verifies shipping preconditions, creates the approved focused commit series, and pushes the current branch"
     }
   },
   "harnesses": {

@@ -41,8 +41,11 @@ Cover the applicable items:
 - failure handling, observability, operations, rollback, and migration strategy
 - compatibility expectations and explicit deletion or deprecation work
 - likely files, directories, symbols, and existing patterns to reuse
-- ordered implementation slices with dependencies and exclusive write ownership
-- architecture-level verification for each slice and final integration
+- an executable task graph with stable task IDs, explicit dependencies, exclusive write
+  ownership, and safe parallel groups
+- architecture-level completion and verification criteria for each task and final integration
+- a commit plan mapping completed task IDs into the smallest reasonable ordered series of
+  coherent, reviewable, and preferably independently verifiable commits
 - unresolved decisions, risks, and conditions that require returning to the user
 
 For a deprecation or replacement, identify known consumers, replacement readiness, compatibility
@@ -58,10 +61,36 @@ representative workload, current evidence, relevant budget or invariant, measure
 acceptable regression threshold. Do not prescribe speculative optimization without evidence.
 
 Trace every material event flow, policy, invariant, exception, and acceptance scenario to its
-owning component, implementation slice, and verification evidence. Prefer vertical slices that
+owning component, task, and verification evidence. Prefer vertical tasks that
 deliver observable behavior rather than layers that only become useful after later work. Separate
 behavior-preserving preparation from behavior changes when each can be independently verified;
 do not add preparatory refactoring that the approved implementation does not need.
+
+Return the implementation plan in a stable structure suitable for recording verbatim under the
+work item's `## Implementation plan` section:
+
+1. `### Architecture decisions` — only the boundaries, interfaces, flows, invariants, and
+   material alternatives builders must not re-decide. Give referenced decisions stable IDs such
+   as `D1`.
+2. `### Task graph` — one builder-sized task card per stable ID such as `T1`. Each card states
+   title, goal, dependencies, safe parallel group when applicable, owned paths, relevant decision
+   and acceptance IDs, concrete requirements, observable completion criteria, strongest practical
+   verification, and commit group. A task must be executable from its card plus the referenced
+   decisions and acceptance scenarios; omit unrelated feature history and peer-task detail.
+3. `### Integration verification` — checks that become meaningful only after specified tasks are
+   combined, including the task that owns any approved cross-component test path.
+4. `### Commit plan` — ordered IDs such as `C1`, each with its purpose, proposed message, included
+   task IDs, and file or hunk boundaries when paths overlap.
+
+Treat the graph as execution structure, not ceremony. Use the fewest tasks that preserve clear
+ownership, dependency order, verification, and safe parallelism. Tests normally stay in the same
+task and commit as the behavior they verify. A task is not automatically a commit, and a builder
+is not automatically a commit boundary. Default to one focused commit. Split commits only when
+separation materially improves comprehension, review, verification, or reversibility, and order
+them by dependency. Every planned commit must be coherent on its own and should leave the
+repository passing the checks applicable at that point. Do not plan a split that would require
+the shipper to invent architectural boundaries or untangle inseparable changes after
+implementation.
 
 Use diagrams only when they materially clarify boundaries or flow. Prefer the simplest
 architecture satisfying the approved drivers. Name decisions explicitly and explain why rejected
@@ -72,8 +101,9 @@ cost, risk, scope, or user behavior, stop and return the conflict to the coordin
 product discovery and approval. Do not resolve it by redesigning the feature inside the plan.
 
 The plan is the implementation contract builders work from: detailed enough that each builder
-implements its slice without re-deciding architecture, interfaces, or approach, yet stopping
-short of literal code. Keep each slice self-contained so a builder needs only its section plus a
-short task brief. The coordinator records the approved plan in the active work item's durable
-`## Implementation plan` section. Do not silently choose a new public API, schema, security
+implements one task without re-deciding architecture, interfaces, or approach, yet stopping
+short of literal code. Keep each task card self-contained and reference only the decisions and
+acceptance scenarios its worker needs. The coordinator records the approved plan in the active
+work item's durable `## Implementation plan` section and projects minimal task envelopes from it.
+Do not silently choose a new public API, schema, security
 model, infrastructure shape, migration policy, or destructive action.

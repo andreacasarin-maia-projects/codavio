@@ -40,37 +40,31 @@
   "roles": {
     "orchestrator": {
       "description": "Orchestrates work from analysis through approved shipping",
-      "model": "gpt-5.6-terra", "mode": "primary", "git": "orient", "web": false,
+      "model": "gpt-6-sol", "reasoning": "medium", "mode": "primary", "git": "orient", "web": false,
       "edit": "work-file", "shell": "none", "delegate": true, "guard": "coordinator"
     },
     "analyst": {
-      "description": "Collaboratively defines product behavior, evaluates confidence, and recommends solution directions",
-      "model": "gpt-6-astra", "mode": "subagent", "git": "none", "web": true,
+      "model": "gpt-6-astra", "reasoning": "medium", "mode": "subagent", "git": "none", "web": true,
       "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
     "planner": {
-      "description": "Turns an approved feature definition and targeted repository evidence into an implementation plan",
-      "model": "gpt-5.6-sol", "mode": "subagent", "git": "none", "web": true,
+      "model": "gpt-6-sol", "reasoning": "medium", "mode": "subagent", "git": "none", "web": true,
       "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
     "explorer": {
-      "description": "Answers focused discovery, planning, or bugfix questions with repository evidence",
-      "model": "gpt-5.6-luna", "mode": "subagent", "git": "none", "web": false,
+      "model": "gpt-6-luna", "reasoning": "low", "mode": "subagent", "git": "none", "web": false,
       "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
     "builder": {
-      "description": "Implements bounded normal development tasks and proportionate verification",
-      "model": "gpt-5.6-luna", "mode": "subagent", "git": "none", "web": false,
+      "model": "gpt-6-luna", "reasoning": "medium", "mode": "subagent", "git": "none", "web": false,
       "edit": "owned", "shell": "verify+integration", "delegate": false, "guard": "builder"
     },
     "reviewer": {
-      "description": "Performs an independent, read-only review against the approved feature definition and repository constraints",
-      "model": "gpt-5.6-terra", "mode": "subagent", "git": "inspect", "web": false,
+      "model": "gpt-6-sol", "reasoning": "high", "mode": "subagent", "git": "inspect", "web": false,
       "edit": "none", "shell": "none", "delegate": false, "guard": "reviewer"
     },
     "shipper": {
-      "description": "Verifies shipping preconditions, creates a focused commit, and pushes the current branch",
-      "model": "gpt-5.6-luna", "mode": "subagent", "git": "commit", "web": false,
+      "model": "gpt-6-luna", "reasoning": "low", "mode": "subagent", "git": "commit", "web": false,
       "edit": "none", "shell": "none", "delegate": false, "guard": "shipper"
     }
   }

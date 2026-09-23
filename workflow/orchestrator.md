@@ -74,8 +74,8 @@ After feature-definition approval:
   returns a `PLANNING` exploration brief, invoke the requested explorers and return their evidence
   to a fresh planner invocation. Repeat only when new evidence exposes another material unknown;
   do not allow broad or speculative exploration. When the planner returns a complete architecture
-  and implementation plan, present its decisions, slices, traceability, risks, and unresolved
-  choices and obtain explicit plan approval. Record the approved plan as the durable
+  and implementation plan, present its decisions, task graph, commit plan, traceability, risks,
+  and unresolved choices and obtain explicit plan approval. Record the approved plan as the durable
   `## Implementation plan` section of `.ai/work/<work-id>.md`.
 
 If planning evidence contradicts the approved functionality or materially changes its behavior,
@@ -90,12 +90,9 @@ invocation is invalid.
 
 The recorded `## Implementation plan` is the shared source of component boundaries, interfaces,
 dependency direction, data flow, failure semantics, migration strategy, acceptance traceability,
-and verification contract. Delegate each slice by pointing its builder to the relevant plan
-section rather than re-copying it; the task brief adds only what the plan does not already fix —
-the exact slice, owned paths, completion criterion, strongest practical verification, and
-exclusive ownership or parallel group. Prefer vertical slices and parallelize writers only for
-disjoint paths without shared lockfiles, migrations, generated outputs, global formatters, or
-repository-wide side effects.
+task graph, verification contract, and commit plan. Prefer vertical tasks and parallelize writers
+only for disjoint paths without shared lockfiles, migrations, generated outputs, global
+formatters, or repository-wide side effects.
 
 Role definitions are capability profiles, not singletons. Invoke multiple explorers concurrently
 when they have independent investigation lanes. Invoke multiple builders concurrently when their
@@ -110,14 +107,20 @@ task, verification, review, and acceptance state. Follow the work-state guidance
 selection, metadata, collisions, and legacy branch-named files. Keep isolated worktrees under
 `<project-root>/.worktrees/`; never create runtime state under global harness configuration.
 
-Delegate each task with its work-item and plan pointer, owned paths, completion criterion,
-verification, and planned peer scopes. Supply each agent only the context its task needs — the
-applicable `AGENTS.md` constraints and relevant definition or plan section — rather than the
-whole repository or unrelated history. Agents read further sources only when the task genuinely
-requires it. Builders own implementation and executable verification, and return the files they
-changed with evidence. After each task or parallel group, check fresh short status and the
-builders' returned reports for scope and completion; do not read diff content. Stop for changed
-scope, paths outside owned scope, new material decisions, worker failure, or unexpected
+Delegate each task with the applicable `AGENTS.md` constraints and a minimal ephemeral envelope
+projected from the canonical work file. Builders receive one task card, only its referenced
+decisions and acceptance scenarios, dependency outputs, exact owned paths, completion and
+verification criteria, and peer path boundaries. Explorers receive only their purpose, focused
+questions, and necessary constraints; integration builders receive completed-task summaries and
+the integration contract; reviewers receive the approved definition and plan, evidence, and
+complete diff; shippers receive the final commit plan and shipping preconditions. Do not send the
+entire work file, unrelated tasks, or history. Agents read further focused sources only when their
+task genuinely requires it. If an envelope is insufficient, require the agent to report the exact
+missing decision or evidence instead of broadening its context. Builders own implementation and
+executable verification, and return the task ID, changed files, checks, results, and remaining
+risk. After each task or parallel group, update `## Delivery state` by task ID, check fresh short
+status and the builders' returned reports for scope and completion; do not read diff content. Stop
+for changed scope, paths outside owned scope, new material decisions, worker failure, or unexpected
 required-check failure. Conflicting-edit and content review belong to the reviewer.
 
 For multi-builder work, delegate one sequential final builder integration-verification task. It
@@ -139,8 +142,11 @@ keep the file under a soft limit of 1,000 words. `AGENTS.md` remains authoritati
 approval before recording a new material rule that the approved work did not already establish.
 
 Then invoke a fresh reviewer against the approved feature definition, implementation plan,
-actual evidence, and complete diff including any `MEMORY.md` change. The reviewer reads the
-branch diff itself, remains read-only, and does not execute tests or Docker. If blockers remain,
+actual evidence, and complete diff including any `MEMORY.md` change. When a plan exists, require
+it to verify that implemented changes trace to completed task IDs. In every route, require it to
+verify that the proposed commit series maps cleanly to the diff without misleading or inseparable
+boundaries. The reviewer reads the branch diff itself, remains read-only, and does not execute
+tests or Docker. If blockers remain,
 autonomously delegate corrections that stay inside the approved behavior, scope, architecture,
 dependencies, migrations, acceptance criteria, and risk. Reverify and review again. Repeat the
 memory closeout when a correction makes its content stale. Ask before any correction that
@@ -152,8 +158,12 @@ deviations, residual risks, and deferred work. Require explicit feature acceptan
 material FEATURE; QUICK work and bounded BUGFIX work may proceed directly to the shipping gate.
 Feature acceptance authorizes the outcome, not Git operations.
 
-After required acceptance, confirm final branch, short status, approved files, commit message,
-and remote; the reviewer has read the diff and the shipper re-inspects it before committing.
+After required acceptance, confirm final branch, short status, approved files, ordered commit
+groups and messages, and remote; the reviewer has read the diff and the shipper re-inspects it
+before committing. Use the approved plan's commit series when one exists. For QUICK work or a
+bounded BUGFIX without a commit plan, default to one focused commit; the coordinator and shipper
+must not invent a multi-commit decomposition after implementation. Shipping approval authorizes
+the complete displayed commit series and push.
 Require explicit shipping approval, then delegate the Git-only shipper. Never deploy production
 and never imply that an unrun check passed.
 
