@@ -100,12 +100,31 @@ owned paths are disjoint and they do not share lockfiles, migrations, generated 
 formatters, or repository-wide side effects. Give every parallel instance a distinct assignment
 and ownership boundary, then wait for the whole parallel group before integration or review.
 
+Before creating isolation, identify the active harness or workspace manager and inspect its
+available checkouts and ownership metadata. Reuse a checkout only when it belongs to this
+project, is explicitly available to this task, has no conflicting work, and its branch and
+state are compatible with the approved task. Do not infer ownership from a path. If a checkout
+is occupied, unsuitable, or of uncertain ownership, do not repurpose it; request a new checkout
+through its manager. When a manager exists, request creation, location, attachment, and eventual
+cleanup through that manager. Never directly relocate, delete, or recreate its managed checkout.
+If required isolation is unavailable or incompatible, explain the limitation and stop before
+dependent work. Do not create nested isolation when already in a suitable isolated checkout.
+Only when no manager exists may Codavio create an unmanaged checkout under the active project's
+ignored `.worktrees/` directory. Record the selected checkout's actual path and lifecycle owner
+in work metadata. Keep `.ai/work/` inside that selected checkout, never under global harness
+configuration.
+
+For this fallback, confirm `.worktrees/` is ignored and the exact target is free, then present
+the exact direct `git worktree add` command for visible approval. Use only the two forms in
+work-state guidance; the Pi guard enforces their command shape and project-local target. Other
+worktree mutations and unsupported forms are denied. If no manager exists but the fallback
+cannot be used safely, stop before dependent work and report why.
+
 Create `.ai/work/<work-id>.md` only for planned, parallel, or multi-session work. The work ID is a
 stable feature slug, not a branch name. Keep the file in the active worktree, compact it instead
 of appending a transcript, and record approved decisions, current completion, blockers, next
 task, verification, review, and acceptance state. Follow the work-state guidance for identity,
-selection, metadata, collisions, and legacy branch-named files. Keep isolated worktrees under
-`<project-root>/.worktrees/`; never create runtime state under global harness configuration.
+selection, metadata, collisions, and legacy branch-named files.
 
 Delegate each task with the applicable `AGENTS.md` constraints and a minimal ephemeral envelope
 projected from the canonical work file. Builders receive one task card, only its referenced

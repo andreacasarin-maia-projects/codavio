@@ -25,11 +25,51 @@ title: Guest checkout
 route: FEATURE
 status: discovery
 branch: feature/guest-checkout
-worktree: .worktrees/guest-checkout
+worktree: /actual/path/to/selected/checkout
+lifecycle_owner: codex
 ---
 ```
 
-Omit unavailable branch or worktree values, including for a new project. Use the smallest status
+Omit unavailable branch, worktree, or lifecycle owner values, including for a new project. Use
+the manager's identifying name for `lifecycle_owner`, or `unmanaged` for the `.worktrees/`
+fallback. `worktree` is the actual selected checkout path, not a path derived from the work ID or
+branch. Keep the work ID independent of branch and path.
+
+Existing records may omit `worktree` or `lifecycle_owner`; keep them valid and resolve ownership
+prospectively when selecting a checkout. Do not migrate or overwrite their metadata just to add
+these fields. For future work, first identify the active harness or workspace manager. Reuse only
+a checkout that belongs to this project, is explicitly available to this task, has no conflicting
+work, and has compatible branch and state. Do not infer manager ownership from a checkout path.
+If the candidate is occupied, unsuitable, or ownership is uncertain, request a fresh checkout
+from the manager; never repurpose it. Let the manager create, locate, attach, and clean up its
+checkouts. Do not directly relocate, delete, or recreate a managed checkout. If needed isolation
+is unavailable or incompatible, report that and stop before dependent work. Avoid nested isolation
+inside a suitable isolated checkout. Only if no manager exists, use an unmanaged checkout under
+the active project's ignored `.worktrees/` directory. Always keep `.ai/work/` inside the selected
+checkout, regardless of its location.
+
+For the unmanaged fallback, first confirm `.worktrees/` is ignored and the exact target
+`<project-root>/.worktrees/<work-id>` is free. Then request visible approval for exactly one
+direct command in one of these forms:
+
+```sh
+git worktree add -b <new-branch> <project-root>/.worktrees/<work-id>
+git worktree add <project-root>/.worktrees/<work-id> <existing-branch>
+```
+
+Use the first form for a new branch and the second for an existing compatible branch. The Pi
+guard accepts only these forms with a lowercase hyphenated work ID and a target directly under
+the active project's `.worktrees/`; the permission system still asks before execution. Do not
+use force, detach, alternate worktree options, wrappers, chained shell syntax, external paths,
+or any other worktree mutation. If the target is occupied or `.worktrees/` is not ignored,
+stop and report the blocker. Record `worktree` as the resulting checkout path and
+`lifecycle_owner: unmanaged`.
+
+When resuming an item with both fields, use its recorded `worktree` as the selected checkout and
+its `lifecycle_owner` to determine who manages it. Route later location, attachment, or cleanup
+through that owner; never infer a different owner from the path.
+
+Use the smallest status
 that describes the current gate: `discovery`, `definition-approved`, `planning`, `plan-approved`,
 `building`, `review`, `accepted`, `shipped`, `paused`, or `blocked`. Update metadata and compact
 sections in place rather than appending a transcript.

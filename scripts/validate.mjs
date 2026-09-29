@@ -66,6 +66,9 @@ const ROLES = Object.keys(manifest.roles);
 assert.equal(manifest.command, "codavio");
 assert.deepEqual(ROLES, ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]);
 assert.deepEqual(Object.keys(capabilities.roles), ["orchestrator", ...ROLES]);
+assert.equal(capabilities.roles.orchestrator.unmanagedWorktreeFallback, "ask");
+for (const role of ROLES) assert.equal("unmanagedWorktreeFallback" in capabilities.roles[role], false,
+  role + " must not own unmanaged worktree lifecycle");
 for (const [role, capability] of Object.entries(capabilities.roles)) {
   assert.ok(["gpt-6-astra", "gpt-6-sol", "gpt-6-luna"].includes(capability.model),
     role + " has an unsupported model");
@@ -107,7 +110,13 @@ contains("workflow/guidance/memory.md", [
 contains("workflow/guidance/work-state.md", [
   "`.ai/work/<work-id>.md`", "stable, lowercase, hyphenated feature name",
   "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist", "### Task graph",
-  "### Commit plan", "minimal task envelope",
+  "### Commit plan", "minimal task envelope", "lifecycle_owner", "actual selected checkout path",
+  "Do not infer manager ownership from a checkout path", "Only if no manager exists",
+  "stop before dependent work", "Always keep `.ai/work/` inside the selected",
+  "use its recorded `worktree` as the selected checkout", "Route later location, attachment, or cleanup",
+  "first confirm `.worktrees/` is ignored", "Then request visible approval", "git worktree add -b <new-branch>",
+  "git worktree add <project-root>/.worktrees/<work-id> <existing-branch>",
+  "lifecycle_owner: unmanaged",
 ]);
 contains("workflow/capabilities.md", [
   "orchestrator → `work-state.md`", "every role → `memory.md`",
@@ -128,7 +137,7 @@ for (const role of ROLES) {
 }
 contains("workflow/orchestrator.md", [
   "QUICK", "BUGFIX", "FEATURE", "explicit approval", "shipping approval", ".ai/work",
-  ".worktrees", "Implementation plan", "Routing is a mandatory, visible gate",
+  "lifecycle owner", "workspace manager", "Implementation plan", "Routing is a mandatory, visible gate",
   "The analyst is mandatory for every FEATURE", "actual builder invocation",
   "always invoke the analyst first", "definition confidence", "`DISCOVERY` exploration brief",
   "`PLANNING` exploration brief", "explicit feature acceptance", "<work-id>",
@@ -224,7 +233,18 @@ for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"
 contains(generated("opencode/agents/orchestrator.md"), [
   "mode: primary", "\"planner\": allow",
   "## Repository memory", "`AGENTS.md` is authoritative",
+  '"git worktree add *": ask',
 ]);
+assert.ok(!read(generated("opencode/agents/orchestrator.md")).includes('"git worktree add *": allow'),
+  "OpenCode coordinator must ask before unmanaged worktree creation");
+contains(generated("pi/pi/prompts/codavio.md"), [
+  "the exact direct `git worktree add` command for visible approval",
+  "Use only the two forms in", "worktree mutations and unsupported forms are denied",
+]);
+for (const role of ["builder", "reviewer", "shipper"]) {
+  const permissions = read(generated("pi/pi/agents/" + role + ".md"));
+  assert.ok(!permissions.includes('"git worktree add'), role + " must not receive worktree lifecycle permission");
+}
 contains(generated("opencode/agents/planner.md"), [
   "mode: subagent", "edit: deny", "bash: deny",
 ]);
@@ -263,10 +283,30 @@ contains(generated("opencode/commands/codavio.md"), [
   "$ARGUMENTS", "generated into the `orchestrator`", "feature definition", "approved shipping",
 ]);
 contains(generated("pi/pi/prompts/codavio.md"), [
-  "$ARGUMENTS", "`pi-subagents`", "pinned model", "`<project-root>/.worktrees/`",
+  "$ARGUMENTS", "`pi-subagents`", "pinned model",
   "`.ai/work/<work-id>.md`", "Use each role's pinned model and reasoning without a per-run override.",
   ...ROLES,
 ]);
+for (const coordinator of [
+  generated("opencode/agents/orchestrator.md"),
+  generated("pi/pi/prompts/codavio.md"),
+  generated("codex/plugins/codavio/skills/codavio/SKILL.md"),
+]) {
+  const text = read(coordinator).replace(/\s+/g, " ");
+  for (const marker of [
+    "active harness or workspace manager", "Do not infer ownership from a path",
+    "request a new checkout through its manager", "Never directly relocate, delete, or recreate",
+    "Only when no manager exists may Codavio create an unmanaged checkout",
+    "stop before dependent work", "`.ai/work/` inside that selected checkout",
+  ]) assert.ok(text.includes(marker), coordinator + " missing ownership policy " + marker);
+  assert.ok(!text.includes("Create worktrees only under `<project-root>/.worktrees/`"),
+    coordinator + " retains the universal .worktrees/ requirement");
+  assert.ok(read(coordinator).includes([
+    "branch: feature/guest-checkout",
+    "worktree: /actual/path/to/selected/checkout",
+    "lifecycle_owner: codex",
+  ].join("\n")), coordinator + " has invalid work-state example metadata indentation");
+}
 contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
   "name: codavio", "$codavio", "# Codavio", "`gpt-6-astra`", "`gpt-6-sol`",
   "`gpt-6-luna`", "`medium` reasoning", "`high` reasoning", "`low` reasoning",

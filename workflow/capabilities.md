@@ -23,6 +23,7 @@ covers model selection, reasoning effort, and the config/permission layer.
 | `reasoning` | `low` \| `medium` \| `high` | role-specific reasoning effort rendered in each harness's native dialect |
 | `mode` | `primary` \| `subagent` | OpenCode agent mode; only the orchestrator is `primary` |
 | `git` | `none` \| `orient` \| `inspect` \| `commit` | Git access level (see below) |
+| `unmanagedWorktreeFallback` | `ask` (or omitted) | coordinator-only direct `git worktree add` fallback, always requiring visible approval |
 | `web` | boolean | web research tools + the `web-use` guidance |
 | `edit` | `none` \| `work-file` \| `owned` | file-write scope |
 | `shell` | `none` \| `verify` \| `verify+integration` | general (non-Git) shell |
@@ -39,6 +40,11 @@ Guidance docs are **derived** from these fields, not declared (see below).
 - `commit` — `inspect` + `add`, `commit`, `push`. Force-push and `--no-verify` are **denied by the guard**, not allowed here.
 
 Command sets live in `constants.git`.
+
+Only the orchestrator has `unmanagedWorktreeFallback: "ask"`. Its Pi guard accepts the two
+direct add forms documented in the work-state guidance; the generated harness permission asks
+for approval. All other worktree mutations remain denied, and workers receive no worktree
+lifecycle permission.
 
 ### `edit` scope
 
@@ -64,6 +70,7 @@ without an AI classifier don't prompt on every common test command. It is expect
 | `reasoning` | `reasoningEffort: <level>` | `thinking: <level>` | `thinking: <level>` delegation argument in generated skill prose |
 | `mode` | `mode: <value>` | (main session vs subagent) | n/a |
 | `git: <level>` | `bash` base `deny` + `constants.git[level]` allows (each as `"<cmd>"` and `"<cmd> *"`) | `bash` tool + role guard restricting to the level | prose ("reads the diff" / "Git-only shipping") |
+| `unmanagedWorktreeFallback: ask` | `git worktree add *: ask` | direct approved add forms reach visible ask; guard denies other forms | coordinator work-state instructions |
 | `web: true` | `webfetch/websearch: allow` | `web_search,fetch_content,get_search_content` in `tools:` | — |
 | `web: false` | `webfetch/websearch: deny` | omit web tools | — |
 | `edit: owned` | `edit: allow` | `edit,write` in `tools:` | prose ("modify owned paths") |

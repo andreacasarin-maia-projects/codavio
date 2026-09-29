@@ -99,7 +99,8 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 - Explorer and builder roles are reusable capability profiles rather than singletons:
   independent explorer lanes may run concurrently, and multiple builders may run
   concurrently when their write scopes and side effects are disjoint.
-- All isolated Git worktrees must be created under the active project root in ignored `.worktrees/`; never create a worktree outside the project.
+- Isolation follows the active harness or workspace manager's checkout lifecycle when available; `.worktrees/` is the unmanaged fallback only when no manager exists. See the canonical ownership policy in `workflow/orchestrator.md`.
+- When no manager exists, the coordinator confirms `.worktrees/` is ignored and the target is free, then requests visible approval for one of the two direct project-local `git worktree add` forms in the canonical work-state guidance. Unsupported forms and other worktree mutations are denied.
 - The conversation is not the source of truth. Planned, parallel, or multi-session work uses a compact living feature-named work item independent of its branch name.
 - The work file is the single durable planning artifact. Coordinators project minimal role-specific
   task envelopes from it instead of sending lower-capability workers the whole plan or history.
@@ -289,11 +290,11 @@ Only planned, parallel, or multi-session work needs a file:
 .ai/work/<work-id>.md
 ```
 
-The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, route, status, branch, and worktree when available. The file contains the leadership brief, discovery map, approved feature definition, durable `## Implementation plan`, delivery state, verification, review, acceptance, and shipping state. The implementation plan contains architecture decisions, builder-sized task cards, integration verification, and the commit plan, all connected by stable IDs. The coordinator keeps this file canonical and sends each worker only a minimal projection containing its task and relevant references. Compact sections are rewritten rather than appended as a transcript.
+The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, route, status, branch, actual selected checkout path, and lifecycle owner when available. Existing records that lack checkout metadata remain valid and are resolved prospectively. The file contains the leadership brief, discovery map, approved feature definition, durable `## Implementation plan`, delivery state, verification, review, acceptance, and shipping state. The implementation plan contains architecture decisions, builder-sized task cards, integration verification, and the commit plan, all connected by stable IDs. The coordinator keeps this file canonical and sends each worker only a minimal projection containing its task and relevant references. Compact sections are rewritten rather than appended as a transcript.
 
 Multiple work items may coexist. Codavio resolves an explicit work ID first, then matching branch or worktree metadata, then a sole active item; ambiguous candidates require selection. Existing `.ai/work/<branch-slug>.md` files remain recognized as legacy state and are never silently overwritten or renamed.
 
-The workflow creates `.ai/work/` on demand under the active Git worktree. Global installation never creates runtime project state.
+The workflow creates feature-named `.ai/work/` state on demand under the selected Git worktree, independent of branch naming. Global installation never creates runtime project state.
 
 Quick changes usually need no work file. A bug fix only gets one if it becomes multi-session or expands beyond a bounded fix. Git, verification evidence, and the PR remain the durable history.
 
@@ -301,7 +302,7 @@ Quick changes usually need no work file. A bug fix only gets one if it becomes m
 
 - QUICK: current branch if clean and low risk.
 - BUGFIX: current branch if clean and bounded.
-- FEATURE: isolated branch and worktree under ignored `.worktrees/`.
+- FEATURE: isolated branch and worktree selected through the active harness or workspace manager; use ignored `.worktrees/` only when no manager exists.
 - Parallel writers: shared worktree only for explicit disjoint paths without repository-wide side effects.
 - Dirty repository with unrelated changes: stop for confirmation or isolate from clean `HEAD`.
 

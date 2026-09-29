@@ -47,7 +47,8 @@ function ocGit(level) {
 function ocBash(role) {
   const c = CAPABILITIES.roles[role];
   if (c.shell === "none" && c.git === "none") return ["  bash: deny"];
-  if (c.shell === "none") return ["  bash:", `    "*": deny`, ...ocGit(c.git)];
+  if (c.shell === "none") return ["  bash:", `    "*": deny`, ...ocGit(c.git),
+    ...(c.unmanagedWorktreeFallback === "ask" ? [`    "git worktree add *": ask`] : [])];
   const bs = CAPABILITIES.constants.builderShell;
   const lines = ["  bash:", `    "*": ask`, ...ocExpand(bs.fileOps),
     ...bs.redirect.map((r) => `    "${r}": allow`), ...ocExpand(bs.verification), ...ocExpand(bs.dockerRead)];
@@ -115,7 +116,7 @@ function piExpand(commands) {
 }
 function piGit(level) {
   const inspect = [...piExpand(["git status", "git diff", "git log"]),
-    `    "git worktree": allow`, `    "git worktree list": allow`];
+    `    "git worktree list": allow`, `    "git worktree list *": allow`];
   if (level === "inspect") return inspect;
   return [...inspect,
     `    "git add": allow`, `    "git add *": allow`,
@@ -210,8 +211,7 @@ function piPrompt(roles) {
     "Do not delegate to any other role or allow nested delegation.",
     "",
     "For delegated command work, specify the narrowest direct repository command required.",
-    "Create worktrees only under " + CODE + "<project-root>/.worktrees/" + CODE + " and keep compact state at",
-    CODE + ".ai/work/<work-id>.md" + CODE + " in the active worktree.",
+    "Keep compact state at " + CODE + ".ai/work/<work-id>.md" + CODE + " in the active worktree.",
     "", orchestratorBody(),
   ].join("\n");
 }
