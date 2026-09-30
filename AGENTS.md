@@ -31,4 +31,5 @@ This project builds a stable, testable, and repeatable AI development workflow t
 ## Installer Gotchas
 
 - Installer links individual agents, commands, skills, and generated `build/opencode/AGENTS.md` into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`, preserving unrelated global OpenCode files.
+- Re-running the installer refreshes current generated definitions and prunes only obsolete OpenCode symlinks proven to target this checkout or its former `ai-dev-workflow` sibling; it must preserve unrelated files, backups, caches, and project runtime state.
 - Existing destinations abort installation. `--force` moves each conflict at a current managed destination to `<destination>.backup`; an existing backup also aborts rather than being overwritten. After adding or renaming commands, rerun the installer and then restart OpenCode; configuration changes require a restart.

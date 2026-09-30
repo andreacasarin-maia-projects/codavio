@@ -9,7 +9,6 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD = path.join(ROOT, "build");
 const SUPPORTED = ["opencode", "pi", "codex"];
-const RETIRED_OPENCODE_ROLES = ["planner"];
 
 function usage() { console.error("Usage: node scripts/install.mjs <opencode|pi|codex|all> [--force]"); }
 
@@ -130,17 +129,38 @@ function openCodePaths(target) {
   return pairs;
 }
 
-function removeRetiredOpenCodeRoles(target) {
-  for (const role of RETIRED_OPENCODE_ROLES) {
-    const destination = path.join(target, "agents", role + ".md");
-    const managedSources = [
-      path.join(BUILD, "opencode/agents", role + ".md"),
-      path.join(ROOT, ".opencode/agents", role + ".md"),
-    ];
-    if (managedSources.some((source) => exactTextLink(destination, source))) {
+function isWithin(root, target) {
+  const relative = path.relative(root, target);
+  return relative === "" || (!relative.startsWith(".." + path.sep) && !path.isAbsolute(relative));
+}
+
+function pruneObsoleteOpenCodeLinks(target) {
+  const definition = manifest();
+  const expected = {
+    agents: new Set([...definition.harnesses.opencode.roles, "orchestrator"].map((role) => role + ".md")),
+    commands: new Set([definition.command + ".md"]),
+    skills: new Set(Object.values(definition.roleSkills)),
+  };
+  const managedRoots = [ROOT, path.join(path.dirname(ROOT), "ai-dev-workflow")];
+  const removed = [];
+
+  for (const [directory, names] of Object.entries(expected)) {
+    const parent = path.join(target, directory);
+    if (!fs.existsSync(parent)) continue;
+    for (const name of fs.readdirSync(parent)) {
+      if (names.has(name)) continue;
+      const destination = path.join(parent, name);
+      let stat;
+      try { stat = fs.lstatSync(destination); } catch { continue; }
+      if (!stat.isSymbolicLink()) continue;
+      const source = path.resolve(path.dirname(destination), fs.readlinkSync(destination));
+      if (!managedRoots.some((root) => isWithin(root, source))) continue;
       fs.unlinkSync(destination);
+      removed.push(path.relative(target, destination));
     }
   }
+
+  if (removed.length) console.log("Removed obsolete Codavio links: " + removed.join(", "));
 }
 
 function installOpenCode(force) {
@@ -148,8 +168,8 @@ function installOpenCode(force) {
   const target = path.join(configRoot, "opencode");
   const pairs = openCodePaths(target);
   for (const [source, destination, legacy] of pairs) checkDestination(source, destination, force, legacy);
-  removeRetiredOpenCodeRoles(target);
   for (const [source, destination, legacy] of pairs) linkDestination(source, destination, force, legacy);
+  pruneObsoleteOpenCodeLinks(target);
   console.log("Linked Codavio into " + target);
   console.log("Start with: /codavio <request> (compatibility launcher for codavio-orchestrate)");
   console.log("Restart OpenCode after repository updates.");

@@ -248,8 +248,12 @@ node scripts/install.mjs all
 ```
 
 The unified Node installer resolves all required executables, regenerates build outputs,
-and then changes the selected harness. It is the only installer; each target uses
-its native installation mechanism behind the same interface.
+and then changes the selected harness. It is also the refresh path: rerunning it replaces the Pi
+package and Codex plugin through their native installers, while OpenCode prunes obsolete agent,
+command, and skill links only when their targets are proven to belong to this checkout or its
+former `ai-dev-workflow` sibling. Unrelated files, backups, project `.ai/work/` state, and harness
+caches are preserved. Pass `--force` only to apply the existing conflict-backup behavior for
+current destinations.
 
 ## Canonical workflow sources
 

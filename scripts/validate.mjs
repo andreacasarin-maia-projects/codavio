@@ -569,6 +569,24 @@ try {
       path.join(BUILD, "opencode/skills", skill));
   }
 
+  const obsoleteCommand = path.join(installed, "commands", "dev.md");
+  const obsoleteSkill = path.join(installed, "skills", "testing-policy");
+  fs.symlinkSync(path.join(ROOT, ".opencode/commands/dev.md"), obsoleteCommand);
+  fs.symlinkSync(path.join(ROOT, ".opencode/skills/testing-policy"), obsoleteSkill);
+  const unrelatedSource = path.join(temporary, "unrelated-agent.md");
+  const unrelatedAgent = path.join(installed, "agents", "unrelated.md");
+  fs.writeFileSync(unrelatedSource, "unrelated");
+  fs.symlinkSync(unrelatedSource, unrelatedAgent);
+  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
+    env: { ...process.env, XDG_CONFIG_HOME: temporary },
+  });
+  assert.throws(() => fs.lstatSync(obsoleteCommand), { code: "ENOENT" },
+    "OpenCode refresh retained an obsolete managed command link");
+  assert.throws(() => fs.lstatSync(obsoleteSkill), { code: "ENOENT" },
+    "OpenCode refresh retained an obsolete managed skill link");
+  assert.equal(linkTarget(path.relative(ROOT, unrelatedAgent)), unrelatedSource,
+    "OpenCode refresh removed an unrelated link");
+
   fs.rmSync(path.join(BUILD, "pi"), { recursive: true, force: true });
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "pi"], {
     env: { ...process.env, NPM_BIN: fakeCli, PI_BIN: fakeCli, FAKE_CLI_LOG: fakeLog },
