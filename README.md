@@ -36,7 +36,7 @@ Repository tooling and installation require Node.js 22.6 or newer.
 ## How it works
 
 ```text
-/codavio
+codavio-orchestrate
   → coordinator visibly starts with Builder, Analyst, or Designer
   → Designer resolves material product or domain choices only when needed
   → approve a material product definition
@@ -61,6 +61,24 @@ Role behavior:
   test execution, integration verification, and approved Docker execution, and performs a final simplification pass. Multiple builder instances require design-independent work and disjoint ownership.
 - Reviewer remains evidence-only and read-only, and blocks unjustified production machinery.
 - Builder may auto-run verb-first `docker compose run`, `docker compose exec`, and `docker compose restart`; global selectors before the verb (`-p`, `--env-file`, `-f`, `--project-directory`, `--profile`, and `--project-name`) ask, and `docker compose pull`, `up`, `down`, and resource removal ask.
+
+Each native role is a least-privilege authority kernel that explicitly loads one portable
+procedure skill:
+
+| Skill | Role |
+|---|---|
+| `codavio-orchestrate` | orchestrator |
+| `codavio-design` | designer |
+| `codavio-analyze` | analyst |
+| `codavio-explore` | explorer |
+| `codavio-build` | builder |
+| `codavio-review` | reviewer |
+| `codavio-ship` | shipper |
+
+Workflow entry is explicit; Codex metadata also disables implicit skill invocation. Once started,
+orchestration remains active and reloads `codavio-orchestrate` on every subsequent turn until
+completion or an explicit pause, cancel, or exit. Corrections and deviations are routed back
+through roles; they never authorize the orchestrator to perform role work itself.
 
 Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 
@@ -96,7 +114,7 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 - Explorer and builder roles are reusable capability profiles rather than singletons:
   independent explorer lanes may run concurrently, and multiple builders may run
   concurrently when their write scopes and side effects are disjoint.
-- Isolation follows the active harness or workspace manager's checkout lifecycle when available; `.worktrees/` is the unmanaged fallback only when no manager exists. See the canonical ownership policy in `workflow/orchestrator.md`.
+- Isolation follows the active harness or workspace manager's checkout lifecycle when available; `.worktrees/` is the unmanaged fallback only when no manager exists. See the canonical ownership policy in `skills/codavio-orchestrate/references/work-state.md`.
 - When no manager exists, the coordinator confirms `.worktrees/` is ignored and the target is free, then requests visible approval for one of the two direct project-local `git worktree add` forms in the canonical work-state guidance. Unsupported forms and other worktree mutations are denied.
 - The conversation is not the source of truth. Planned, parallel, or multi-session work uses a compact living feature-named work item independent of its branch name.
 - The work file is the single durable planning artifact. Coordinators project minimal role-specific
@@ -132,7 +150,10 @@ cd codavio
 node scripts/install.mjs opencode
 ```
 
-The installer first generates ignored `build/opencode` artifacts, then symlinks its agents, command, and minimal global behavioral baseline into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After adding or renaming commands, rerun the installer and then restart OpenCode to reload them. Configuration changes require an OpenCode restart.
+The installer first generates ignored `build/opencode` artifacts, then symlinks its agents,
+skills, compatibility command, and minimal global behavioral baseline into
+`${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After changing definitions, rerun the installer and
+restart OpenCode.
 
 Unrelated existing files are preserved. `node scripts/install.mjs opencode --force` moves conflicts at current managed destinations to a sibling `.backup` path before linking.
 
@@ -173,6 +194,8 @@ role routing table; use
 `/subagents-models` after restarting Pi to inspect the live mapping.
 
 Pi must run in a trusted repository: its package extensions do not provide a sandbox. They do not infer GET/POST semantics, and allowed project scripts may have side effects. Start the workflow with `/codavio <request>`, inspect or list state with `/workflow-status [work-id]`, and use `.ai/work/<work-id>.md` for planned, parallel, or multi-session work. For remote work, keep Pi attached to SSH and use `tmux` so the session survives disconnects.
+The native skill entry is `/skill:codavio-orchestrate <request>`; `/codavio` remains the
+compatibility prompt.
 
 ## Install in Codex
 
@@ -188,13 +211,14 @@ The installer generates and registers the marketplace under `build/codex/`, inst
 use `node scripts/install.mjs codex --force` to move it to `AGENTS.md.backup` first. An
 existing backup is never overwritten. If `codavio` is already registered from a
 different marketplace path, `--force` replaces that marketplace entry as well.
-The generated skill routes each worker delegation to its matching `references/<role>.md`
-brief inside the installed plugin.
+The generated `codavio-orchestrate` skill routes each worker delegation to its matching
+`references/<role>.md` brief inside the installed plugin. Every brief explicitly loads its own
+portable role skill.
 
 Start a new Codex task after installation and invoke the workflow explicitly:
 
 ```text
-$codavio <request>
+$codavio-orchestrate <request>
 ```
 
 Implicit invocation is disabled. Select `gpt-6-sol` with `medium` reasoning for the main
@@ -209,13 +233,13 @@ rules remain independent checks.
 
 | Harness | Entry point | Purpose |
 |---|---|---|
-| OpenCode | `/codavio` | Orchestrate analysis through approved shipping |
-| Pi | `/codavio` | Orchestrate analysis through approved shipping |
-| Codex | `$codavio` | Explicitly run the Codex skill |
+| OpenCode | `/codavio` | Compatibility command that enters the orchestrator role |
+| Pi | `/skill:codavio-orchestrate` | Explicitly run the portable orchestration skill |
+| Codex | `$codavio-orchestrate` | Explicitly run the portable orchestration skill |
 
 Codex reserves slash commands for its own interface. Installed workflows are skills, so
-Codavio uses the platform-native `$codavio` mention there; `/skills` opens the Codex skill
-selector.
+Codavio uses the platform-native `$codavio-orchestrate` mention there; `/skills` opens the Codex
+skill selector. `$codavio` remains a thin compatibility launcher.
 
 Install every supported harness after their CLIs are available:
 
@@ -229,21 +253,23 @@ its native installation mechanism behind the same interface.
 
 ## Canonical workflow sources
 
-Shared workflow behavior lives under `workflow/`:
+Canonical behavior is split by concern:
 
-- `workflow/orchestrator.md` defines routing, approvals, planning, implementation,
-  verification, review, correction, and shipping behavior.
-- `workflow/roles/*.md` defines the six reusable role contracts.
-- `workflow/guidance/*.md` contains focused work-state, repository-memory, code-quality,
-  implementation, verification, and web-research guidance composed only into the roles that need
-  it.
-- `workflow/manifest.json` declares the command, roles, and supported harnesses.
+- `skills/codavio-*/SKILL.md` are Portable Agent Skill directories and define each role's
+  procedure. The orchestration skill owns work-state and repository-memory references.
+- `workflow/orchestrator.md` and `workflow/roles/*.md` are small persistent authority kernels:
+  they enforce boundaries, load the assigned skill, and fail closed if it is unavailable.
+- `workflow/guidance/*.md` contains shared code-quality, implementation, verification, and
+  web-research guidance composed only into the native roles that need it.
+- `workflow/manifest.json` declares the command, roles, supported harnesses, and exact
+  `roleSkills` mapping. `workflow/capabilities.json` owns model and permission policy.
 
 `scripts/generate.mjs` combines those canonical sources with frontmatter-only native
-definitions under `adapters/`. It writes installable artifacts only to ignored
+definitions under `adapters/`. It copies the portable skills and writes installable artifacts
+only to ignored
 `build/opencode`, `build/pi`, and `build/codex`, preserving OpenCode models and
 permissions, Pi tools and permission policies, and Codex skill metadata without
-duplicating behavioral prompts.
+embedding skill procedures into generated roles.
 
 `templates/AGENTS.global.md` intentionally contains only universal behavioral
 guidelines: load repository memory with lower precedence than `AGENTS.md`, think before

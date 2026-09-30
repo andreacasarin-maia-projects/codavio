@@ -50,6 +50,17 @@ function linkTarget(relative) {
 }
 
 function generated(relative) { return path.join("build", relative); }
+function skillFor(role) { return manifest.roleSkills[role]; }
+function skillSource(role) { return "skills/" + skillFor(role) + "/SKILL.md"; }
+function skillBody(role) {
+  const text = read(skillSource(role));
+  return text.slice(text.indexOf("\n---\n", 4) + 5).trim();
+}
+function guidancePath(name) {
+  return name === "memory"
+    ? "skills/" + skillFor("orchestrator") + "/references/memory.md"
+    : "workflow/guidance/" + name + ".md";
+}
 function expectedGuidance(role) {
   const capability = json("workflow/capabilities.json").roles[role];
   const docs = ["memory"];
@@ -63,18 +74,24 @@ function assertRoleArtifact(role, relative, harness) {
   const artifact = read(generated(relative));
   contains(generated(relative), [read("workflow/roles/" + role + ".md").trim()]);
   for (const guidance of expectedGuidance(role)) {
-    contains(generated(relative), [read("workflow/guidance/" + guidance + ".md").trim()]);
+    contains(generated(relative), [read(guidancePath(guidance)).trim()]);
   }
   for (const other of ROLES) {
     if (other === role) continue;
     assert.ok(!artifact.includes(read("workflow/roles/" + other + ".md").trim()),
       relative + " embeds the " + other + " role body");
   }
+  for (const worker of ROLES) {
+    assert.ok(!artifact.includes(skillBody(worker)),
+      relative + " embeds the " + worker + " skill procedure");
+  }
+  contains(generated(relative), [skillFor(role), "load", "stop"]);
   const capability = json("workflow/capabilities.json").roles[role];
   if (harness === "opencode") {
     contains(generated(relative), [
       "model: openai/" + capability.model,
       "reasoningEffort: " + capability.reasoning,
+      `"${skillFor(role)}": allow`,
       "webfetch: " + (capability.web ? "allow" : "deny"),
       "websearch: " + (capability.web ? "allow" : "deny"),
     ]);
@@ -83,6 +100,9 @@ function assertRoleArtifact(role, relative, harness) {
       "model: openai/" + capability.model,
       "thinking: " + capability.reasoning,
       "inheritProjectContext: false",
+      "inheritSkills: false",
+      "skills: " + skillFor(role),
+      "skillPath: ../../skills",
     ]);
   } else {
     contains(generated(relative), [
@@ -101,12 +121,12 @@ run(process.execPath, [path.join(ROOT, "scripts/generate.mjs"), "--check"]);
 assert.equal(run("git", ["status", "--porcelain"]).stdout, beforeGeneration,
   "generation changed Git-tracked files");
 const staleCodexAggregate = path.join(BUILD,
-  "codex/plugins/codavio/skills/codavio/references/roles.md");
+  "codex/plugins/codavio/skills/codavio-orchestrate/references/roles.md");
 fs.writeFileSync(staleCodexAggregate, "stale aggregate");
 const staleAggregateCheck = fails(process.execPath,
   [path.join(ROOT, "scripts/generate.mjs"), "--check"]);
 assert.ok((staleAggregateCheck.stderr + staleAggregateCheck.stdout).includes(
-  "UNEXPECTED: build/codex/plugins/codavio/skills/codavio/references/roles.md"),
+  "UNEXPECTED: build/codex/plugins/codavio/skills/codavio-orchestrate/references/roles.md"),
   "check mode did not identify the obsolete Codex aggregate");
 run(process.execPath, [path.join(ROOT, "scripts/generate.mjs")]);
 assert.equal(fs.existsSync(staleCodexAggregate), false,
@@ -116,10 +136,23 @@ run(process.execPath, [path.join(ROOT, "scripts/generate.mjs"), "--check"]);
 const manifest = json("workflow/manifest.json");
 const capabilities = json("workflow/capabilities.json");
 const ROLES = Object.keys(manifest.roles);
+const ALL_ROLES = ["orchestrator", ...ROLES];
+const ROLE_SKILLS = {
+  orchestrator: "codavio-orchestrate",
+  designer: "codavio-design",
+  analyst: "codavio-analyze",
+  explorer: "codavio-explore",
+  builder: "codavio-build",
+  reviewer: "codavio-review",
+  shipper: "codavio-ship",
+};
+const SKILLS = Object.values(ROLE_SKILLS);
 assert.equal(manifest.command, "codavio");
 assert.deepEqual(ROLES, ["designer", "analyst", "explorer", "builder", "reviewer", "shipper"]);
+assert.deepEqual(manifest.roleSkills, ROLE_SKILLS);
+assert.deepEqual(names("skills"), [...SKILLS].sort());
 assert.deepEqual(names("workflow/roles"), ROLES.map((role) => role + ".md").sort());
-assert.deepEqual(Object.keys(capabilities.roles), ["orchestrator", ...ROLES]);
+assert.deepEqual(Object.keys(capabilities.roles), ALL_ROLES);
 assert.equal(capabilities.roles.orchestrator.unmanagedWorktreeFallback, "ask");
 for (const role of ROLES) assert.equal("unmanagedWorktreeFallback" in capabilities.roles[role], false,
   role + " must not own unmanaged worktree lifecycle");
@@ -158,12 +191,12 @@ contains("workflow/guidance/verification.md", [
 contains("workflow/guidance/web-use.md", [
   "Web research guidance", "official or primary sources", "Never paste whole pages",
 ]);
-contains("workflow/guidance/memory.md", [
+contains("skills/codavio-orchestrate/references/memory.md", [
   "## Repository memory", "applicable `AGENTS.md` files first",
   "Read root `MEMORY.md` after those files when it exists", "`AGENTS.md` is authoritative",
   "Report conflicting memory as stale",
 ]);
-contains("workflow/guidance/work-state.md", [
+contains("skills/codavio-orchestrate/references/work-state.md", [
   "`.ai/work/<work-id>.md`", "stable, lowercase, hyphenated feature name",
   "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist",
   "A bounded change may contain one task", "minimal ephemeral envelope", "lifecycle_owner", "actual selected checkout path",
@@ -179,11 +212,7 @@ contains("workflow/guidance/work-state.md", [
   "Legacy records may retain a `route`", "current blockers and the next task explicit",
   "worker failure, or unexpected required-check failure",
 ]);
-contains("workflow/capabilities.md", [
-  "orchestrator → `work-state.md`", "every role → `memory.md`",
-  "analyst, builder, and reviewer → `code-quality.md`",
-  "builder gets memory, code quality, implementation", "reviewer gets memory, code quality",
-]);
+contains("workflow/capabilities.md", ["roleSkills", "Portable Agent Skill", "native `skill` permission"]);
 contains("templates/AGENTS.global.md", [
   "Think Before Coding", "Simplicity First", "Surgical Changes", "Goal-Driven Execution",
   "repository-root `MEMORY.md`", "`AGENTS.md` is authoritative",
@@ -195,34 +224,43 @@ for (const forbidden of ["/codavio", "/dev", "builder", "docker compose", ".work
 for (const role of ROLES) {
   assert.match(read("workflow/roles/" + role + ".md"), /do not[\s\S]{0,200}delegate/i,
     "workflow/roles/" + role + ".md must forbid delegation");
+  contains("workflow/roles/" + role + ".md", [skillFor(role), "load", "stop"]);
 }
 contains("workflow/orchestrator.md", [
-  "`Start: Builder`", "`Start: Analyst`", "`Start: Designer`", "Silence is never approval", "shipping approval",
-  "matching compact work item and completed approvals", "smallest implementation brief",
-  "execution choice, not a persistent request taxonomy",
-  "Before checkout-dependent work, apply the complete checkout ownership",
-  "role-specific envelopes and stop rules in", "On conflicts, failures, changed scope",
-  "actual builder invocation", "high-confidence proposed definition", "focused exploration brief",
-  "Prefer one builder", "designs are independent", "repository-memory closeout",
-  "Zero is valid", "trace every production change and new concept",
+  "coordination-only", "`codavio-orchestrate`", "every subsequent user turn",
+  "remembered from an earlier turn", "deviation changes routing", "authority. Continue", "stop",
 ]);
 contains("MEMORY.md", ["# Repository memory", "compact living context", "defer to `AGENTS.md`"]);
-contains("workflow/roles/designer.md", [
+contains("skills/codavio-design/SKILL.md", [
   "product and domain design partner", "definition confidence", "`HIGH`", "`MEDIUM`", "`LOW`",
   "Event Storming", "actor and event flows", "proposed definition", "Never treat a recommendation as approval",
 ]);
-contains("workflow/roles/analyst.md", [
+contains("skills/codavio-analyze/SKILL.md", [
   "smallest repository-native implementation brief", "closest exemplary implementation",
   "### Minimum change", "justification for every new abstraction", "Parallel builders require design-independent work",
   "Default to one focused commit", "Stop rather than choosing a new public API",
 ]);
-contains("workflow/roles/reviewer.md", [
+contains("skills/codavio-review/SKILL.md", [
   "readability and simplicity", "performance and resource bounds", "maintained result",
   "approximately 500 lines", "Size alone is not a finding", "fragmented micro-files",
   "`BLOCKER`, `OPTIONAL`, or `FYI`", "smallest acceptable correction",
   "commit plan maps cleanly",
 ]);
-contains("workflow/roles/explorer.md", ["purpose and focused questions", "supply evidence"]);
+contains("skills/codavio-explore/SKILL.md", ["purpose and focused questions", "supply evidence"]);
+contains("skills/codavio-orchestrate/SKILL.md", [
+  "`Start: Builder`", "`Start: Analyst`", "`Start: Designer`", "Silence is never approval",
+  "shipping approval", "Prefer one builder", "repository-memory closeout",
+  "at the beginning of every active turn", "Deviations change routing", "authority.",
+]);
+for (const role of ALL_ROLES) {
+  const relative = skillSource(role);
+  const skillFrontmatter = frontmatter(relative);
+  contains(relative, [
+    "name: " + skillFor(role),
+    "description:",
+  ]);
+  assert.ok(skillFrontmatter.length > 0, relative + " has empty frontmatter");
+}
 contains("pi/extensions/workflow.ts", [
   "work_id", "Report or list AI workflow work-item status", "legacy branch-named state",
   "Work items:",
@@ -231,10 +269,12 @@ contains("pi/extensions/workflow.ts", [
 assert.deepEqual(names(generated("opencode/agents")),
   [...ROLES, "orchestrator"].map((role) => role + ".md").sort());
 assert.deepEqual(names(generated("opencode/commands")), ["codavio.md"]);
+assert.deepEqual(names(generated("opencode/skills")), [...SKILLS].sort());
 assert.equal(fs.existsSync(path.join(BUILD, "opencode/references")), false,
   "OpenCode must use its native agent artifacts without duplicate references");
 assert.deepEqual(names(generated("pi/pi/agents")), ROLES.map((role) => role + ".md").sort());
 assert.deepEqual(names(generated("pi/pi/prompts")), ["codavio.md"]);
+assert.deepEqual(names(generated("pi/skills")), [...SKILLS].sort());
 assert.equal(fs.existsSync(path.join(BUILD, "pi/pi/references")), false,
   "Pi must use its native agent artifacts without duplicate references");
 assert.ok(fs.existsSync(path.join(BUILD, "pi/package.json")));
@@ -246,17 +286,27 @@ assert.ok(fs.existsSync(path.join(BUILD,
   "codex/plugins/codavio/.codex-plugin/plugin.json")));
 assert.ok(fs.existsSync(path.join(BUILD,
   "codex/plugins/codavio/skills/codavio/agents/openai.yaml")));
-const codexReferences = generated("codex/plugins/codavio/skills/codavio/references");
-assert.deepEqual(names(codexReferences), ROLES.map((role) => role + ".md").sort());
+assert.deepEqual(names(generated("codex/plugins/codavio/skills")), ["codavio", ...SKILLS].sort());
+const codexReferences = generated("codex/plugins/codavio/skills/codavio-orchestrate/references");
+assert.deepEqual(names(codexReferences),
+  [...ROLES.map((role) => role + ".md"), "memory.md", "work-state.md"].sort());
 assert.equal(fs.existsSync(path.join(BUILD,
-  "codex/plugins/codavio/skills/codavio/references/roles.md")), false,
+  "codex/plugins/codavio/skills/codavio-orchestrate/references/roles.md")), false,
   "Codex generated tree contains no aggregate role brief");
+
+for (const skill of SKILLS) {
+  for (const harnessRoot of ["opencode/skills", "pi/skills"]) {
+    contains(generated(harnessRoot + "/" + skill + "/SKILL.md"), ["name: " + skill]);
+  }
+  contains(generated("codex/plugins/codavio/skills/" + skill + "/agents/openai.yaml"),
+    ["allow_implicit_invocation: false"]);
+}
 
 for (const role of ROLES) {
   assertRoleArtifact(role, "opencode/agents/" + role + ".md", "opencode");
   assertRoleArtifact(role, "pi/pi/agents/" + role + ".md", "pi");
   assertRoleArtifact(role,
-    "codex/plugins/codavio/skills/codavio/references/" + role + ".md", "codex");
+    "codex/plugins/codavio/skills/codavio-orchestrate/references/" + role + ".md", "codex");
   const description = manifest.roles[role].description;
   contains(generated("opencode/agents/" + role + ".md"),
     ["description: " + description, "mode: subagent"]);
@@ -277,6 +327,8 @@ for (const role of ROLES) {
     "external_directory: deny",
   ]);
   assert.match(openCodeFrontmatter, /permission:/);
+  assert.ok(openCodeFrontmatter.includes("  skill:\n    \"*\": deny\n    \"" +
+    skillFor(role) + "\": allow"), role + " OpenCode skill policy differs");
   assert.equal(openCodeFrontmatter.includes("  task: deny"), role !== "orchestrator",
     role + " OpenCode delegation permission differs");
   if (capability.edit === "owned") assert.ok(openCodeFrontmatter.includes("edit: allow"));
@@ -298,6 +350,9 @@ for (const role of ROLES) {
   const piFrontmatter = frontmatter(generated("pi/pi/agents/" + role + ".md"));
   assert.ok(piFrontmatter.includes("permission:\n  tools:"));
   assert.ok(piFrontmatter.includes("maxSubagentDepth: 0"));
+  assert.ok(piFrontmatter.includes("inheritSkills: false"));
+  assert.ok(piFrontmatter.includes("skills: " + skillFor(role)));
+  assert.ok(piFrontmatter.includes("skillPath: ../../skills"));
   const expectedPiTools = ["read", "grep", "find", "ls"];
   if (capability.web) expectedPiTools.push("web_search", "fetch_content", "get_search_content");
   if (capability.edit === "owned") expectedPiTools.push("edit", "write");
@@ -313,25 +368,17 @@ for (const role of ROLES) {
       role + " Pi guard extension is missing");
   }
 }
-const returnEvidence = {
-  designer: "Return a compact proposed definition",
-  analyst: "Produce a compact implementation brief",
-  explorer: "Return only material findings",
-  builder: "Return the task ID, changed files",
-  reviewer: "Findings return",
-  shipper: "Report every commit",
-};
 const codexBoundaries = {
   designer: "Remain read-only",
   analyst: "Remain read-only",
-  explorer: "without editing files",
-  builder: "Do not run Git",
+  explorer: "Remain read-only",
+  builder: "do not run Git",
   reviewer: "Remain read-only",
   shipper: "Remain Git-only",
 };
 for (const role of ROLES) {
-  contains(generated("codex/plugins/codavio/skills/codavio/references/" + role + ".md"),
-    [returnEvidence[role], codexBoundaries[role], "selected active worktree", "exact owned paths",
+  contains(generated("codex/plugins/codavio/skills/codavio-orchestrate/references/" + role + ".md"),
+    [skillFor(role), codexBoundaries[role], "selected active worktree", "exact owned paths",
       "applicable `AGENTS.md` constraints", "referenced decisions and acceptance scenarios",
       "peer path boundaries", "requested return evidence"]);
 }
@@ -369,7 +416,8 @@ for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"
 }
 contains(generated("opencode/agents/orchestrator.md"), [
   "mode: primary", "\"designer\": allow",
-  "## Repository memory", "`AGENTS.md` is authoritative",
+  "`codavio-orchestrate`", "every subsequent user turn",
+  '"codavio-orchestrate": allow',
   '"git worktree add *": ask',
 ]);
 for (const role of ROLES) {
@@ -378,8 +426,8 @@ for (const role of ROLES) {
 assert.ok(!read(generated("opencode/agents/orchestrator.md")).includes('"git worktree add *": allow'),
   "OpenCode coordinator must ask before unmanaged worktree creation");
 contains(generated("pi/pi/prompts/codavio.md"), [
-  "Then request visible approval", "Use the first form for a new branch",
-  "any other worktree mutation.",
+  "load the `codavio-orchestrate` skill", "Reload it at the beginning of every subsequent turn",
+  "stop instead of performing role work yourself",
 ]);
 for (const role of ["builder", "reviewer", "shipper"]) {
   const permissions = read(generated("pi/pi/agents/" + role + ".md"));
@@ -407,6 +455,7 @@ assert.equal(packageJson.repository.url,
   "git+https://github.com/andreacasarin-maia-projects/codavio.git");
 assert.equal(packageJson.dependencies["pi-subagents"], "0.35.1");
 assert.deepEqual(packageJson.pi.subagents.agents, ["./pi/agents"]);
+assert.deepEqual(packageJson.pi.skills, ["./skills"]);
 assert.equal(packageJson.scripts.generate, "node scripts/generate.mjs");
 assert.equal(packageJson.scripts.validate, "node scripts/validate.mjs");
 
@@ -429,9 +478,8 @@ contains(generated("pi/pi/prompts/codavio.md"), [
   ...ROLES,
 ]);
 for (const coordinator of [
-  generated("opencode/agents/orchestrator.md"),
-  generated("pi/pi/prompts/codavio.md"),
-  generated("codex/plugins/codavio/skills/codavio/SKILL.md"),
+  "skills/codavio-orchestrate/references/work-state.md",
+  generated("codex/plugins/codavio/skills/codavio-orchestrate/references/work-state.md"),
 ]) {
   const text = read(coordinator).replace(/\s+/g, " ");
   for (const marker of [
@@ -451,9 +499,9 @@ for (const coordinator of [
     "lifecycle_owner: codex",
   ].join("\n")), coordinator + " has invalid work-state example metadata indentation");
 }
-const codexSkillPath = generated("codex/plugins/codavio/skills/codavio/SKILL.md");
+const codexSkillPath = generated("codex/plugins/codavio/skills/codavio-orchestrate/SKILL.md");
 contains(codexSkillPath, [
-  "name: codavio", "$codavio", "# Codavio", "`gpt-6-astra`", "`gpt-6-sol`",
+  "name: codavio-orchestrate", "# Codavio orchestration runtime", "`gpt-6-astra`", "`gpt-6-sol`",
   "`gpt-6-luna`", "`medium` reasoning", "`high` reasoning", "`low` reasoning",
   "`fork_turns: \"none\"`", "Load exactly one matching role brief for each delegation:",
 ]);
@@ -463,18 +511,21 @@ const codexRoutes = [...codexSkillText.matchAll(/\[([a-z]+)\]\(references\/([a-z
 assert.equal(codexRoutes.length, ROLES.length, "Codex skill must have one role route per worker");
 assert.deepEqual(codexRoutes.map((match) => [match[1], match[2]]), ROLES.map((role) => [role, role]));
 assert.ok(!codexSkillText.includes("roles.md"), "Codex skill retains an aggregate reference");
-contains(generated("codex/plugins/codavio/skills/codavio/references/shipper.md"), [
+contains(generated("codex/plugins/codavio/skills/codavio-orchestrate/references/shipper.md"), [
   "network sandbox escalation", "sandbox_permissions: \"require_escalated\"",
 ]);
-contains(generated("codex/plugins/codavio/skills/codavio/agents/openai.yaml"),
+contains(generated("codex/plugins/codavio/skills/codavio-orchestrate/agents/openai.yaml"),
   ["allow_implicit_invocation: false"]);
-contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
+contains(generated("codex/plugins/codavio/skills/codavio-orchestrate/SKILL.md"), [
   "main session model is selected in Codex", "explorer and shipper",
   "shipper with " + CODE + "gpt-6-luna" + CODE, "shipping approval", "designer",
   "Start: Builder", "Start: Analyst", "Start: Designer", "actual builder invocation",
-  "high-confidence proposed definition", "smallest implementation brief", ".ai/work/<work-id>.md",
+  "high-confidence proposed definition", "smallest implementation brief",
   "Prefer one builder", "repository-memory closeout",
-  "## Repository memory",
+]);
+contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
+  "name: codavio", "compatibility launcher", "activate `codavio-orchestrate`",
+  "Do not perform workflow work from this launcher",
 ]);
 for (const obsolete of [
   "scripts/install.sh", "scripts/install-pi.sh", "scripts/install-codex.sh", "scripts/install.py",
@@ -513,6 +564,10 @@ try {
   }
   assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "commands", "codavio.md"))),
     path.join(BUILD, "opencode/commands/codavio.md"));
+  for (const skill of SKILLS) {
+    assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "skills", skill))),
+      path.join(BUILD, "opencode/skills", skill));
+  }
 
   fs.rmSync(path.join(BUILD, "pi"), { recursive: true, force: true });
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "pi"], {
@@ -533,8 +588,9 @@ try {
   assert.equal(installedPlugin, path.join(installedMarketplace, "plugins/codavio"));
   const installedPluginDefinition = JSON.parse(fs.readFileSync(
     path.join(installedPlugin, ".codex-plugin/plugin.json"), "utf8"));
-  const installedSkill = path.resolve(installedPlugin, installedPluginDefinition.skills, "codavio");
-  assert.equal(installedSkill, path.join(installedPlugin, "skills/codavio"));
+  const installedSkill = path.resolve(installedPlugin, installedPluginDefinition.skills,
+    "codavio-orchestrate");
+  assert.equal(installedSkill, path.join(installedPlugin, "skills/codavio-orchestrate"));
   const installedSkillText = fs.readFileSync(path.join(installedSkill, "SKILL.md"), "utf8");
   for (const role of ROLES) {
     const reference = path.join(installedSkill, "references", role + ".md");
@@ -544,6 +600,10 @@ try {
   }
   assert.equal(fs.existsSync(path.join(installedSkill, "references/roles.md")), false,
     "installed Codex skill contains an aggregate role brief");
+  for (const skill of SKILLS) {
+    assert.ok(fs.existsSync(path.join(installedPlugin, "skills", skill, "SKILL.md")),
+      "installed Codex role skill missing: " + skill);
+  }
 
   const codexLegacyHome = path.join(temporary, "codex-legacy");
   fs.mkdirSync(codexLegacyHome, { recursive: true });

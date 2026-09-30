@@ -36,6 +36,9 @@
     "pi-subagents": "0.35.1"
   },
   "pi": {
+    "skills": [
+      "./skills"
+    ],
     "subagents": {
       "agents": [
         "./pi/agents"

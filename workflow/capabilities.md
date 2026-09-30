@@ -10,10 +10,12 @@ risk classifier cannot infer — hard boundaries and workflow structure. The *gr
 plus each harness's native adjudication (ask tier, or an AI classifier where one exists).
 See [Gray-zone adjudication](#gray-zone-adjudication).
 
-Role *behaviour* (what each role should do) lives in `workflow/roles/*.md`, already single
-sourced. Worker display descriptions live in `workflow/manifest.json`; only the orchestrator's
-description remains here because it is not a manifest worker role. `capabilities.json` otherwise
-covers model selection, reasoning effort, and the config/permission layer.
+Role *authority* lives in the small kernels under `workflow/roles/*.md` and
+`workflow/orchestrator.md`. Role *procedure* lives in Portable Agent Skill directories under
+`skills/`. The `roleSkills` mapping in `workflow/manifest.json` binds each role to exactly one
+skill. Worker display descriptions live in the manifest; only the orchestrator's description
+remains here because it is not a manifest worker role. `capabilities.json` otherwise covers model
+selection, reasoning effort, and the config/permission layer.
 
 ## Role fields
 
@@ -79,24 +81,26 @@ without an AI classifier don't prompt on every common test command. It is expect
 | `shell: verify[...]` | `bash` base `ask` + `builderShell` allows | `bash` in `tools:` + builder guard | prose ("edits + verification") |
 | `hardDeny` (`sudo`) | `"sudo": deny`, `"sudo *": deny` | builder/coordinator guard | prose |
 | `delegate: true` | `task:` allowlist of the worker roles | (main session invokes subagents) | prose |
+| `roleSkills` mapping | native `skill` permission allows only the assigned skill | `skills` + `skillPath` select only the assigned skill | plugin ships all skills with implicit invocation disabled |
 | `guard: <name>` | n/a | register `<name>-guard` extension | n/a |
 | guidance (derived) | append docs to body | append docs to body | append docs to each per-role brief |
 
-Codex generates one file per role at `references/<role>.md`; `SKILL.md` links each delegation to
-exactly one matching file. Each file contains the complete canonical role brief, derived model
-and reasoning assignment, selected shared guidance, and the assignment and return-evidence
-contract. Normal generation removes stale aggregate references, while check mode rejects
-unexpected generated files.
+Codex generates one file per worker at
+`skills/codavio-orchestrate/references/<role>.md`; the orchestration `SKILL.md` links each
+delegation to exactly one matching file. Each brief contains the role kernel, derived model and
+reasoning assignment, selected shared guidance, and the assignment and return-evidence contract.
+The worker then explicitly loads its assigned procedure skill. Normal generation removes stale
+aggregate references, while check mode rejects unexpected generated files.
 
 Constants applied uniformly (not per role): `constants.opencode` / `constants.pi`
 (`external_directory: deny`, Pi inherit flags). Each command in a set renders as both its
 bare form and its `<cmd> *` wildcard, except `redirect` entries which are used verbatim.
 
-Repository-memory guidance is appended to every role body. Work-state guidance is appended
-to the orchestrator before repository-memory guidance. The remaining guidance docs are
-**derived from role capabilities** (in `roleBody`), so they cannot contradict the policy:
+Repository-memory and work-state guidance are canonical references of
+`codavio-orchestrate`; every role artifact also receives the repository-memory guidance. The
+remaining shared guidance docs are **derived from role capabilities** (in `roleBody`), so they
+cannot contradict the policy:
 
-- orchestrator → `work-state.md`, then `memory.md`
 - every role → `memory.md`
 - analyst, builder, and reviewer → `code-quality.md`
 - `edit == "owned"` → `implementation.md`
@@ -141,9 +145,9 @@ permission frontmatter has been deleted; only fixed command/prompt adapters rema
   to the old adapters; the builder converged additively from the npm-only set up to the unified
   verification set (nothing removed; `git`/`sudo` still denied and the builder guard still
   enforces hard boundaries).
-- **Codex** — role model and reasoning assignments come from `capabilities.json`; each
-  `references/<role>.md` contains one canonical role body plus capability-selected guidance, and
-  `SKILL.md` links each delegation to its matching brief.
+- **Codex** — role model and reasoning assignments come from `capabilities.json`; the
+  orchestration skill links each delegation to a matching role brief, and every role brief loads
+  its assigned procedure skill.
 
 `scripts/validate.mjs` checks generated model and reasoning assignments, native role artifacts,
 role separation, and the Codex reference routes against the canonical sources and capabilities.

@@ -1,5 +1,14 @@
 {
   "command": "codavio",
+  "roleSkills": {
+    "orchestrator": "codavio-orchestrate",
+    "designer": "codavio-design",
+    "analyst": "codavio-analyze",
+    "explorer": "codavio-explore",
+    "builder": "codavio-build",
+    "reviewer": "codavio-review",
+    "shipper": "codavio-ship"
+  },
   "roles": {
     "designer": {
       "description": "Collaboratively defines product and domain behavior when material choices remain unresolved"

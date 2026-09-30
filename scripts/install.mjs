@@ -121,6 +121,10 @@ function openCodePaths(target) {
   pairs.push([path.join(BUILD, "opencode/commands", command + ".md"),
     path.join(target, "commands", command + ".md"),
     path.join(ROOT, ".opencode/commands", command + ".md")]);
+  for (const skill of Object.values(manifest().roleSkills)) {
+    pairs.push([path.join(BUILD, "opencode/skills", skill),
+      path.join(target, "skills", skill)]);
+  }
   pairs.push([path.join(BUILD, "opencode/AGENTS.md"), path.join(target, "AGENTS.md"),
     path.join(ROOT, "templates/AGENTS.global.md")]);
   return pairs;
@@ -147,7 +151,7 @@ function installOpenCode(force) {
   removeRetiredOpenCodeRoles(target);
   for (const [source, destination, legacy] of pairs) linkDestination(source, destination, force, legacy);
   console.log("Linked Codavio into " + target);
-  console.log("Start with: /codavio <request>");
+  console.log("Start with: /codavio <request> (compatibility launcher for codavio-orchestrate)");
   console.log("Restart OpenCode after repository updates.");
 }
 
@@ -166,7 +170,7 @@ function installPi(commands) {
   }
   process.stdout.write(listing.endsWith("\n") ? listing : listing + "\n");
   console.log("Installed Codavio with Pi permission enforcement from " + packageRoot);
-  console.log("Start Pi, run /subagents-doctor, then invoke: /codavio <request>");
+  console.log("Start Pi, run /subagents-doctor, then invoke: /skill:codavio-orchestrate <request>");
 }
 
 function installMarketplace(force, commands, marketplace) {
@@ -196,7 +200,7 @@ function installCodex(force, commands) {
   run(commands.codex, ["plugin", "add", "codavio@codavio"]);
   console.log("Linked global guidance into " + globalAgents);
   console.log("Installed codavio from " + marketplace);
-  console.log("Start a new Codex task and invoke: $codavio <request>");
+  console.log("Start a new Codex task and invoke: $codavio-orchestrate <request>");
 }
 
 const { force, targets } = parseArgs();

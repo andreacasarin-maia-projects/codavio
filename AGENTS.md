@@ -9,18 +9,18 @@ This project builds a stable, testable, and repeatable AI development workflow t
 
 ## Scope
 
-- Tracked product includes canonical workflow sources (including `workflow/capabilities.json`, the single source for per-role model and permission policy), the remaining command/prompt adapters under `adapters/`, templates, native Pi extensions, root package and lock metadata, Codex marketplace/plugin/invocation metadata, scripts, tests, documentation, and the license. The generator writes only generated harness artifacts under ignored `build/opencode`, `build/pi`, and `build/codex`; those build subtrees are not tracked product inputs.
+- Tracked product includes Portable Agent Skill sources under `skills/`, canonical workflow kernels and policy (including `workflow/capabilities.json`, the single source for per-role model and permission policy), the remaining command/prompt adapters under `adapters/`, templates, native Pi extensions, root package and lock metadata, Codex marketplace/plugin/invocation metadata, scripts, tests, documentation, and the license. The generator writes only generated harness artifacts under ignored `build/opencode`, `build/pi`, and `build/codex`; those build subtrees are not tracked product inputs.
 - `.opencode/` is local OpenCode state, not repository source. Do not include its package files, lockfile, node_modules, or local configuration in changes.
 - The Pi package uses source dependencies declared by the tracked root `package.json` and `package-lock.json`; local `node_modules/` is ignored and must not be treated as product source.
-- For isolation, use the active harness or workspace manager's lifecycle when available; Codavio's `.worktrees/` fallback applies only when no manager exists. See `workflow/orchestrator.md` and `workflow/guidance/work-state.md`.
+- For isolation, use the active harness or workspace manager's lifecycle when available; Codavio's `.worktrees/` fallback applies only when no manager exists. See `workflow/orchestrator.md` and `skills/codavio-orchestrate/references/work-state.md`.
 - `.ai/work/` contains feature-named, branch-independent runtime state inside each active project worktree; global installation must never create it under OpenCode configuration.
 - Trusted-project permissions are a curated safe list, not an OS sandbox: repository reads/edits, patch deletions, listed shell inspection commands, and curated build/test/lint/Docker-build commands run without prompts in the relevant roles; web access (OpenCode `webfetch`/`websearch`, Pi `web_search`/`fetch_content`/`get_search_content`) is allowed only for the research roles (designer and analyst); direct general network clients and explicit removal commands ask; `.env`, external-directory access, `sudo`, all builder Git access, the Pi coordinator session's `git diff`/`git log`, non-research web access, force-push, and role boundaries deny.
 
 ## Keep Definitions Aligned
 
-- `scripts/validate.mjs` checks ignored build outputs, native metadata, and a disposable installer integration for exactly command `codavio` and roles `orchestrator`, `designer`, `analyst`, `explorer`, `builder`, `reviewer`, `shipper`. Adding or renaming one requires updating `workflow/manifest.json` and the role entry in `workflow/capabilities.json`.
-- OpenCode and Pi agent frontmatter is generated from `workflow/capabilities.json` (see `workflow/capabilities.md` for the field vocabulary and per-harness rendering rules); do not hand-edit generated `build/` frontmatter. Codex role config is prose derived from the role bodies plus the model assignment in `capabilities.json`.
-- Keep the command, role files, Pi support files, and docs coordinated when routes, roles, models, verification, or shipping behavior changes.
+- `scripts/validate.mjs` checks ignored build outputs, native metadata, and a disposable installer integration for exactly command `codavio`, roles `orchestrator`, `designer`, `analyst`, `explorer`, `builder`, `reviewer`, `shipper`, and their `roleSkills` mappings. Adding or renaming one requires updating `workflow/manifest.json`, the role entry in `workflow/capabilities.json`, and its portable skill directory.
+- OpenCode and Pi agent frontmatter is generated from `workflow/capabilities.json` and `workflow/manifest.json` (see `workflow/capabilities.md` for rendering rules); do not hand-edit generated `build/` frontmatter. Codex role config is derived from role kernels, assigned skills, and model policy.
+- Keep the command, role kernels, skills, Pi support files, and docs coordinated when routes, roles, models, verification, or shipping behavior changes.
 - Commands still carry hand-written frontmatter and require `description` and an existing `agent`.
 
 ## Verification
@@ -30,5 +30,5 @@ This project builds a stable, testable, and repeatable AI development workflow t
 
 ## Installer Gotchas
 
-- Installer links individual agents, commands, and generated `build/opencode/AGENTS.md` into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`, preserving unrelated global OpenCode files.
+- Installer links individual agents, commands, skills, and generated `build/opencode/AGENTS.md` into `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`, preserving unrelated global OpenCode files.
 - Existing destinations abort installation. `--force` moves each conflict at a current managed destination to `<destination>.backup`; an existing backup also aborts rather than being overwritten. After adding or renaming commands, rerun the installer and then restart OpenCode; configuration changes require a restart.
