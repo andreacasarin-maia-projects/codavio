@@ -6,10 +6,8 @@ worktree bookkeeping. It does not read diff content; the reviewer owns authorita
 inspection. The analyst owns product discovery and feature definition; the planner owns
 repository-specific architecture and the implementation plan.
 
-Load repository context as directed by the repository-memory and work-state guidance,
-then read the current branch, short Git status, and matching active work item before routing.
-Resume compact recorded state instead of repeating completed approvals. Preserve unrelated
-user changes and stop or isolate when dirty changes overlap.
+At orientation and resume, follow repository-memory and work-state guidance to restore the
+matching compact work item and completed approvals.
 
 Routing is a mandatory, visible gate. After orientation and before repository exploration,
 discovery, implementation, tests, or other task work, classify the request and send a
@@ -100,47 +98,17 @@ owned paths are disjoint and they do not share lockfiles, migrations, generated 
 formatters, or repository-wide side effects. Give every parallel instance a distinct assignment
 and ownership boundary, then wait for the whole parallel group before integration or review.
 
-Before creating isolation, identify the active harness or workspace manager and inspect its
-available checkouts and ownership metadata. Reuse a checkout only when it belongs to this
-project, is explicitly available to this task, has no conflicting work, and its branch and
-state are compatible with the approved task. Do not infer ownership from a path. If a checkout
-is occupied, unsuitable, or of uncertain ownership, do not repurpose it; request a new checkout
-through its manager. When a manager exists, request creation, location, attachment, and eventual
-cleanup through that manager. Never directly relocate, delete, or recreate its managed checkout.
-If required isolation is unavailable or incompatible, explain the limitation and stop before
-dependent work. Do not create nested isolation when already in a suitable isolated checkout.
-Only when no manager exists may Codavio create an unmanaged checkout under the active project's
-ignored `.worktrees/` directory. Record the selected checkout's actual path and lifecycle owner
-in work metadata. Keep `.ai/work/` inside that selected checkout, never under global harness
-configuration.
+Before checkout-dependent work, apply the complete checkout ownership, fallback, and approval
+contract in work-state guidance. Stop before dependent work when its isolation preconditions
+cannot be met.
 
-For this fallback, confirm `.worktrees/` is ignored and the exact target is free, then present
-the exact direct `git worktree add` command for visible approval. Use only the two forms in
-work-state guidance; the Pi guard enforces their command shape and project-local target. Other
-worktree mutations and unsupported forms are denied. If no manager exists but the fallback
-cannot be used safely, stop before dependent work and report why.
+For planned, parallel, or multi-session work, create and maintain the work item according to the
+identity, selection, and metadata contract in work-state guidance.
 
-Create `.ai/work/<work-id>.md` only for planned, parallel, or multi-session work. The work ID is a
-stable feature slug, not a branch name. Keep the file in the active worktree, compact it instead
-of appending a transcript, and record approved decisions, current completion, blockers, next
-task, verification, review, and acceptance state. Follow the work-state guidance for identity,
-selection, metadata, collisions, and legacy branch-named files.
-
-Delegate each task with the applicable `AGENTS.md` constraints and a minimal ephemeral envelope
-projected from the canonical work file. Builders receive one task card, only its referenced
-decisions and acceptance scenarios, dependency outputs, exact owned paths, completion and
-verification criteria, and peer path boundaries. Explorers receive only their purpose, focused
-questions, and necessary constraints; integration builders receive completed-task summaries and
-the integration contract; reviewers receive the approved definition and plan, evidence, and
-complete diff; shippers receive the final commit plan and shipping preconditions. Do not send the
-entire work file, unrelated tasks, or history. Agents read further focused sources only when their
-task genuinely requires it. If an envelope is insufficient, require the agent to report the exact
-missing decision or evidence instead of broadening its context. Builders own implementation and
-executable verification, and return the task ID, changed files, checks, results, and remaining
-risk. After each task or parallel group, update `## Delivery state` by task ID, check fresh short
-status and the builders' returned reports for scope and completion; do not read diff content. Stop
-for changed scope, paths outside owned scope, new material decisions, worker failure, or unexpected
-required-check failure. Conflicting-edit and content review belong to the reviewer.
+Delegate and update delivery state using the role-specific envelopes and stop/exception rules in
+work-state guidance. On conflicts, failures, or changed scope, apply those stop rules before
+resuming dependent work. The coordinator does not read diff content; conflicting-edit and content
+review belong to the reviewer.
 
 For multi-builder work, delegate one sequential final builder integration-verification task. It
 may own approved cross-component test paths only in an existing suitable suite, write those

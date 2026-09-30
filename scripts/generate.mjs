@@ -248,27 +248,30 @@ function codexSkill(roles) {
     CODE + 'fork_turns: "none"' + CODE + " or a bounded positive turn count whenever setting a model or reasoning",
     "override, include all necessary context, and tell every role not to spawn subagents.",
     "",
-    "Load the matching canonical brief from [roles.md](references/roles.md) for every",
-    "delegation. If collaboration tools are unavailable, stop and explain that the workflow",
+    "Load exactly one matching role brief for each delegation:",
+    ...roles.map((role) => "- " + role + ": [" + role + "](references/" + role + ".md)."),
+    "",
+    "If collaboration tools are unavailable, stop and explain that the workflow",
     "requires Codex subagents.",
     "", orchestratorBody(),
   ].join("\n");
 }
 
-function codexRoles(roles) {
-  const sections = [
-    "# Role briefs",
-    "These role briefs are generated from the canonical " + CODE + "workflow/roles/" + CODE + " sources. " +
-      "Append the concrete assignment, owned paths, active worktree, " + CODE + "AGENTS.md" + CODE + " " +
-      "constraints, only the referenced decisions and acceptance scenarios, peer path boundaries, " +
-      "and required return evidence " +
-      "whenever spawning a role.",
-  ];
-  for (const role of roles) {
-    const title = role.replaceAll("-", " ").replace(/^\w/, (character) => character.toUpperCase());
-    sections.push("## " + title, roleBody(role, "codex"));
-  }
-  return sections.join("\n\n") + "\n";
+function codexRoleBrief(role) {
+  const title = role.replaceAll("-", " ").replace(/^\w/, (character) => character.toUpperCase());
+  const capability = CAPABILITIES.roles[role];
+  return [
+    "# " + title,
+    "Model assignment: `" + capability.model + "` at `" + capability.reasoning + "` reasoning.",
+    "",
+    "The coordinator supplies the concrete assignment, selected active worktree, exact owned paths, " +
+      "applicable `AGENTS.md` constraints, referenced decisions and acceptance scenarios, peer " +
+      "path boundaries, and requested return evidence. " +
+      "Return the complete deliverable and evidence required by this brief, including unresolved " +
+      "questions or risks.",
+    "",
+    roleBody(role, "codex"),
+  ].join("\n") + "\n";
 }
 
 function add(result, relative, body) { result.set(relative, body); }
@@ -309,8 +312,10 @@ function outputs() {
   }
   add(result, "build/codex/plugins/codavio/skills/codavio/SKILL.md",
     generated("adapters/codex/plugins/codavio/skills/codavio/SKILL.md", codexSkill(MANIFEST.harnesses.codex.roles)));
-  add(result, "build/codex/plugins/codavio/skills/codavio/references/roles.md",
-    NOTICE + "\n\n" + codexRoles(MANIFEST.harnesses.codex.roles));
+  for (const role of MANIFEST.harnesses.codex.roles) {
+    add(result, "build/codex/plugins/codavio/skills/codavio/references/" + role + ".md",
+      NOTICE + "\n\n" + codexRoleBrief(role));
+  }
   return result;
 }
 

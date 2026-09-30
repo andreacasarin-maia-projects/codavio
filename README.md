@@ -192,6 +192,8 @@ The installer generates and registers the marketplace under `build/codex/`, inst
 use `node scripts/install.mjs codex --force` to move it to `AGENTS.md.backup` first. An
 existing backup is never overwritten. If `codavio` is already registered from a
 different marketplace path, `--force` replaces that marketplace entry as well.
+The generated skill routes each worker delegation to its matching `references/<role>.md`
+brief inside the installed plugin.
 
 Start a new Codex task after installation and invoke the workflow explicitly:
 

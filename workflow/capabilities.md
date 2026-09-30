@@ -66,8 +66,8 @@ without an AI classifier don't prompt on every common test command. It is expect
 
 | field | → OpenCode | → Pi | → Codex |
 | --- | --- | --- | --- |
-| `model` | `model: openai/<id>` | `model: openai/<id>` | model assignment in generated skill delegation prose |
-| `reasoning` | `reasoningEffort: <level>` | `thinking: <level>` | `thinking: <level>` delegation argument in generated skill prose |
+| `model` | `model: openai/<id>` | `model: openai/<id>` | assignment in each generated role brief and skill routing prose |
+| `reasoning` | `reasoningEffort: <level>` | `thinking: <level>` | assignment in each generated role brief and skill routing prose |
 | `mode` | `mode: <value>` | (main session vs subagent) | n/a |
 | `git: <level>` | `bash` base `deny` + `constants.git[level]` allows (each as `"<cmd>"` and `"<cmd> *"`) | `bash` tool + role guard restricting to the level | prose ("reads the diff" / "Git-only shipping") |
 | `unmanagedWorktreeFallback: ask` | `git worktree add *: ask` | direct approved add forms reach visible ask; guard denies other forms | coordinator work-state instructions |
@@ -80,7 +80,13 @@ without an AI classifier don't prompt on every common test command. It is expect
 | `hardDeny` (`sudo`) | `"sudo": deny`, `"sudo *": deny` | builder/coordinator guard | prose |
 | `delegate: true` | `task:` allowlist of the worker roles | (main session invokes subagents) | prose |
 | `guard: <name>` | n/a | register `<name>-guard` extension | n/a |
-| guidance (derived) | append docs to body | append docs to body | append docs to `roles.md` brief |
+| guidance (derived) | append docs to body | append docs to body | append docs to each per-role brief |
+
+Codex generates one file per role at `references/<role>.md`; `SKILL.md` links each delegation to
+exactly one matching file. Each file contains the complete canonical role brief, derived model
+and reasoning assignment, selected shared guidance, and the assignment and return-evidence
+contract. Normal generation removes stale aggregate references, while check mode rejects
+unexpected generated files.
 
 Constants applied uniformly (not per role): `constants.opencode` / `constants.pi`
 (`external_directory: deny`, Pi inherit flags). Each command in a set renders as both its
@@ -135,8 +141,9 @@ permission frontmatter has been deleted; only fixed command/prompt adapters rema
   to the old adapters; the builder converged additively from the npm-only set up to the unified
   verification set (nothing removed; `git`/`sudo` still denied and the builder guard still
   enforces hard boundaries).
-- **Codex** — model assignments derived via `codexModelSentence` (byte-identical output);
-  role briefs and boundaries were already prose from the role bodies.
+- **Codex** — role model and reasoning assignments come from `capabilities.json`; each
+  `references/<role>.md` contains one canonical role body plus capability-selected guidance, and
+  `SKILL.md` links each delegation to its matching brief.
 
-`scripts/validate.mjs` checks that generated model lines match `capabilities.json`, so the
-spec and the generated harness files cannot drift.
+`scripts/validate.mjs` checks generated model and reasoning assignments, native role artifacts,
+role separation, and the Codex reference routes against the canonical sources and capabilities.

@@ -50,6 +50,47 @@ function linkTarget(relative) {
 }
 
 function generated(relative) { return path.join("build", relative); }
+function expectedGuidance(role) {
+  const capability = json("workflow/capabilities.json").roles[role];
+  const docs = ["memory"];
+  if (["planner", "builder", "reviewer"].includes(role)) docs.push("code-quality");
+  if (capability.edit === "owned") docs.push("implementation");
+  if (capability.shell.startsWith("verify") || capability.git === "inspect") docs.push("verification");
+  if (capability.web) docs.push("web-use");
+  return docs;
+}
+function assertRoleArtifact(role, relative, harness) {
+  const artifact = read(generated(relative));
+  contains(generated(relative), [read("workflow/roles/" + role + ".md").trim()]);
+  for (const guidance of expectedGuidance(role)) {
+    contains(generated(relative), [read("workflow/guidance/" + guidance + ".md").trim()]);
+  }
+  for (const other of ROLES) {
+    if (other === role) continue;
+    assert.ok(!artifact.includes(read("workflow/roles/" + other + ".md").trim()),
+      relative + " embeds the " + other + " role body");
+  }
+  const capability = json("workflow/capabilities.json").roles[role];
+  if (harness === "opencode") {
+    contains(generated(relative), [
+      "model: openai/" + capability.model,
+      "reasoningEffort: " + capability.reasoning,
+      "webfetch: " + (capability.web ? "allow" : "deny"),
+      "websearch: " + (capability.web ? "allow" : "deny"),
+    ]);
+  } else if (harness === "pi") {
+    contains(generated(relative), [
+      "model: openai/" + capability.model,
+      "thinking: " + capability.reasoning,
+      "inheritProjectContext: false",
+    ]);
+  } else {
+    contains(generated(relative), [
+      "Model assignment: `" + capability.model + "` at `" + capability.reasoning + "` reasoning.",
+      "Return the complete deliverable and evidence required by this brief",
+    ]);
+  }
+}
 
 for (const relative of ["build/opencode", "build/pi", "build/codex"]) {
   fs.rmSync(path.join(ROOT, relative), { recursive: true, force: true });
@@ -59,6 +100,18 @@ run(process.execPath, [path.join(ROOT, "scripts/generate.mjs")]);
 run(process.execPath, [path.join(ROOT, "scripts/generate.mjs"), "--check"]);
 assert.equal(run("git", ["status", "--porcelain"]).stdout, beforeGeneration,
   "generation changed Git-tracked files");
+const staleCodexAggregate = path.join(BUILD,
+  "codex/plugins/codavio/skills/codavio/references/roles.md");
+fs.writeFileSync(staleCodexAggregate, "stale aggregate");
+const staleAggregateCheck = fails(process.execPath,
+  [path.join(ROOT, "scripts/generate.mjs"), "--check"]);
+assert.ok((staleAggregateCheck.stderr + staleAggregateCheck.stdout).includes(
+  "UNEXPECTED: build/codex/plugins/codavio/skills/codavio/references/roles.md"),
+  "check mode did not identify the obsolete Codex aggregate");
+run(process.execPath, [path.join(ROOT, "scripts/generate.mjs")]);
+assert.equal(fs.existsSync(staleCodexAggregate), false,
+  "normal generation retained the obsolete Codex aggregate");
+run(process.execPath, [path.join(ROOT, "scripts/generate.mjs"), "--check"]);
 
 const manifest = json("workflow/manifest.json");
 const capabilities = json("workflow/capabilities.json");
@@ -105,18 +158,25 @@ contains("workflow/guidance/web-use.md", [
   "Web research guidance", "official or primary sources", "Never paste whole pages",
 ]);
 contains("workflow/guidance/memory.md", [
-  "Repository memory", "read the applicable `AGENTS.md` first", "`AGENTS.md` is authoritative",
+  "## Repository memory", "applicable `AGENTS.md` files first",
+  "Read root `MEMORY.md` after those files when it exists", "`AGENTS.md` is authoritative",
+  "Report conflicting memory as stale",
 ]);
 contains("workflow/guidance/work-state.md", [
   "`.ai/work/<work-id>.md`", "stable, lowercase, hyphenated feature name",
   "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist", "### Task graph",
-  "### Commit plan", "minimal task envelope", "lifecycle_owner", "actual selected checkout path",
+  "### Commit plan", "minimal ephemeral envelope", "lifecycle_owner", "actual selected checkout path",
   "Do not infer manager ownership from a checkout path", "Only if no manager exists",
   "stop before dependent work", "Always keep `.ai/work/` inside the selected",
   "use its recorded `worktree` as the selected checkout", "Route later location, attachment, or cleanup",
   "first confirm `.worktrees/` is ignored", "Then request visible approval", "git worktree add -b <new-branch>",
   "git worktree add <project-root>/.worktrees/<work-id> <existing-branch>",
-  "lifecycle_owner: unmanaged",
+  "lifecycle_owner: unmanaged", "At entry and resume, read the current branch and short Git status",
+  "After any managed checkout is selected, created, or attached, immediately update the active work",
+  "actual selected checkout path in `worktree`", "lifecycle owner", "`lifecycle_owner`",
+  "## Dispatch and delivery contract", "After each task or parallel group, update `## Delivery state`",
+  "current blockers and the next task explicit",
+  "worker failure, or unexpected required-check failure",
 ]);
 contains("workflow/capabilities.md", [
   "orchestrator → `work-state.md`", "every role → `memory.md`",
@@ -137,7 +197,10 @@ for (const role of ROLES) {
 }
 contains("workflow/orchestrator.md", [
   "QUICK", "BUGFIX", "FEATURE", "explicit approval", "shipping approval", ".ai/work",
-  "lifecycle owner", "workspace manager", "Implementation plan", "Routing is a mandatory, visible gate",
+  "matching compact work item and completed approvals", "Implementation plan",
+  "Routing is a mandatory, visible gate",
+  "Before checkout-dependent work, apply the complete checkout ownership",
+  "role-specific envelopes and stop/exception rules in", "On conflicts, failures, or changed scope",
   "The analyst is mandatory for every FEATURE", "actual builder invocation",
   "always invoke the analyst first", "definition confidence", "`DISCOVERY` exploration brief",
   "`PLANNING` exploration brief", "explicit feature acceptance", "<work-id>",
@@ -175,8 +238,12 @@ contains("pi/extensions/workflow.ts", [
 assert.deepEqual(names(generated("opencode/agents")),
   [...ROLES, "orchestrator"].map((role) => role + ".md").sort());
 assert.deepEqual(names(generated("opencode/commands")), ["codavio.md"]);
+assert.equal(fs.existsSync(path.join(BUILD, "opencode/references")), false,
+  "OpenCode must use its native agent artifacts without duplicate references");
 assert.deepEqual(names(generated("pi/pi/agents")), ROLES.map((role) => role + ".md").sort());
 assert.deepEqual(names(generated("pi/pi/prompts")), ["codavio.md"]);
+assert.equal(fs.existsSync(path.join(BUILD, "pi/pi/references")), false,
+  "Pi must use its native agent artifacts without duplicate references");
 assert.ok(fs.existsSync(path.join(BUILD, "pi/package.json")));
 assert.ok(fs.existsSync(path.join(BUILD, "pi/package-lock.json")));
 assert.deepEqual(names(generated("pi/pi/extensions")), names("pi/extensions"));
@@ -186,8 +253,17 @@ assert.ok(fs.existsSync(path.join(BUILD,
   "codex/plugins/codavio/.codex-plugin/plugin.json")));
 assert.ok(fs.existsSync(path.join(BUILD,
   "codex/plugins/codavio/skills/codavio/agents/openai.yaml")));
+const codexReferences = generated("codex/plugins/codavio/skills/codavio/references");
+assert.deepEqual(names(codexReferences), ROLES.map((role) => role + ".md").sort());
+assert.equal(fs.existsSync(path.join(BUILD,
+  "codex/plugins/codavio/skills/codavio/references/roles.md")), false,
+  "Codex generated tree contains no aggregate role brief");
 
 for (const role of ROLES) {
+  assertRoleArtifact(role, "opencode/agents/" + role + ".md", "opencode");
+  assertRoleArtifact(role, "pi/pi/agents/" + role + ".md", "pi");
+  assertRoleArtifact(role,
+    "codex/plugins/codavio/skills/codavio/references/" + role + ".md", "codex");
   const description = manifest.roles[role].description;
   contains(generated("opencode/agents/" + role + ".md"),
     ["description: " + description, "mode: subagent"]);
@@ -198,6 +274,73 @@ for (const role of ROLES) {
   assert.match(frontmatter(generated("opencode/agents/" + role + ".md")), /description:|name:/);
   assert.match(frontmatter(generated("pi/pi/agents/" + role + ".md")),
     new RegExp("name: " + role));
+  const openCodeFrontmatter = frontmatter(generated("opencode/agents/" + role + ".md"));
+  const capability = capabilities.roles[role];
+  contains(generated("opencode/agents/" + role + ".md"), [
+    "description: " + manifest.roles[role].description,
+    "mode: " + capability.mode,
+    "model: openai/" + capability.model,
+    "reasoningEffort: " + capability.reasoning,
+    "external_directory: deny",
+  ]);
+  assert.match(openCodeFrontmatter, /permission:/);
+  assert.equal(openCodeFrontmatter.includes("  task: deny"), role !== "orchestrator",
+    role + " OpenCode delegation permission differs");
+  if (capability.edit === "owned") assert.ok(openCodeFrontmatter.includes("edit: allow"));
+  else if (capability.edit === "work-file") {
+    assert.ok(openCodeFrontmatter.includes('"*": deny'));
+    assert.ok(openCodeFrontmatter.includes('".ai/work/**": allow'));
+  } else assert.ok(openCodeFrontmatter.includes("edit: deny"));
+  assert.ok(openCodeFrontmatter.includes("webfetch: " + (capability.web ? "allow" : "deny")));
+  assert.ok(openCodeFrontmatter.includes("websearch: " + (capability.web ? "allow" : "deny")));
+  if (capability.shell === "none" && capability.git === "none") {
+    assert.ok(openCodeFrontmatter.includes("bash: deny"));
+  } else if (capability.shell === "none") {
+    assert.ok(openCodeFrontmatter.includes('"*": deny'));
+  } else {
+    assert.ok(openCodeFrontmatter.includes('"*": ask'));
+    assert.ok(openCodeFrontmatter.includes('"git *": deny'));
+    assert.ok(openCodeFrontmatter.includes('"sudo *": deny'));
+  }
+  const piFrontmatter = frontmatter(generated("pi/pi/agents/" + role + ".md"));
+  assert.ok(piFrontmatter.includes("permission:\n  tools:"));
+  assert.ok(piFrontmatter.includes("maxSubagentDepth: 0"));
+  const expectedPiTools = ["read", "grep", "find", "ls"];
+  if (capability.web) expectedPiTools.push("web_search", "fetch_content", "get_search_content");
+  if (capability.edit === "owned") expectedPiTools.push("edit", "write");
+  if (capability.git !== "none" || capability.shell !== "none") expectedPiTools.push("bash");
+  assert.ok(piFrontmatter.includes("tools: " + expectedPiTools.join(",")),
+    role + " Pi tool set differs from capabilities");
+  assert.ok(piFrontmatter.includes('external_directory: deny'));
+  const expectedPiGuard = capability.guard === "coordinator"
+    ? "coordinator-guard"
+    : capability.guard ? capability.guard + "-guard" : null;
+  if (expectedPiGuard) {
+    assert.ok(names(generated("pi/pi/extensions")).includes(expectedPiGuard + ".ts"),
+      role + " Pi guard extension is missing");
+  }
+}
+const returnEvidence = {
+  analyst: "Return a proposed feature definition",
+  planner: "Return the implementation plan",
+  explorer: "Return only material findings",
+  builder: "Return the task ID, changed files",
+  reviewer: "Findings return",
+  shipper: "Report every commit",
+};
+const codexBoundaries = {
+  analyst: "remain read-only",
+  planner: "Remain read-only",
+  explorer: "without editing files",
+  builder: "Do not run Git",
+  reviewer: "Remain read-only",
+  shipper: "Remain Git-only",
+};
+for (const role of ROLES) {
+  contains(generated("codex/plugins/codavio/skills/codavio/references/" + role + ".md"),
+    [returnEvidence[role], codexBoundaries[role], "selected active worktree", "exact owned paths",
+      "applicable `AGENTS.md` constraints", "referenced decisions and acceptance scenarios",
+      "peer path boundaries", "requested return evidence"]);
 }
 contains(generated("opencode/agents/builder.md"), [
   "## Code quality guidance", "## Implementation guidance", "## Verification guidance",
@@ -224,9 +367,10 @@ for (const role of ["analyst", "planner"]) {
   contains(generated("pi/pi/agents/" + role + ".md"),
     ["## Web research guidance", "web_search", "fetch_content"]);
 }
-contains(generated("codex/plugins/codavio/skills/codavio/references/roles.md"),
-  ["## Web research guidance", "## Code quality guidance", "ongoing liability",
-    "approximately 500 human-authored lines", "`BLOCKER`, `OPTIONAL`, or `FYI`"]);
+for (const name of names("pi/extensions")) {
+  assert.equal(read(generated("pi/pi/extensions/" + name)), read("pi/extensions/" + name),
+    "generated Pi extension differs from its native guard source: " + name);
+}
 for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
 }
@@ -235,11 +379,14 @@ contains(generated("opencode/agents/orchestrator.md"), [
   "## Repository memory", "`AGENTS.md` is authoritative",
   '"git worktree add *": ask',
 ]);
+for (const role of ROLES) {
+  contains(generated("opencode/agents/orchestrator.md"), ['"' + role + '": allow']);
+}
 assert.ok(!read(generated("opencode/agents/orchestrator.md")).includes('"git worktree add *": allow'),
   "OpenCode coordinator must ask before unmanaged worktree creation");
 contains(generated("pi/pi/prompts/codavio.md"), [
-  "the exact direct `git worktree add` command for visible approval",
-  "Use only the two forms in", "worktree mutations and unsupported forms are denied",
+  "Then request visible approval", "Use the first form for a new branch",
+  "any other worktree mutation.",
 ]);
 for (const role of ["builder", "reviewer", "shipper"]) {
   const permissions = read(generated("pi/pi/agents/" + role + ".md"));
@@ -285,6 +432,7 @@ contains(generated("opencode/commands/codavio.md"), [
 contains(generated("pi/pi/prompts/codavio.md"), [
   "$ARGUMENTS", "`pi-subagents`", "pinned model",
   "`.ai/work/<work-id>.md`", "Use each role's pinned model and reasoning without a per-run override.",
+  "Invoke only these `pi-subagents` roles:", ROLES.join(", "),
   ...ROLES,
 ]);
 for (const coordinator of [
@@ -294,10 +442,13 @@ for (const coordinator of [
 ]) {
   const text = read(coordinator).replace(/\s+/g, " ");
   for (const marker of [
-    "active harness or workspace manager", "Do not infer ownership from a path",
-    "request a new checkout through its manager", "Never directly relocate, delete, or recreate",
-    "Only when no manager exists may Codavio create an unmanaged checkout",
-    "stop before dependent work", "`.ai/work/` inside that selected checkout",
+    "active harness or workspace manager", "Do not infer manager ownership from a checkout path",
+    "request a fresh checkout from the manager", "Do not directly relocate, delete, or recreate",
+    "Only if no manager exists, use an unmanaged checkout",
+    "stop before dependent work", "Always keep `.ai/work/` inside the selected checkout",
+    "After any managed checkout is selected, created, or attached, immediately update the active work",
+    "actual selected checkout path in `worktree`", "lifecycle owner", "`lifecycle_owner`",
+    "current blockers and the next task explicit",
   ]) assert.ok(text.includes(marker), coordinator + " missing ownership policy " + marker);
   assert.ok(!text.includes("Create worktrees only under `<project-root>/.worktrees/`"),
     coordinator + " retains the universal .worktrees/ requirement");
@@ -307,14 +458,19 @@ for (const coordinator of [
     "lifecycle_owner: codex",
   ].join("\n")), coordinator + " has invalid work-state example metadata indentation");
 }
-contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
+const codexSkillPath = generated("codex/plugins/codavio/skills/codavio/SKILL.md");
+contains(codexSkillPath, [
   "name: codavio", "$codavio", "# Codavio", "`gpt-6-astra`", "`gpt-6-sol`",
   "`gpt-6-luna`", "`medium` reasoning", "`high` reasoning", "`low` reasoning",
-  "`fork_turns: \"none\"`", "[roles.md](references/roles.md)",
+  "`fork_turns: \"none\"`", "Load exactly one matching role brief for each delegation:",
 ]);
-contains(generated("codex/plugins/codavio/skills/codavio/references/roles.md"), [
-  "canonical `workflow/roles/` sources", "active worktree, `AGENTS.md`",
-  "only the referenced decisions and acceptance scenarios", "peer path boundaries",
+const codexSkillText = read(codexSkillPath);
+contains(codexSkillPath, ["Use Codex collaboration agents", "Spawn"]);
+const codexRoutes = [...codexSkillText.matchAll(/\[([a-z]+)\]\(references\/([a-z]+)\.md\)/g)];
+assert.equal(codexRoutes.length, ROLES.length, "Codex skill must have one role route per worker");
+assert.deepEqual(codexRoutes.map((match) => [match[1], match[2]]), ROLES.map((role) => [role, role]));
+assert.ok(!codexSkillText.includes("roles.md"), "Codex skill retains an aggregate reference");
+contains(generated("codex/plugins/codavio/skills/codavio/references/shipper.md"), [
   "network sandbox escalation", "sandbox_permissions: \"require_escalated\"",
 ]);
 contains(generated("codex/plugins/codavio/skills/codavio/agents/openai.yaml"),
@@ -370,6 +526,25 @@ try {
   });
   assert.equal(linkTarget(path.relative(ROOT, path.join(codexHome, "AGENTS.md"))),
     path.join(BUILD, "codex/AGENTS.md"));
+  const installedMarketplace = path.join(BUILD, "codex");
+  const installedMarketplaceDefinition = JSON.parse(fs.readFileSync(
+    path.join(installedMarketplace, ".agents/plugins/marketplace.json"), "utf8"));
+  const installedPlugin = path.resolve(installedMarketplace,
+    installedMarketplaceDefinition.plugins[0].source.path);
+  assert.equal(installedPlugin, path.join(installedMarketplace, "plugins/codavio"));
+  const installedPluginDefinition = JSON.parse(fs.readFileSync(
+    path.join(installedPlugin, ".codex-plugin/plugin.json"), "utf8"));
+  const installedSkill = path.resolve(installedPlugin, installedPluginDefinition.skills, "codavio");
+  assert.equal(installedSkill, path.join(installedPlugin, "skills/codavio"));
+  const installedSkillText = fs.readFileSync(path.join(installedSkill, "SKILL.md"), "utf8");
+  for (const role of ROLES) {
+    const reference = path.join(installedSkill, "references", role + ".md");
+    assert.ok(fs.existsSync(reference), "installed Codex skill reference missing: " + role);
+    assert.ok(installedSkillText.includes("[" + role + "](references/" + role + ".md)"),
+      "installed Codex skill does not route to " + role);
+  }
+  assert.equal(fs.existsSync(path.join(installedSkill, "references/roles.md")), false,
+    "installed Codex skill contains an aggregate role brief");
 
   const codexLegacyHome = path.join(temporary, "codex-legacy");
   fs.mkdirSync(codexLegacyHome, { recursive: true });
@@ -395,6 +570,7 @@ try {
   assert.ok(calls.includes(JSON.stringify(["install", "npm:pi-web-access"])));
   assert.ok(calls.includes(JSON.stringify(["install", path.join(BUILD, "pi")])));
   assert.ok(calls.includes(JSON.stringify(["plugin", "marketplace", "add", path.join(BUILD, "codex")])));
+  assert.ok(calls.includes(JSON.stringify(["plugin", "add", "codavio@codavio"])));
 
   const staleMarketplaceHome = path.join(temporary, "codex-stale-marketplace");
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "codex", "--force"], {
