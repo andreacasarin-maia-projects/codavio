@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BUILD = path.join(ROOT, "build");
 const SUPPORTED = ["opencode", "pi", "codex"];
+const RETIRED_OPENCODE_ROLES = ["planner"];
 
 function usage() { console.error("Usage: node scripts/install.mjs <opencode|pi|codex|all> [--force]"); }
 
@@ -125,11 +126,25 @@ function openCodePaths(target) {
   return pairs;
 }
 
+function removeRetiredOpenCodeRoles(target) {
+  for (const role of RETIRED_OPENCODE_ROLES) {
+    const destination = path.join(target, "agents", role + ".md");
+    const managedSources = [
+      path.join(BUILD, "opencode/agents", role + ".md"),
+      path.join(ROOT, ".opencode/agents", role + ".md"),
+    ];
+    if (managedSources.some((source) => exactTextLink(destination, source))) {
+      fs.unlinkSync(destination);
+    }
+  }
+}
+
 function installOpenCode(force) {
   const configRoot = process.env.XDG_CONFIG_HOME ?? path.join(process.env.HOME ?? os.homedir(), ".config");
   const target = path.join(configRoot, "opencode");
   const pairs = openCodePaths(target);
   for (const [source, destination, legacy] of pairs) checkDestination(source, destination, force, legacy);
+  removeRetiredOpenCodeRoles(target);
   for (const [source, destination, legacy] of pairs) linkDestination(source, destination, force, legacy);
   console.log("Linked Codavio into " + target);
   console.log("Start with: /codavio <request>");

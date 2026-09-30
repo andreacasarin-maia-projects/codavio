@@ -27,8 +27,7 @@ Start a new work item with compact metadata:
 ---
 work_id: guest-checkout
 title: Guest checkout
-route: FEATURE
-status: discovery
+status: design
 branch: feature/guest-checkout
 worktree: /actual/path/to/selected/checkout
 lifecycle_owner: codex
@@ -38,7 +37,8 @@ lifecycle_owner: codex
 Omit unavailable branch, worktree, or lifecycle owner values, including for a new project. Use
 the manager's identifying name for `lifecycle_owner`, or `unmanaged` for the `.worktrees/`
 fallback. `worktree` is the actual selected checkout path, not a path derived from the work ID or
-branch. Keep the work ID independent of branch and path.
+branch. Keep the work ID independent of branch and path. Legacy records may retain a `route`
+field; do not migrate or reinterpret it, and do not write one for new work.
 
 Existing records may omit `worktree` or `lifecycle_owner`; keep them valid and resolve ownership
 prospectively when selecting a checkout. Do not migrate or overwrite their metadata just to add
@@ -81,12 +81,13 @@ through that owner; never infer a different owner from the path.
 ## Dispatch and delivery contract
 
 For every delegation, project a minimal ephemeral envelope from the canonical work item and
-include applicable `AGENTS.md` constraints. Builders receive one task card, only its referenced
+include applicable `AGENTS.md` constraints. Builders receive one bounded task, only its referenced
 decisions and acceptance scenarios, dependency outputs, exact owned paths, completion and
-verification criteria, and peer path boundaries. Explorers receive only their purpose, focused
-questions, and necessary constraints. Integration builders receive completed-task summaries and
-the integration contract. Reviewers receive the approved definition and plan, evidence, and
-complete diff. Shippers receive the final commit plan and shipping preconditions. Do not send the
+verification criteria, exemplary implementation when identified, and peer path boundaries.
+Explorers receive only their purpose, focused questions, and necessary constraints. Integration
+builders receive completed-task summaries and the integration contract. Reviewers receive the
+accepted definition and implementation brief, evidence, and complete diff. Shippers receive the
+approved commit plan when one exists and shipping preconditions. Do not send the
 entire work item, unrelated tasks, or history. Agents read further focused sources only when their
 task genuinely requires it. If an envelope is insufficient, require the agent to report the exact
 missing decision or evidence instead of broadening its context.
@@ -99,16 +100,17 @@ material decisions, worker failure, or unexpected required-check failure. Confli
 content review belong to the reviewer. On conflicts or failures, report the blocker and stop
 dependent work until the approved workflow resolves it.
 
-Use the smallest status
-that describes the current gate: `discovery`, `definition-approved`, `planning`, `plan-approved`,
-`building`, `review`, `accepted`, `shipped`, `paused`, or `blocked`. Update metadata and compact
-sections in place rather than appending a transcript.
+Use the smallest status that describes the current gate: `design`, `definition-approved`,
+`analysis`, `analysis-approved`, `building`, `review`, `accepted`, `shipped`, `paused`, or
+`blocked`. Existing `discovery`, `planning`, and `plan-approved` values remain valid legacy state;
+do not migrate them only to change terminology. Update metadata and compact sections in place
+rather than appending a transcript.
 
 Keep only applicable sections:
 
 - `## Leadership brief`
 - `## Discovery map`
-- `## Approved feature definition`
+- `## Approved definition`
 - `## Decisions and assumptions`
 - `## Implementation plan`
 - `## Delivery state`
@@ -116,20 +118,19 @@ Keep only applicable sections:
 - `## Review`
 - `## Acceptance and shipping`
 
-For planned work, keep every durable planning artifact inside `## Implementation plan` using
-these stable subsections: `### Architecture decisions`, `### Task graph`, `### Integration
-verification`, and `### Commit plan`. Use stable decision (`D1`), task (`T1`), acceptance (`A1`),
-and commit-group (`C1`) IDs so later sections can reference rather than duplicate the planner's
-task definitions. `## Delivery state` records compact status and evidence by task ID without
-copying those definitions. For reliable resume, keep current blockers and the next task explicit
-and compact in delivery state or the applicable recovery section; update them whenever work pauses,
-resumes, or advances.
+For analyzed work, keep the durable implementation brief inside `## Implementation plan` using
+only the applicable subsections from the analyst's output. A bounded change may contain one task
+statement and verification contract rather than a formal graph. Use stable decision (`D1`), task
+(`T1`), acceptance (`A1`), and commit-group (`C1`) IDs only when later sections need to reference
+them. `## Delivery state` records compact status and evidence without copying task definitions.
+For reliable resume, keep current blockers and the next task explicit and compact in delivery
+state or the applicable recovery section; update them whenever work pauses, resumes, or advances.
 
 The work file is the canonical durable artifact, not the default context payload. Coordinators
 project only role-relevant sections into minimal task envelopes; they do not make workers read the
 full file when a bounded projection is sufficient.
 
-Multiple work items may coexist. Material FEATURE implementation normally uses one branch and
-isolated worktree per work item. Merely using separate files does not make parallel writes safe;
-shared-worktree writers still require explicit disjoint ownership and no repository-wide side
-effects.
+Multiple work items may coexist. Material, risky, parallel, or multi-session implementation
+normally uses one branch and isolated worktree per work item. Merely using separate files does not
+make parallel writes safe; shared-worktree writers still require design-independent work,
+explicit disjoint ownership, and no repository-wide side effects.

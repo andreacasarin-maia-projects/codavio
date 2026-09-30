@@ -37,32 +37,29 @@ Repository tooling and installation require Node.js 22.6 or newer.
 
 ```text
 /codavio
-  → coordinator visibly declares QUICK, BUGFIX, or FEATURE before task work
-  → BUGFIX invokes a focused explorer first
-  → FEATURE invokes an analyst first to assess confidence and collaboratively design the functionality
-  → analyst may request high-level DISCOVERY exploration when repository evidence could change the feature
-  → discuss and approve the feature definition and product direction
-  → planner identifies technical unknowns and may request targeted PLANNING exploration
-  → planner turns the approved definition and returned evidence into architecture, a task graph, and a commit plan
-  → approve the architecture plan when required
-  → treat an explicit unambiguous QUICK request as its definition approval
+  → coordinator visibly starts with Builder, Analyst, or Designer
+  → Designer resolves material product or domain choices only when needed
+  → approve a material product definition
+  → Analyst finds the repository-native minimum change only when technical analysis is needed
+  → Designer or Analyst may request focused internal Explorer evidence
+  → approve only material unresolved technical decisions
   → delegate every implementation, test, and Docker action to a builder
+  → builder performs a final simplification pass
   → compact durable architectural and philosophical context into MEMORY.md
-  → invoke an independent reviewer after successful verification
-  → accept the outcome of a material FEATURE
+  → invoke an independent traceability and minimality review after successful verification
+  → accept a materially changed product outcome
   → request shipping approval
   → delegate the approved focused commit series and push
 ```
 
 Role behavior:
 
-- Analyst acts as the product discovery and solution-design partner: it evaluates definition confidence, asks only decision-changing questions with recommendations, uses Event Storming and flow analysis when useful, and proposes the feature definition.
-- Explorer answers focused `DISCOVERY`, `PLANNING`, or `BUGFIX` questions with repository evidence; it never chooses product behavior or architecture.
-- Planner converts the approved feature definition and targeted repository evidence into component boundaries, interfaces, data and control flow, failure semantics, migration strategy, a traceable builder-sized task graph, integration verification, and an ordered commit plan.
+- Designer resolves material product and domain uncertainty: it evaluates definition confidence, asks only decision-changing questions with recommendations, uses Event Storming and flow analysis when useful, and proposes the definition.
+- Analyst turns defined behavior and focused repository evidence into the smallest executable implementation brief, naming the closest exemplar and justifying every new concept.
+- Explorer answers focused internal evidence questions; it never chooses product behavior or technical design.
 - Builder is the implementation worker for mechanical edits, normal development,
-  test execution, integration verification, and approved Docker execution. Multiple
-  builder instances may run concurrently only with disjoint ownership.
-- Reviewer remains evidence-only and read-only.
+  test execution, integration verification, and approved Docker execution, and performs a final simplification pass. Multiple builder instances require design-independent work and disjoint ownership.
+- Reviewer remains evidence-only and read-only, and blocks unjustified production machinery.
 - Builder may auto-run verb-first `docker compose run`, `docker compose exec`, and `docker compose restart`; global selectors before the verb (`-p`, `--env-file`, `-f`, `--project-directory`, `--profile`, and `--project-name`) ask, and `docker compose pull`, `up`, `down`, and resource removal ask.
 
 Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
@@ -70,8 +67,8 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 | Role | Model | Reasoning |
 |---|---|---|
 | Orchestration | `openai/gpt-6-sol` | `medium` |
-| Product discovery and solution design | `openai/gpt-6-astra` | `medium` |
-| Architecture and task planning | `openai/gpt-6-sol` | `medium` |
+| Product and domain design | `openai/gpt-6-astra` | `medium` |
+| Technical analysis | `openai/gpt-6-sol` | `medium` |
 | Exploration | `openai/gpt-6-luna` | `low` |
 | Implementation | `openai/gpt-6-luna` | `medium` |
 | Review | `openai/gpt-6-sol` | `high` |
@@ -85,17 +82,17 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
   paths rather than optimizing for raw line count. Approximately 500 human-authored lines in one
   source file or refactor trigger responsibility and reviewability assessment, not automatic
   rejection.
-- Routing is observable and ordered: the coordinator declares QUICK, BUGFIX, or FEATURE
-  before task work; BUGFIX starts with an explorer, while FEATURE starts with the analyst
-  and cannot enter repository-specific planning before feature-definition approval.
-- An explicit, unambiguous QUICK request can serve as definition approval when no material alternative remains, the working tree is clean or non-overlapping, and verification is obvious.
+- Entry is observable and proportional: clear localized work starts with Builder, defined
+  non-trivial work starts with Analyst, and only material product or domain uncertainty starts
+  with Designer. Request labels such as bug or feature do not determine the path.
+- An explicit, unambiguous request serves as approval for its stated behavior.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
-- After definition and plan approval, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
+- After required approvals, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
 - Every change gets verification proportionate to its behavior and risk.
 - Builders execute every implementation, test, and Docker action; the coordinator never substitutes for them. In multi-builder work, a final sequential integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
 - Baseline checks are encouraged for complex or high-risk work, not mandatory. If a baseline fails, a builder repairs it before continuing and retains the evidence.
 - Bug fixes add regression coverage only within an existing suitable test suite; otherwise they use and document the strongest existing verification.
-- Worktrees isolate features, risky work, or unrelated dirty changes; parallel writers require explicit disjoint ownership.
+- Worktrees isolate material, risky, parallel, multi-session work or unrelated dirty changes; parallel writers require design-independent tasks and explicit disjoint ownership.
 - Explorer and builder roles are reusable capability profiles rather than singletons:
   independent explorer lanes may run concurrently, and multiple builders may run
   concurrently when their write scopes and side effects are disjoint.
@@ -104,11 +101,10 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 - The conversation is not the source of truth. Planned, parallel, or multi-session work uses a compact living feature-named work item independent of its branch name.
 - The work file is the single durable planning artifact. Coordinators project minimal role-specific
   task envelopes from it instead of sending lower-capability workers the whole plan or history.
-- Planned work uses a dependency-aware task graph with stable IDs and a commit plan. One focused
-  commit remains the default; multiple commits are used only when they improve comprehension,
-  review, verification, or reversibility.
+- Analyzed work uses the smallest applicable implementation brief. Task graphs and commit plans
+  appear only when the change needs them; one focused commit remains the default.
 - Root `MEMORY.md` is dense, living repository context rather than history. Every role reads it after the applicable `AGENTS.md`, which remains authoritative, and the coordinator rewrites it before final review when shipped work makes durable context new, stale, or redundant.
-- Orchestrator is coordination-only: it owns routing, approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not perform product discovery, architecture, or diff inspection. Analyst owns the feature definition, planner owns the detailed implementation plan, and reviewer owns authoritative diff inspection.
+- Orchestrator is coordination-only: it owns entry selection, approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not perform product design, technical analysis, implementation, or diff inspection. Designer owns unresolved product and domain choices, Analyst owns the minimum-change implementation brief, and Reviewer owns authoritative diff inspection.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
 - Review corrections proceed autonomously when they stay inside approved behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk; changing one of those boundaries requires approval.
 
@@ -117,7 +113,7 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 Trusted-project permissions are a curated safe list, not an OS sandbox:
 
 - Repository reads (including `.env` files), edits, patch deletions, file listing, globbing, searching, and common project-local shell writes/deletions (`mkdir`, `touch`, `cp`, `mv`, `tee`, `sed`, `rm`, `rmdir`, `unlink`, `find`, and common redirection forms) run without prompts in the relevant roles.
-- Curated build/test/lint/typecheck/check commands and Docker build commands run without prompts in the relevant roles. Web access — OpenCode `webfetch`/`websearch` and Pi `web_search`/`fetch_content`/`get_search_content` — is allowed only for the research roles (analyst and planner) and denied for every other role.
+- Curated build/test/lint/typecheck/check commands and Docker build commands run without prompts in the relevant roles. Web access — OpenCode `webfetch`/`websearch` and Pi `web_search`/`fetch_content`/`get_search_content` — is allowed only for the research roles (designer and analyst) and denied for every other role.
 - Builder may run approved implementation and integration-verification `docker exec`, `docker compose exec`, `docker compose restart`, and `docker compose run`; Docker pull still prompts, and there is no blanket Docker permission.
 - External-directory access is denied where OpenCode detects it; `sudo`, all builder Git access (builders never run Git; the reviewer and shipper own diff inspection), the Pi coordinator session's `git diff`/`git log`, force-push, and role boundaries remain denied. Bare shipper `git push` is the only push that asks.
 - The builder is default-`ask`, scoped to file edits and a curated verification allowlist
@@ -163,8 +159,8 @@ load in persistent feature worktrees. Override the executables with `NPM_BIN` or
 
 This project keeps `pi-subagents@0.35.1` pinned exactly. The permission extension is
 required for runtime `allow`/`ask`/`deny` enforcement; run `/subagents-doctor` after
-installation to confirm that child-agent approval forwarding is active. The analyst and
-planner use Pi's `web_search`, `fetch_content`, and `get_search_content` tools for
+installation to confirm that child-agent approval forwarding is active. The designer and
+analyst use Pi's `web_search`, `fetch_content`, and `get_search_content` tools for
 documentation lookup and search; the installer adds the
 [`pi-web-access`](https://github.com/nicobailon/pi-web-access) extension
 (`pi install npm:pi-web-access`) automatically so those tools work. A coordinator guard
@@ -203,9 +199,8 @@ $codavio <request>
 
 Implicit invocation is disabled. Select `gpt-6-sol` with `medium` reasoning for the main
 coordinator in Codex when available; Codavio does not override the main session selection.
-Subagents use the role model routing above. The same
-feature-definition, FEATURE-plan, feature-acceptance, material-correction, and shipping approval rules
-apply. Codex's shipper then requests a scoped network sandbox escalation for its one
+Subagents use the role model routing above. The same material-definition, technical-decision,
+outcome-acceptance, correction, and shipping approval rules apply. Codex's shipper then requests a scoped network sandbox escalation for its one
 direct `git push`; the role brief supplies a clear approval question. A successful
 approval authorizes the sandbox escalation, but Git authentication and remote branch
 rules remain independent checks.
@@ -292,20 +287,19 @@ Only planned, parallel, or multi-session work needs a file:
 .ai/work/<work-id>.md
 ```
 
-The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, route, status, branch, actual selected checkout path, and lifecycle owner when available. Existing records that lack checkout metadata remain valid and are resolved prospectively. The file contains the leadership brief, discovery map, approved feature definition, durable `## Implementation plan`, delivery state, verification, review, acceptance, and shipping state. The implementation plan contains architecture decisions, builder-sized task cards, integration verification, and the commit plan, all connected by stable IDs. The coordinator keeps this file canonical and sends each worker only a minimal projection containing its task and relevant references. Compact sections are rewritten rather than appended as a transcript.
+The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, status, branch, actual selected checkout path, and lifecycle owner when available. Legacy `route` metadata remains valid but is not written for new work. Existing records that lack checkout metadata remain valid and are resolved prospectively. The file contains only the applicable leadership brief, discovery map, approved definition, durable implementation brief, delivery state, verification, review, acceptance, and shipping state. Formal task graphs and commit plans appear only when required. The coordinator keeps this file canonical and sends each worker only a minimal projection containing its task and relevant references. Compact sections are rewritten rather than appended as a transcript.
 
 Multiple work items may coexist. Codavio resolves an explicit work ID first, then matching branch or worktree metadata, then a sole active item; ambiguous candidates require selection. Existing `.ai/work/<branch-slug>.md` files remain recognized as legacy state and are never silently overwritten or renamed.
 
 The workflow creates feature-named `.ai/work/` state on demand under the selected Git worktree, independent of branch naming. Global installation never creates runtime project state.
 
-Quick changes usually need no work file. A bug fix only gets one if it becomes multi-session or expands beyond a bounded fix. Git, verification evidence, and the PR remain the durable history.
+Clear localized changes usually need no work file. Git, verification evidence, and the PR remain the durable history.
 
 ## Worktrees
 
-- QUICK: current branch if clean and low risk.
-- BUGFIX: current branch if clean and bounded.
-- FEATURE: isolated branch and worktree selected through the active harness or workspace manager; use ignored `.worktrees/` only when no manager exists.
-- Parallel writers: shared worktree only for explicit disjoint paths without repository-wide side effects.
+- Clear localized work: current branch if clean and low risk.
+- Material, risky, parallel, or multi-session work: isolated branch and worktree selected through the active harness or workspace manager; use ignored `.worktrees/` only when no manager exists.
+- Parallel writers: shared worktree only for design-independent tasks with explicit disjoint paths and no repository-wide side effects.
 - Dirty repository with unrelated changes: stop for confirmation or isolate from clean `HEAD`.
 
 ## Measuring token usage
@@ -322,14 +316,14 @@ is a **local logging proxy** in front of every harness:
   (OpenCode/Pi/Codex all read the standard `OPENAI_BASE_URL` / provider base-URL
   setting).
 - Attribute each request to a role or paired role group. Model plus reasoning identifies most
-  lanes (`gpt-6-astra`/`medium` → analyst, `gpt-6-sol`/`medium` → orchestrator/planner,
+  lanes (`gpt-6-astra`/`medium` → designer, `gpt-6-sol`/`medium` → orchestrator/analyst,
   `gpt-6-sol`/`high` → reviewer, `gpt-6-luna`/`medium` → builder, and
   `gpt-6-luna`/`low` → explorer/shipper), so grouping logged usage by both fields yields that
   breakdown without harness changes.
 
 This is intentionally out of the generated package: it is host configuration, not
 workflow source. Use the breakdown to see whether cost concentrates in the reasoning
-roles (analyst/planner), the review loop, or repeated context, and tune from there.
+roles (designer/analyst), the review loop, or repeated context, and tune from there.
 
 ## Validation
 

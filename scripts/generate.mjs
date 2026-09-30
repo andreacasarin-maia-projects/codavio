@@ -164,7 +164,7 @@ function roleBody(role, harness) {
   let body = read("workflow/roles/" + role + ".md");
   const c = CAPABILITIES.roles[role];
   const docs = ["memory"];
-  if (["planner", "builder", "reviewer"].includes(role)) docs.push("code-quality");
+  if (["analyst", "builder", "reviewer"].includes(role)) docs.push("code-quality");
   if (c.edit === "owned") docs.push("implementation");
   if (c.shell.startsWith("verify") || c.git === "inspect") docs.push("verification");
   if (c.web) docs.push("web-use");
@@ -196,9 +196,9 @@ function openCodeCommand() {
     "Begin with the coordinator.", "", "Analyze this request:", "", "$ARGUMENTS", "",
     "Route the request through the canonical workflow generated into the " + CODE + "orchestrator" + CODE,
     "agent. The coordinator owns routing, approvals, work state, execution delegation, and Git",
-    "bookkeeping; the analyst owns product discovery and feature definition, the planner owns",
-    "architecture and implementation planning, and other role agents own bounded implementation, verification, review,",
-    "and approved shipping.",
+    "bookkeeping; the designer owns unresolved product and domain choices, the analyst owns",
+    "repository-specific implementation analysis, and other role agents own bounded implementation,",
+    "verification, review, and approved shipping.",
   ].join("\n");
 }
 

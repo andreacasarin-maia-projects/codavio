@@ -53,7 +53,7 @@ function generated(relative) { return path.join("build", relative); }
 function expectedGuidance(role) {
   const capability = json("workflow/capabilities.json").roles[role];
   const docs = ["memory"];
-  if (["planner", "builder", "reviewer"].includes(role)) docs.push("code-quality");
+  if (["analyst", "builder", "reviewer"].includes(role)) docs.push("code-quality");
   if (capability.edit === "owned") docs.push("implementation");
   if (capability.shell.startsWith("verify") || capability.git === "inspect") docs.push("verification");
   if (capability.web) docs.push("web-use");
@@ -117,7 +117,8 @@ const manifest = json("workflow/manifest.json");
 const capabilities = json("workflow/capabilities.json");
 const ROLES = Object.keys(manifest.roles);
 assert.equal(manifest.command, "codavio");
-assert.deepEqual(ROLES, ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]);
+assert.deepEqual(ROLES, ["designer", "analyst", "explorer", "builder", "reviewer", "shipper"]);
+assert.deepEqual(names("workflow/roles"), ROLES.map((role) => role + ".md").sort());
 assert.deepEqual(Object.keys(capabilities.roles), ["orchestrator", ...ROLES]);
 assert.equal(capabilities.roles.orchestrator.unmanagedWorktreeFallback, "ask");
 for (const role of ROLES) assert.equal("unmanagedWorktreeFallback" in capabilities.roles[role], false,
@@ -164,8 +165,8 @@ contains("workflow/guidance/memory.md", [
 ]);
 contains("workflow/guidance/work-state.md", [
   "`.ai/work/<work-id>.md`", "stable, lowercase, hyphenated feature name",
-  "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist", "### Task graph",
-  "### Commit plan", "minimal ephemeral envelope", "lifecycle_owner", "actual selected checkout path",
+  "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist",
+  "A bounded change may contain one task", "minimal ephemeral envelope", "lifecycle_owner", "actual selected checkout path",
   "Do not infer manager ownership from a checkout path", "Only if no manager exists",
   "stop before dependent work", "Always keep `.ai/work/` inside the selected",
   "use its recorded `worktree` as the selected checkout", "Route later location, attachment, or cleanup",
@@ -175,12 +176,12 @@ contains("workflow/guidance/work-state.md", [
   "After any managed checkout is selected, created, or attached, immediately update the active work",
   "actual selected checkout path in `worktree`", "lifecycle owner", "`lifecycle_owner`",
   "## Dispatch and delivery contract", "After each task or parallel group, update `## Delivery state`",
-  "current blockers and the next task explicit",
+  "Legacy records may retain a `route`", "current blockers and the next task explicit",
   "worker failure, or unexpected required-check failure",
 ]);
 contains("workflow/capabilities.md", [
   "orchestrator → `work-state.md`", "every role → `memory.md`",
-  "planner, builder, and reviewer → `code-quality.md`",
+  "analyst, builder, and reviewer → `code-quality.md`",
   "builder gets memory, code quality, implementation", "reviewer gets memory, code quality",
 ]);
 contains("templates/AGENTS.global.md", [
@@ -196,32 +197,24 @@ for (const role of ROLES) {
     "workflow/roles/" + role + ".md must forbid delegation");
 }
 contains("workflow/orchestrator.md", [
-  "QUICK", "BUGFIX", "FEATURE", "explicit approval", "shipping approval", ".ai/work",
-  "matching compact work item and completed approvals", "Implementation plan",
-  "Routing is a mandatory, visible gate",
+  "`Start: Builder`", "`Start: Analyst`", "`Start: Designer`", "Silence is never approval", "shipping approval",
+  "matching compact work item and completed approvals", "smallest implementation brief",
+  "execution choice, not a persistent request taxonomy",
   "Before checkout-dependent work, apply the complete checkout ownership",
-  "role-specific envelopes and stop/exception rules in", "On conflicts, failures, or changed scope",
-  "The analyst is mandatory for every FEATURE", "actual builder invocation",
-  "always invoke the analyst first", "definition confidence", "`DISCOVERY` exploration brief",
-  "`PLANNING` exploration brief", "explicit feature acceptance", "<work-id>",
-  "After every implementation path completes successful verification",
-  "Role definitions are capability profiles, not singletons",
-  "Invoke multiple explorers", "Invoke multiple builders", "memory closeout",
-  "Zero is valid", "dense living bullet list",
+  "role-specific envelopes and stop rules in", "On conflicts, failures, changed scope",
+  "actual builder invocation", "high-confidence proposed definition", "focused exploration brief",
+  "Prefer one builder", "designs are independent", "repository-memory closeout",
+  "Zero is valid", "trace every production change and new concept",
 ]);
 contains("MEMORY.md", ["# Repository memory", "compact living context", "defer to `AGENTS.md`"]);
-contains("workflow/roles/analyst.md", [
-  "product analyst and solution-design partner", "definition confidence", "`HIGH`", "`MEDIUM`",
-  "`LOW`", "Event Storming", "flow analysis", "recommended answer", "proposed feature definition",
-  "belongs to the planner",
+contains("workflow/roles/designer.md", [
+  "product and domain design partner", "definition confidence", "`HIGH`", "`MEDIUM`", "`LOW`",
+  "Event Storming", "actor and event flows", "proposed definition", "Never treat a recommendation as approval",
 ]);
-contains("workflow/roles/planner.md", [
-  "approved feature definition", "focused exploration brief", "target components or modules",
-  "interfaces, contracts", "data and state lifecycle", "executable task graph",
-  "### Architecture decisions", "### Task graph", "### Integration verification", "### Commit plan",
-  "acceptance scenario", "owning component", "activated dimensions", "explicit cohesion assessment",
-  "approximately 500 human-authored lines", "large mechanical refactor",
-  "advisory or compulsory policy", "destructive contraction", "acceptable regression threshold",
+contains("workflow/roles/analyst.md", [
+  "smallest repository-native implementation brief", "closest exemplary implementation",
+  "### Minimum change", "justification for every new abstraction", "Parallel builders require design-independent work",
+  "Default to one focused commit", "Stop rather than choosing a new public API",
 ]);
 contains("workflow/roles/reviewer.md", [
   "readability and simplicity", "performance and resource bounds", "maintained result",
@@ -229,7 +222,7 @@ contains("workflow/roles/reviewer.md", [
   "`BLOCKER`, `OPTIONAL`, or `FYI`", "smallest acceptable correction",
   "commit plan maps cleanly",
 ]);
-contains("workflow/roles/explorer.md", ["`DISCOVERY`", "`PLANNING`", "`BUGFIX`", "supply evidence"]);
+contains("workflow/roles/explorer.md", ["purpose and focused questions", "supply evidence"]);
 contains("pi/extensions/workflow.ts", [
   "work_id", "Report or list AI workflow work-item status", "legacy branch-named state",
   "Work items:",
@@ -321,16 +314,16 @@ for (const role of ROLES) {
   }
 }
 const returnEvidence = {
-  analyst: "Return a proposed feature definition",
-  planner: "Return the implementation plan",
+  designer: "Return a compact proposed definition",
+  analyst: "Produce a compact implementation brief",
   explorer: "Return only material findings",
   builder: "Return the task ID, changed files",
   reviewer: "Findings return",
   shipper: "Report every commit",
 };
 const codexBoundaries = {
-  analyst: "remain read-only",
-  planner: "Remain read-only",
+  designer: "Remain read-only",
+  analyst: "Remain read-only",
   explorer: "without editing files",
   builder: "Do not run Git",
   reviewer: "Remain read-only",
@@ -354,7 +347,7 @@ contains(generated("pi/pi/agents/reviewer.md"),
   ["## Code quality guidance", "## Verification guidance"]);
 for (const relative of [
   "opencode/agents/builder.md", "pi/pi/agents/builder.md",
-  "opencode/agents/planner.md", "pi/pi/agents/planner.md",
+  "opencode/agents/analyst.md", "pi/pi/agents/analyst.md",
   "opencode/agents/reviewer.md", "pi/pi/agents/reviewer.md",
 ]) {
   contains(generated(relative), [
@@ -362,7 +355,7 @@ for (const relative of [
     "approximately 500 human-authored lines",
   ]);
 }
-for (const role of ["analyst", "planner"]) {
+for (const role of ["designer", "analyst"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["## Web research guidance"]);
   contains(generated("pi/pi/agents/" + role + ".md"),
     ["## Web research guidance", "web_search", "fetch_content"]);
@@ -375,7 +368,7 @@ for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"
   contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
 }
 contains(generated("opencode/agents/orchestrator.md"), [
-  "mode: primary", "\"planner\": allow",
+  "mode: primary", "\"designer\": allow",
   "## Repository memory", "`AGENTS.md` is authoritative",
   '"git worktree add *": ask',
 ]);
@@ -392,10 +385,10 @@ for (const role of ["builder", "reviewer", "shipper"]) {
   const permissions = read(generated("pi/pi/agents/" + role + ".md"));
   assert.ok(!permissions.includes('"git worktree add'), role + " must not receive worktree lifecycle permission");
 }
-contains(generated("opencode/agents/planner.md"), [
+contains(generated("opencode/agents/analyst.md"), [
   "mode: subagent", "edit: deny", "bash: deny",
 ]);
-contains(generated("pi/pi/agents/planner.md"), [
+contains(generated("pi/pi/agents/analyst.md"), [
   "tools: read,grep,find,ls",
 ]);
 for (const role of ROLES) {
@@ -427,7 +420,7 @@ assert.equal(marketplace.plugins[0].name, plugin.name);
 assert.equal(marketplace.plugins[0].source.path, "./plugins/codavio");
 
 contains(generated("opencode/commands/codavio.md"), [
-  "$ARGUMENTS", "generated into the `orchestrator`", "feature definition", "approved shipping",
+  "$ARGUMENTS", "generated into the `orchestrator`", "product and domain choices", "approved shipping",
 ]);
 contains(generated("pi/pi/prompts/codavio.md"), [
   "$ARGUMENTS", "`pi-subagents`", "pinned model",
@@ -477,10 +470,10 @@ contains(generated("codex/plugins/codavio/skills/codavio/agents/openai.yaml"),
   ["allow_implicit_invocation: false"]);
 contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
   "main session model is selected in Codex", "explorer and shipper",
-  "shipper with " + CODE + "gpt-6-luna" + CODE, "shipping approval", "planner",
-  "Route: QUICK", "The analyst is mandatory for every FEATURE", "actual builder invocation",
-  "definition confidence", "explicit feature acceptance", ".ai/work/<work-id>.md",
-  "Invoke multiple explorers", "Invoke multiple builders", "memory closeout",
+  "shipper with " + CODE + "gpt-6-luna" + CODE, "shipping approval", "designer",
+  "Start: Builder", "Start: Analyst", "Start: Designer", "actual builder invocation",
+  "high-confidence proposed definition", "smallest implementation brief", ".ai/work/<work-id>.md",
+  "Prefer one builder", "repository-memory closeout",
   "## Repository memory",
 ]);
 for (const obsolete of [
@@ -502,9 +495,15 @@ try {
   fs.chmodSync(fakeCli, 0o755);
 
   fs.rmSync(path.join(BUILD, "opencode"), { recursive: true, force: true });
+  const retiredAgents = path.join(temporary, "opencode", "agents");
+  fs.mkdirSync(retiredAgents, { recursive: true });
+  const retiredPlanner = path.join(retiredAgents, "planner.md");
+  fs.symlinkSync(path.join(BUILD, "opencode/agents/planner.md"), retiredPlanner);
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
     env: { ...process.env, XDG_CONFIG_HOME: temporary },
   });
+  assert.throws(() => fs.lstatSync(retiredPlanner), { code: "ENOENT" },
+    "OpenCode installation retained the managed retired planner link");
   const installed = path.join(temporary, "opencode");
   assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "AGENTS.md"))),
     path.join(BUILD, "opencode/AGENTS.md"));
@@ -606,6 +605,17 @@ try {
   });
   assert.equal(path.resolve(path.dirname(wrongLegacy), fs.readlinkSync(wrongLegacy)),
     path.join(ROOT, ".opencode/agents/analyst.md"));
+
+  const unrelatedRetiredRoot = path.join(temporary, "unrelated-retired");
+  const unrelatedRetiredAgents = path.join(unrelatedRetiredRoot, "opencode", "agents");
+  fs.mkdirSync(unrelatedRetiredAgents, { recursive: true });
+  const unrelatedPlanner = path.join(unrelatedRetiredAgents, "planner.md");
+  fs.writeFileSync(unrelatedPlanner, "unrelated planner");
+  run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
+    env: { ...process.env, XDG_CONFIG_HOME: unrelatedRetiredRoot },
+  });
+  assert.equal(fs.readFileSync(unrelatedPlanner, "utf8"), "unrelated planner",
+    "OpenCode installation removed an unrelated retired role file");
 
   const conflictRoot = path.join(temporary, "conflict");
   fs.mkdirSync(path.join(conflictRoot, "opencode"), { recursive: true });

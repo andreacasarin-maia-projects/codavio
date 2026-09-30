@@ -1,11 +1,11 @@
 {
   "command": "codavio",
   "roles": {
-    "analyst": {
-      "description": "Collaboratively defines product behavior, evaluates confidence, and recommends solution directions"
+    "designer": {
+      "description": "Collaboratively defines product and domain behavior when material choices remain unresolved"
     },
-    "planner": {
-      "description": "Turns an approved feature definition and targeted repository evidence into an executable task graph and commit plan"
+    "analyst": {
+      "description": "Turns defined behavior and focused repository evidence into the smallest executable implementation brief"
     },
     "explorer": {
       "description": "Answers focused discovery, planning, or bugfix questions with repository evidence"
@@ -14,7 +14,7 @@
       "description": "Implements bounded normal development tasks and proportionate verification"
     },
     "reviewer": {
-      "description": "Performs an independent, read-only review against the approved feature definition and repository constraints"
+      "description": "Performs an independent, read-only review against the accepted definition and repository constraints"
     },
     "shipper": {
       "description": "Verifies shipping preconditions, creates the approved focused commit series, and pushes the current branch"
@@ -22,13 +22,13 @@
   },
   "harnesses": {
     "opencode": {
-      "roles": ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]
+      "roles": ["designer", "analyst", "explorer", "builder", "reviewer", "shipper"]
     },
     "pi": {
-      "roles": ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]
+      "roles": ["designer", "analyst", "explorer", "builder", "reviewer", "shipper"]
     },
     "codex": {
-      "roles": ["analyst", "planner", "explorer", "builder", "reviewer", "shipper"]
+      "roles": ["designer", "analyst", "explorer", "builder", "reviewer", "shipper"]
     }
   }
 }
