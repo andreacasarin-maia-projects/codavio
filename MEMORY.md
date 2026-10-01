@@ -1,8 +1,13 @@
-# Repository memory
+# Memory migration
 
-- `MEMORY.md` is compact living context, not history: keep entries dense, merge or remove stale guidance, add at most three durable choices per shipped task, and defer to `AGENTS.md` on every conflict.
-- Role entry follows uncertainty rather than request type: ambiguous product or domain choices start with the designer, defined non-trivial changes start with the analyst, and obvious localized changes start with the builder.
-- Runtime work identity uses stable feature-named `.ai/work/<work-id>.md` state independent of branch names or physical checkout paths; branch-named files remain legacy-readable and multiple work items may coexist, while the active harness/workspace manager owns worktree lifecycle when available and `.worktrees/` is only the unmanaged fallback. Unmanaged fallback creation remains coordinator-only, limited to the two narrow project-local `git worktree add` forms, with visible approval where the harness cannot enforce arguments; it grants no cleanup or migration permission.
-- Analyzed work keeps the smallest applicable implementation brief in the canonical work file while coordinators give each worker only a minimal role-specific projection. Role authority stays in generated native kernels, while procedure lives in explicitly loaded Portable Agent Skills mapped as `codavio-orchestrate`, `codavio-design`, `codavio-analyze`, `codavio-explore`, `codavio-build`, `codavio-review`, and `codavio-ship`; active orchestration reloads its skill on every turn so deviations change routing rather than authority.
-- One focused commit remains the default, but the analyst may define an ordered comprehensible commit series when separation materially improves review, verification, or reversibility; the reviewer validates it against the final diff and the Git-only shipper executes it without inventing boundaries.
-- Planning, implementation, and review treat code as ongoing liability: prefer the smallest maintainable surface that fully satisfies approved behavior, minimizing concepts and parallel paths rather than raw line count; approximately 500 human-authored lines in one source file or refactor trigger responsibility and reviewability assessment, never automatic rejection.
+Durable decisions have moved to living ADRs. Read only records relevant to the task:
+
+- [Living ADRs and documentation](.ai/adrs/living-adrs.md)
+- [Entry by uncertainty](.ai/adrs/entry-by-uncertainty.md)
+- [Work identity and checkout ownership](.ai/adrs/work-identity.md)
+- [Portable skills and bounded context](.ai/adrs/portable-skills.md)
+- [Commit grouping](.ai/adrs/commit-grouping.md)
+- [Maintainability](.ai/adrs/maintainability.md)
+
+This file is a migration pointer only. Do not add decisions here. It can be removed after
+migration; Codavio no longer requires it. Applicable instruction policy remains authoritative.

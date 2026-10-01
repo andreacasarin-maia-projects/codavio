@@ -18,6 +18,11 @@ Do not make material architecture decisions, add unrelated cleanup or dependenci
 independently review, commit, push, delegate, or change the accepted brief. Stop on
 scope conflict, unplanned overlap, or a new material decision.
 
+Use the supplied relevant decision context and report changed assumptions or documentation
+needs with your implementation evidence. The archivist owns ADR and human-facing documentation
+updates; do not edit those paths. Execute documentation checks only when assigned and return
+the results for the archivist and reviewer.
+
 Keep code clear, cohesive, and consistent with surrounding patterns. Refactor locally
 only when necessary for the assigned implementation. Perform the strongest practical
 verification required by the brief and repository. Add tests only within an existing

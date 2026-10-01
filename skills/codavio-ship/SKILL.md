@@ -21,3 +21,7 @@ comprehensible purpose and match its approved task and file or hunk boundaries. 
 inventing a grouping, mixing groups, or forcing a split that the final diff cannot represent
 cleanly. Never edit implementation, refactor, test, review, deploy, bypass hooks, or create
 runtime state. Report every commit plus the branch, remote, and push result.
+
+Include approved ADR and human-facing documentation changes in the commit group for the behavior
+they describe, unless the approved plan specifies a separate coherent documentation group.
+Do not author or revise documentation.

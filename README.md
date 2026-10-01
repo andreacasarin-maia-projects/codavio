@@ -30,14 +30,15 @@ Repository tooling and installation require Node.js 22.6 or newer.
   infrastructure, migration, and shipping choices remain approval points.
 - **Portable by design.** Shared behavior lives in one canonical source and is rendered
   into native artifacts for each supported coding agent.
-- **Built for continuity.** Compact work items and repository memory preserve decisions
+- **Built for continuity.** Compact work items and selectively loaded living ADRs preserve decisions
   that need to survive long tasks or new sessions.
 
 ## How it works
 
 ```text
 codavio-orchestrate
-  → coordinator visibly starts with Builder, Analyst, or Designer
+  → coordinator visibly starts with Builder, Analyst, Designer, or Archivist
+  → Archivist supplies relevant prior decisions when needed, before dependent work
   → Designer resolves material product or domain choices only when needed
   → approve a material product definition
   → Analyst finds the repository-native minimum change only when technical analysis is needed
@@ -45,7 +46,7 @@ codavio-orchestrate
   → approve only material unresolved technical decisions
   → delegate every implementation, test, and Docker action to a builder
   → builder performs a final simplification pass
-  → compact durable architectural and philosophical context into MEMORY.md
+  → Archivist maintains relevant living ADRs and human-facing documentation
   → invoke an independent traceability and minimality review after successful verification
   → accept a materially changed product outcome
   → request shipping approval
@@ -57,6 +58,9 @@ Role behavior:
 - Designer resolves material product and domain uncertainty: it evaluates definition confidence, asks only decision-changing questions with recommendations, uses Event Storming and flow analysis when useful, and proposes the definition.
 - Analyst turns defined behavior and focused repository evidence into the smallest executable implementation brief, naming the closest exemplar and justifying every new concept.
 - Explorer answers focused internal evidence questions; it never chooses product behavior or technical design.
+- Archivist retrieves relevant documented decisions and maintains approved ADRs, README files,
+  and technical documentation. Discovery assignments are read-only; writing assignments own
+  exact documentation paths. It does not choose architecture or execute commands.
 - Builder is the implementation worker for mechanical edits, normal development,
   test execution, integration verification, and approved Docker execution, and performs a final simplification pass. Multiple builder instances require design-independent work and disjoint ownership.
 - Reviewer remains evidence-only and read-only, and blocks unjustified production machinery.
@@ -71,6 +75,7 @@ procedure skill:
 | `codavio-design` | designer |
 | `codavio-analyze` | analyst |
 | `codavio-explore` | explorer |
+| `codavio-archive` | archivist |
 | `codavio-build` | builder |
 | `codavio-review` | reviewer |
 | `codavio-ship` | shipper |
@@ -88,6 +93,7 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 | Product and domain design | `openai/gpt-6-astra` | `medium` |
 | Technical analysis | `openai/gpt-6-sol` | `medium` |
 | Exploration | `openai/gpt-6-luna` | `low` |
+| Documentation | `openai/gpt-6-luna` | `medium` |
 | Implementation | `openai/gpt-6-luna` | `medium` |
 | Review | `openai/gpt-6-sol` | `high` |
 | Shipping | `openai/gpt-6-luna` | `low` |
@@ -102,12 +108,15 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
   rejection.
 - Entry is observable and proportional: clear localized work starts with Builder, defined
   non-trivial work starts with Analyst, and only material product or domain uncertainty starts
-  with Designer. Request labels such as bug or feature do not determine the path.
+  with Designer. Documentation-only discovery or maintenance starts with Archivist. Request
+  labels such as bug or feature do not determine the path.
 - An explicit, unambiguous request serves as approval for its stated behavior.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
 - After required approvals, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
 - Every change gets verification proportionate to its behavior and risk.
 - Builders execute every implementation, test, and Docker action; the coordinator never substitutes for them. In multi-builder work, a final sequential integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
+- Archivists own documentation edits separately from builder implementation paths. They use
+  read/search and edit/write tools only; executable documentation checks belong to builders.
 - Baseline checks are encouraged for complex or high-risk work, not mandatory. If a baseline fails, a builder repairs it before continuing and retains the evidence.
 - Bug fixes add regression coverage only within an existing suitable test suite; otherwise they use and document the strongest existing verification.
 - Worktrees isolate material, risky, parallel, multi-session work or unrelated dirty changes; parallel writers require design-independent tasks and explicit disjoint ownership.
@@ -121,7 +130,9 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
   task envelopes from it instead of sending lower-capability workers the whole plan or history.
 - Analyzed work uses the smallest applicable implementation brief. Task graphs and commit plans
   appear only when the change needs them; one focused commit remains the default.
-- Root `MEMORY.md` is dense, living repository context rather than history. Every role reads it after the applicable `AGENTS.md`, which remains authoritative, and the coordinator rewrites it before final review when shipped work makes durable context new, stale, or redundant.
+- Living ADRs hold current approved project decisions and relevant rationale. Update existing
+  topic records, use Git for revision history, and load only task-relevant records. Legacy memory
+  is a migration source; new decisions go to ADRs. README and usage docs remain part of delivery.
 - Orchestrator is coordination-only: it owns entry selection, approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not perform product design, technical analysis, implementation, or diff inspection. Designer owns unresolved product and domain choices, Analyst owns the minimum-change implementation brief, and Reviewer owns authoritative diff inspection.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
 - Review corrections proceed autonomously when they stay inside approved behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk; changing one of those boundaries requires approval.
@@ -260,7 +271,8 @@ current destinations.
 Canonical behavior is split by concern:
 
 - `skills/codavio-*/SKILL.md` are Portable Agent Skill directories and define each role's
-  procedure. The orchestration skill owns work-state and repository-memory references.
+  procedure. The orchestration skill owns work-state references; `codavio-archive` owns
+  documentation discovery and living-ADR maintenance guidance.
 - `workflow/orchestrator.md` and `workflow/roles/*.md` are small persistent authority kernels:
   they enforce boundaries, load the assigned skill, and fail closed if it is unavailable.
 - `workflow/guidance/*.md` contains shared code-quality, implementation, verification, and
@@ -276,8 +288,8 @@ permissions, Pi tools and permission policies, and Codex skill metadata without
 embedding skill procedures into generated roles.
 
 `templates/AGENTS.global.md` intentionally contains only universal behavioral
-guidelines: load repository memory with lower precedence than `AGENTS.md`, think before
-coding, prefer simplicity, make surgical changes, and work toward verifiable goals.
+guidelines: think before coding, prefer simplicity, make surgical changes, and work toward
+verifiable goals. Project decision discovery belongs to the workflow, not the global template.
 Workflow routing, architecture, permissions, implementation quality, and verification
 policy stay in canonical coordinator, role, guidance, or harness-specific files rather
 than leaking into every global session.
@@ -297,19 +309,47 @@ arbitrary presentation logic.
 
 ## Persistent context
 
-Durable cross-task context lives in a tracked root file when the repository has something
-worth preserving:
+Durable cross-task decisions live in versioned ADRs. Follow an existing repository location;
+otherwise use:
 
 ```text
-MEMORY.md
+.ai/adrs/<stable-topic>.md
 ```
 
-Every role reads it after the applicable `AGENTS.md`; `AGENTS.md` wins on conflict. Before
-final review, the coordinator considers zero to three new durable architectural or
-philosophical choices, then uses a bounded builder to update the file only when needed.
-The file is a dense living bullet list under a 1,000-word soft limit: merge overlaps,
-rewrite inaccurate entries, and remove obsolete guidance instead of retaining a task
-history. New unapproved material rules still require user approval.
+Codavio uses **living ADRs**: one stable file per significant decision or tightly related concern,
+updated in place as the approved decision changes. Each record states its scope, current choice,
+context and rationale, relevant alternatives, consequences, and conditions for reconsideration.
+Retain earlier rationale only when it explains the current choice; Git holds full revision history.
+Compact overlap and merge or remove redundant guidance, without discarding a decision merely
+because it is old. Respect existing immutable ADR conventions unless the user approves a change.
+
+Search relevant README files, design docs, legacy memory, code comments, and available work items
+for prior decisions even when a project has no ADRs. Distinguish approved choices from observed
+implementation and inference; do not invent missing rationale. Discover records through their
+titles and scope, read only those relevant to the task, and pass bounded decision context to
+workers. Do not load the entire collection or Git history by default.
+
+The archivist returns compact source-linked decision briefs when workers need prior context,
+then maintains documentation from approved choices and implementation evidence. The designer
+and analyst own product and technical reasoning; the coordinator routes existing approval and
+records paths and evidence. The reviewer checks documentation against the final implementation,
+and the shipper includes approved documentation in coherent commit groups. Ordinary changes need
+no ADR, and documentation creates no separate approval gate or mandatory discovery pass.
+Existing authorization can cover a decision change; otherwise material reversals need approval.
+
+`MEMORY.md` is a legacy migration source only, not a destination for future decisions. Migrate
+still-relevant choices, resolve conflicts, and remove it when requested. This repository's former
+memory entries now live under [.ai/adrs/](.ai/adrs/); its remaining memory file is a removable
+migration pointer. Applicable `AGENTS.md` files govern instructions when present; projects need
+no `AGENTS.md` as a memory store. The global template contains only behavioral guidance.
+
+README, usage, API, and maintenance docs still explain the project to humans and AI. Update
+affected commands, examples, and behavior as part of delivery, linking decision rationale rather
+than duplicating it. The archivist loads
+[living-ADR guidance](skills/codavio-archive/references/adrs.md) only for ADR maintenance or migration;
+other workers receive relevant decisions instead of this procedure or the whole collection.
+When `.ai/` is ignored, include only `.ai/adrs/` in version control; keep `.ai/work/` runtime state
+ignored. No mandatory index or historical backfill is required.
 
 Only planned, parallel, or multi-session work needs a file:
 
@@ -347,7 +387,7 @@ is a **local logging proxy** in front of every harness:
   setting).
 - Attribute each request to a role or paired role group. Model plus reasoning identifies most
   lanes (`gpt-6-astra`/`medium` → designer, `gpt-6-sol`/`medium` → orchestrator/analyst,
-  `gpt-6-sol`/`high` → reviewer, `gpt-6-luna`/`medium` → builder, and
+  `gpt-6-sol`/`high` → reviewer, `gpt-6-luna`/`medium` → archivist/builder, and
   `gpt-6-luna`/`low` → explorer/shipper), so grouping logged usage by both fields yields that
   breakdown without harness changes.
 

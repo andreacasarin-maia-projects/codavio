@@ -30,6 +30,12 @@ Produce a compact implementation brief containing only what the change activates
 - observable completion and the strongest practical verification
 - unresolved technical decisions, risks, or conditions that require the user
 
+Use the supplied documentation decision brief; return focused questions for the archivist when
+prior choices or rationale are missing. In `### Decisions`, identify durable choices that need
+records, their approved or proposed rationale, alternatives, consequences, and changes needing
+approval. Name affected documentation in the minimum change for a separate archivist assignment.
+Do not author ADR files or invent missing historical reasoning.
+
 Create implementation tasks only when more than one task is genuinely needed. Use the fewest
 vertical tasks that preserve clear ownership, dependency order, verification, and safe execution.
 Parallel builders require design-independent work as well as disjoint write paths; disjoint files

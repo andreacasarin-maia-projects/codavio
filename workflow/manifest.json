@@ -5,6 +5,7 @@
     "designer": "codavio-design",
     "analyst": "codavio-analyze",
     "explorer": "codavio-explore",
+    "archivist": "codavio-archive",
     "builder": "codavio-build",
     "reviewer": "codavio-review",
     "shipper": "codavio-ship"
@@ -19,6 +20,9 @@
     "explorer": {
       "description": "Answers focused discovery, planning, or bugfix questions with repository evidence"
     },
+    "archivist": {
+      "description": "Retrieves relevant project decisions and maintains approved ADRs and human-facing documentation"
+    },
     "builder": {
       "description": "Implements bounded normal development tasks and proportionate verification"
     },
@@ -31,13 +35,13 @@
   },
   "harnesses": {
     "opencode": {
-      "roles": ["designer", "analyst", "explorer", "builder", "reviewer", "shipper"]
+      "roles": ["designer", "analyst", "explorer", "archivist", "builder", "reviewer", "shipper"]
     },
     "pi": {
-      "roles": ["designer", "analyst", "explorer", "builder", "reviewer", "shipper"]
+      "roles": ["designer", "analyst", "explorer", "archivist", "builder", "reviewer", "shipper"]
     },
     "codex": {
-      "roles": ["designer", "analyst", "explorer", "builder", "reviewer", "shipper"]
+      "roles": ["designer", "analyst", "explorer", "archivist", "builder", "reviewer", "shipper"]
     }
   }
 }

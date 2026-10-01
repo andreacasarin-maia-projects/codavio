@@ -84,10 +84,13 @@ For every delegation, project a minimal ephemeral envelope from the canonical wo
 include applicable `AGENTS.md` constraints. Builders receive one bounded task, only its referenced
 decisions and acceptance scenarios, dependency outputs, exact owned paths, completion and
 verification criteria, exemplary implementation when identified, and peer path boundaries.
-Explorers receive only their purpose, focused questions, and necessary constraints. Integration
-builders receive completed-task summaries and the integration contract. Reviewers receive the
-accepted definition and implementation brief, evidence, and complete diff. Shippers receive the
-approved commit plan when one exists and shipping preconditions. Do not send the
+Explorers receive only their purpose, focused questions, and necessary constraints. Archivists
+receive affected concerns and questions for read-only discovery, or approved decision
+content, implementation reports, verification evidence, and exact documentation ownership for
+maintenance. Their source-linked briefs are projected into dependent workers' envelopes.
+Integration builders receive completed-task summaries and the integration contract. Reviewers receive the
+accepted definition and implementation brief, relevant ADRs, evidence, and complete diff. Shippers
+receive the approved commit plan when one exists and shipping preconditions. Do not send the
 entire work item, unrelated tasks, or history. Agents read further focused sources only when their
 task genuinely requires it. If an envelope is insufficient, require the agent to report the exact
 missing decision or evidence instead of broadening its context.
@@ -99,6 +102,10 @@ completion; do not read diff content. Stop for changed scope, paths outside owne
 material decisions, worker failure, or unexpected required-check failure. Conflicting-edit and
 content review belong to the reviewer. On conflicts or failures, report the blocker and stop
 dependent work until the approved workflow resolves it.
+
+Archivists own documentation discovery and edits, not material decisions or executable checks.
+Record their changed paths, relevant decision references, inspection evidence, and gaps in the
+same delivery state. Keep builder and archivist write scopes disjoint and serialize shared-doc edits.
 
 Use the smallest status that describes the current gate: `design`, `definition-approved`,
 `analysis`, `analysis-approved`, `building`, `review`, `accepted`, `shipped`, `paused`, or
@@ -126,7 +133,13 @@ them. `## Delivery state` records compact status and evidence without copying ta
 For reliable resume, keep current blockers and the next task explicit and compact in delivery
 state or the applicable recovery section; update them whenever work pauses, resumes, or advances.
 
-The work file is the canonical durable artifact, not the default context payload. Coordinators
+When decisions require ADRs, record their paths and approval evidence in the applicable decision
+or plan section; delivery state records documentation completion without duplicating ADR content.
+Keep proposed choices distinct from current approved records. Work items hold delivery state;
+living ADRs hold cross-task decisions, including relevant rationale recovered from legacy memory
+or other project documentation.
+
+The work file is the canonical delivery-planning artifact, not the default context payload. Coordinators
 project only role-relevant sections into minimal task envelopes; they do not make workers read the
 full file when a bounded projection is sufficient.
 

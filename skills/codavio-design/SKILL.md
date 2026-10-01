@@ -40,3 +40,8 @@ recommended assumptions, acceptance scenarios, material alternatives, remaining 
 definition confidence. Give acceptance scenarios stable IDs when later work will reference them.
 Separate user-confirmed facts, repository-observed facts, inference, and unresolved questions.
 Never treat a recommendation as approval.
+
+Flag durable product or domain choices and constraints whose rationale should survive delivery.
+Pass them with the definition to the analyst for ADR assessment; do not author technical ADRs.
+Use the supplied relevant decision brief; return focused questions for the archivist when
+documented constraints or prior rationale are missing.

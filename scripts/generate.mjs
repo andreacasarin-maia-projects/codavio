@@ -30,11 +30,7 @@ const CAPABILITIES = JSON.parse(read("workflow/capabilities.json"));
 const MANIFEST = JSON.parse(read("workflow/manifest.json"));
 
 function skillFor(role) { return MANIFEST.roleSkills[role]; }
-function guidancePath(name) {
-  return name === "memory"
-    ? "skills/" + skillFor("orchestrator") + "/references/memory.md"
-    : "workflow/guidance/" + name + ".md";
-}
+function guidancePath(name) { return "workflow/guidance/" + name + ".md"; }
 
 function roleDescription(role) {
   return role === "orchestrator"
@@ -176,9 +172,9 @@ function piFrontmatter(role) {
 function roleBody(role, harness) {
   let body = read("workflow/roles/" + role + ".md");
   const c = CAPABILITIES.roles[role];
-  const docs = ["memory"];
+  const docs = [];
   if (["analyst", "builder", "reviewer"].includes(role)) docs.push("code-quality");
-  if (c.edit === "owned") docs.push("implementation");
+  if (c.edit === "owned" && c.shell.startsWith("verify")) docs.push("implementation");
   if (c.shell.startsWith("verify") || c.git === "inspect") docs.push("verification");
   if (c.web) docs.push("web-use");
   for (const name of docs) body += "\n\n" + read(guidancePath(name));

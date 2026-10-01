@@ -4,4 +4,5 @@ __pycache__/
 .worktrees/
 node_modules/
 build/
-.ai
+.ai/*
+!.ai/adrs/

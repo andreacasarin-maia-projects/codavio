@@ -6,10 +6,10 @@ description: Perform an independent evidence-based review against accepted behav
 Remain read-only and do not delegate or execute tests or Docker. Work from the
 coordinator-supplied materials: the accepted definition; the implementation brief and commit
 plan when they exist; the diff under review; the relevant `AGENTS.md`
-constraints; root `MEMORY.md` when it exists; active work state; and verification evidence.
+constraints; relevant current ADRs; active work state; and verification evidence.
 Read additional focused sources only when a specific finding
-needs confirmation; do not re-scan the whole repository. `AGENTS.md` is authoritative
-over `MEMORY.md`.
+needs confirmation; do not re-scan the whole repository. Applicable `AGENTS.md` instructions
+remain authoritative; an ADR conflict requires investigation rather than silent reversal.
 
 Review in this order:
 
@@ -20,7 +20,7 @@ Review in this order:
 5. verification credibility
 6. architecture, readability, simplicity, dependency discipline, and material maintainability
 7. performance and resource bounds when the change can affect them
-8. accidental scope growth and `MEMORY.md` accuracy, density, durability, and consistency
+8. accidental scope growth and relevant ADR and human-facing documentation accuracy and consistency
 9. traceability from every production change and new concept to an accepted outcome or repository
    necessity, and from every change to exactly one proposed commit group
 
@@ -30,6 +30,12 @@ verification before the implementation when practical so they establish intended
 trace the implementation against them. Expand security, migration, performance, and dependency
 review only when the diff or accepted brief activates those dimensions or introduces an unplanned
 risk.
+
+Check relevant ADRs and affected human-facing docs against approved intent, implementation, and
+supplied evidence. Flag misleading rationale, lost constraints, unapproved reversals, stale
+commands or examples, and missing assigned documentation. Send corrections through the
+coordinator to the archivist; do not load documentation maintenance procedures or demand ADRs
+for ordinary implementation details.
 
 Apply the code-quality guidance to the maintained result, not only the changed lines. When a
 touched human-authored source file approaches or exceeds approximately 500 lines, or the change

@@ -1,7 +1,7 @@
 # Repository Instructions
 
-Read root `MEMORY.md` after this file. This file is authoritative if they conflict; report
-conflicting memory as stale.
+This file governs repository instructions. Current project decisions live in `.ai/adrs/`;
+read only records relevant to the task and report conflicts with these instructions.
 
 ## Purpose
 
@@ -18,7 +18,7 @@ This project builds a stable, testable, and repeatable AI development workflow t
 
 ## Keep Definitions Aligned
 
-- `scripts/validate.mjs` checks ignored build outputs, native metadata, and a disposable installer integration for exactly command `codavio`, roles `orchestrator`, `designer`, `analyst`, `explorer`, `builder`, `reviewer`, `shipper`, and their `roleSkills` mappings. Adding or renaming one requires updating `workflow/manifest.json`, the role entry in `workflow/capabilities.json`, and its portable skill directory.
+- `scripts/validate.mjs` checks ignored build outputs, native metadata, and a disposable installer integration for exactly command `codavio`, roles `orchestrator`, `designer`, `analyst`, `explorer`, `archivist`, `builder`, `reviewer`, `shipper`, and their `roleSkills` mappings. Adding or renaming one requires updating `workflow/manifest.json`, the role entry in `workflow/capabilities.json`, and its portable skill directory.
 - OpenCode and Pi agent frontmatter is generated from `workflow/capabilities.json` and `workflow/manifest.json` (see `workflow/capabilities.md` for rendering rules); do not hand-edit generated `build/` frontmatter. Codex role config is derived from role kernels, assigned skills, and model policy.
 - Keep the command, role kernels, skills, Pi support files, and docs coordinated when routes, roles, models, verification, or shipping behavior changes.
 - Commands still carry hand-written frontmatter and require `description` and an existing `agent`.

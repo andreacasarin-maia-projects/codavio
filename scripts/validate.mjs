@@ -56,16 +56,12 @@ function skillBody(role) {
   const text = read(skillSource(role));
   return text.slice(text.indexOf("\n---\n", 4) + 5).trim();
 }
-function guidancePath(name) {
-  return name === "memory"
-    ? "skills/" + skillFor("orchestrator") + "/references/memory.md"
-    : "workflow/guidance/" + name + ".md";
-}
+function guidancePath(name) { return "workflow/guidance/" + name + ".md"; }
 function expectedGuidance(role) {
   const capability = json("workflow/capabilities.json").roles[role];
-  const docs = ["memory"];
+  const docs = [];
   if (["analyst", "builder", "reviewer"].includes(role)) docs.push("code-quality");
-  if (capability.edit === "owned") docs.push("implementation");
+  if (capability.edit === "owned" && capability.shell.startsWith("verify")) docs.push("implementation");
   if (capability.shell.startsWith("verify") || capability.git === "inspect") docs.push("verification");
   if (capability.web) docs.push("web-use");
   return docs;
@@ -85,6 +81,8 @@ function assertRoleArtifact(role, relative, harness) {
     assert.ok(!artifact.includes(skillBody(worker)),
       relative + " embeds the " + worker + " skill procedure");
   }
+  assert.ok(!artifact.includes(read("skills/codavio-archive/references/adrs.md").trim()),
+    relative + " eagerly embeds ADR maintenance guidance");
   contains(generated(relative), [skillFor(role), "load", "stop"]);
   const capability = json("workflow/capabilities.json").roles[role];
   if (harness === "opencode") {
@@ -142,13 +140,14 @@ const ROLE_SKILLS = {
   designer: "codavio-design",
   analyst: "codavio-analyze",
   explorer: "codavio-explore",
+  archivist: "codavio-archive",
   builder: "codavio-build",
   reviewer: "codavio-review",
   shipper: "codavio-ship",
 };
 const SKILLS = Object.values(ROLE_SKILLS);
 assert.equal(manifest.command, "codavio");
-assert.deepEqual(ROLES, ["designer", "analyst", "explorer", "builder", "reviewer", "shipper"]);
+assert.deepEqual(ROLES, ["designer", "analyst", "explorer", "archivist", "builder", "reviewer", "shipper"]);
 assert.deepEqual(manifest.roleSkills, ROLE_SKILLS);
 assert.deepEqual(names("skills"), [...SKILLS].sort());
 assert.deepEqual(names("workflow/roles"), ROLES.map((role) => role + ".md").sort());
@@ -191,11 +190,16 @@ contains("workflow/guidance/verification.md", [
 contains("workflow/guidance/web-use.md", [
   "Web research guidance", "official or primary sources", "Never paste whole pages",
 ]);
-contains("skills/codavio-orchestrate/references/memory.md", [
-  "## Repository memory", "applicable `AGENTS.md` files first",
-  "Read root `MEMORY.md` after those files when it exists", "`AGENTS.md` is authoritative",
-  "Report conflicting memory as stale",
-]);
+assert.equal(fs.existsSync(path.join(ROOT,
+  "skills/codavio-orchestrate/references/memory.md")), false,
+  "legacy memory guidance must not remain a workflow source");
+assert.equal(fs.existsSync(path.join(ROOT,
+  "skills/codavio-orchestrate/references/adrs.md")), false,
+  "ADR maintenance belongs only to the documentation skill");
+assert.equal(spawnSync("git", ["check-ignore", "--no-index", ".ai/adrs/living-adrs.md"],
+  { cwd: ROOT }).status, 1, "living ADRs must be versionable");
+assert.equal(spawnSync("git", ["check-ignore", "--no-index", ".ai/work/example.md"],
+  { cwd: ROOT }).status, 0, "runtime work state must remain ignored");
 contains("skills/codavio-orchestrate/references/work-state.md", [
   "`.ai/work/<work-id>.md`", "stable, lowercase, hyphenated feature name",
   "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist",
@@ -215,9 +219,11 @@ contains("skills/codavio-orchestrate/references/work-state.md", [
 contains("workflow/capabilities.md", ["roleSkills", "Portable Agent Skill", "native `skill` permission"]);
 contains("templates/AGENTS.global.md", [
   "Think Before Coding", "Simplicity First", "Surgical Changes", "Goal-Driven Execution",
-  "repository-root `MEMORY.md`", "`AGENTS.md` is authoritative",
 ]);
-for (const forbidden of ["/codavio", "/dev", "builder", "docker compose", ".worktrees", "openai/", "permission"]) {
+for (const forbidden of [
+  "/codavio", "/dev", "builder", "docker compose", ".worktrees", "openai/", "permission",
+  "MEMORY.md", "adrs/",
+]) {
   assert.ok(!read("templates/AGENTS.global.md").toLowerCase().includes(forbidden.toLowerCase()),
     "templates/AGENTS.global.md must not contain workflow-specific marker " + forbidden);
 }
@@ -230,7 +236,6 @@ contains("workflow/orchestrator.md", [
   "coordination-only", "`codavio-orchestrate`", "every subsequent user turn",
   "remembered from an earlier turn", "deviation changes routing", "authority. Continue", "stop",
 ]);
-contains("MEMORY.md", ["# Repository memory", "compact living context", "defer to `AGENTS.md`"]);
 contains("skills/codavio-design/SKILL.md", [
   "product and domain design partner", "definition confidence", "`HIGH`", "`MEDIUM`", "`LOW`",
   "Event Storming", "actor and event flows", "proposed definition", "Never treat a recommendation as approval",
@@ -249,7 +254,7 @@ contains("skills/codavio-review/SKILL.md", [
 contains("skills/codavio-explore/SKILL.md", ["purpose and focused questions", "supply evidence"]);
 contains("skills/codavio-orchestrate/SKILL.md", [
   "`Start: Builder`", "`Start: Analyst`", "`Start: Designer`", "Silence is never approval",
-  "shipping approval", "Prefer one builder", "repository-memory closeout",
+  "shipping approval", "Prefer one builder", "ADR and documentation closeout",
   "at the beginning of every active turn", "Deviations change routing", "authority.",
 ]);
 for (const role of ALL_ROLES) {
@@ -289,7 +294,7 @@ assert.ok(fs.existsSync(path.join(BUILD,
 assert.deepEqual(names(generated("codex/plugins/codavio/skills")), ["codavio", ...SKILLS].sort());
 const codexReferences = generated("codex/plugins/codavio/skills/codavio-orchestrate/references");
 assert.deepEqual(names(codexReferences),
-  [...ROLES.map((role) => role + ".md"), "memory.md", "work-state.md"].sort());
+  [...ROLES.map((role) => role + ".md"), "work-state.md"].sort());
 assert.equal(fs.existsSync(path.join(BUILD,
   "codex/plugins/codavio/skills/codavio-orchestrate/references/roles.md")), false,
   "Codex generated tree contains no aggregate role brief");
@@ -300,6 +305,16 @@ for (const skill of SKILLS) {
   }
   contains(generated("codex/plugins/codavio/skills/" + skill + "/agents/openai.yaml"),
     ["allow_implicit_invocation: false"]);
+  for (const skillRoot of [
+    "skills", "build/opencode/skills", "build/pi/skills", "build/codex/plugins/codavio/skills",
+  ]) {
+    const source = path.join(skillRoot, skill, "SKILL.md");
+    for (const match of read(source).matchAll(/\[[^\]]+\]\(([^)#]+\.md)(?:#[^)]*)?\)/g)) {
+      if (/^https?:/.test(match[1])) continue;
+      const target = path.resolve(ROOT, path.dirname(source), match[1]);
+      assert.ok(fs.existsSync(target), source + " has an unresolved reference: " + match[1]);
+    }
+  }
 }
 
 for (const role of ROLES) {
@@ -312,8 +327,6 @@ for (const role of ROLES) {
     ["description: " + description, "mode: subagent"]);
   contains(generated("pi/pi/agents/" + role + ".md"),
     ["name: " + role, "description: " + description, "maxSubagentDepth: 0"]);
-  contains(generated("opencode/agents/" + role + ".md"), ["## Repository memory"]);
-  contains(generated("pi/pi/agents/" + role + ".md"), ["## Repository memory"]);
   assert.match(frontmatter(generated("opencode/agents/" + role + ".md")), /description:|name:/);
   assert.match(frontmatter(generated("pi/pi/agents/" + role + ".md")),
     new RegExp("name: " + role));
@@ -372,6 +385,7 @@ const codexBoundaries = {
   designer: "Remain read-only",
   analyst: "Remain read-only",
   explorer: "Remain read-only",
+  archivist: "Do not run Git",
   builder: "do not run Git",
   reviewer: "Remain read-only",
   shipper: "Remain Git-only",
@@ -411,7 +425,7 @@ for (const name of names("pi/extensions")) {
   assert.equal(read(generated("pi/pi/extensions/" + name)), read("pi/extensions/" + name),
     "generated Pi extension differs from its native guard source: " + name);
 }
-for (const role of ["explorer", "builder", "reviewer", "orchestrator", "shipper"]) {
+for (const role of ["explorer", "archivist", "builder", "reviewer", "orchestrator", "shipper"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
 }
 contains(generated("opencode/agents/orchestrator.md"), [
@@ -429,7 +443,7 @@ contains(generated("pi/pi/prompts/codavio.md"), [
   "load the `codavio-orchestrate` skill", "Reload it at the beginning of every subsequent turn",
   "stop instead of performing role work yourself",
 ]);
-for (const role of ["builder", "reviewer", "shipper"]) {
+for (const role of ["archivist", "builder", "reviewer", "shipper"]) {
   const permissions = read(generated("pi/pi/agents/" + role + ".md"));
   assert.ok(!permissions.includes('"git worktree add'), role + " must not receive worktree lifecycle permission");
 }
@@ -439,6 +453,22 @@ contains(generated("opencode/agents/analyst.md"), [
 contains(generated("pi/pi/agents/analyst.md"), [
   "tools: read,grep,find,ls",
 ]);
+const { git, web, edit, shell, delegate, guard } = capabilities.roles.archivist;
+assert.deepEqual({ git, web, edit, shell, delegate, guard }, {
+  git: "none", web: false,
+  edit: "owned", shell: "none", delegate: false, guard: null,
+}, "archivist must remain a documentation worker without execution or research authority");
+contains(generated("opencode/agents/archivist.md"), [
+  "edit: allow", "bash: deny", "task: deny", "webfetch: deny", "websearch: deny",
+]);
+contains(generated("pi/pi/agents/archivist.md"), ["tools: read,grep,find,ls,edit,write"]);
+assert.ok(!frontmatter(generated("pi/pi/agents/archivist.md")).includes("    bash: allow"),
+  "Pi archivist must not expose shell execution");
+for (const skillRoot of ["opencode/skills", "pi/skills", "codex/plugins/codavio/skills"]) {
+  assert.equal(read(generated(skillRoot + "/codavio-archive/references/adrs.md")),
+    read("skills/codavio-archive/references/adrs.md"),
+    skillRoot + " must package the on-demand ADR reference unchanged");
+}
 for (const role of ROLES) {
   const model = "openai/" + capabilities.roles[role].model;
   contains(generated("opencode/agents/" + role + ".md"), ["model: " + model]);
@@ -521,7 +551,7 @@ contains(generated("codex/plugins/codavio/skills/codavio-orchestrate/SKILL.md"),
   "shipper with " + CODE + "gpt-6-luna" + CODE, "shipping approval", "designer",
   "Start: Builder", "Start: Analyst", "Start: Designer", "actual builder invocation",
   "high-confidence proposed definition", "smallest implementation brief",
-  "Prefer one builder", "repository-memory closeout",
+  "Prefer one builder", "ADR and documentation closeout",
 ]);
 contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [
   "name: codavio", "compatibility launcher", "activate `codavio-orchestrate`",

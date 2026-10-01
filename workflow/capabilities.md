@@ -52,7 +52,7 @@ lifecycle permission.
 
 - `none` — read-only.
 - `work-file` — may write only `.ai/work/**` (the orchestrator, for the work file + plan).
-- `owned` — may write repo code within the task's owned paths (builders).
+- `owned` — may write assigned repository paths (builder implementation or archivist documentation).
 
 ### `shell` levels
 
@@ -96,20 +96,22 @@ Constants applied uniformly (not per role): `constants.opencode` / `constants.pi
 (`external_directory: deny`, Pi inherit flags). Each command in a set renders as both its
 bare form and its `<cmd> *` wildcard, except `redirect` entries which are used verbatim.
 
-Repository-memory and work-state guidance are canonical references of
-`codavio-orchestrate`; every role artifact also receives the repository-memory guidance. The
-remaining shared guidance docs are **derived from role capabilities** (in `roleBody`), so they
+Work-state guidance belongs to `codavio-orchestrate`; living-ADR guidance belongs to
+`codavio-archive` and loads only for ADR maintenance or migration. It is not injected into
+worker kernels. Shared guidance docs are **derived from role capabilities** (in `roleBody`), so they
 cannot contradict the policy:
 
-- every role → `memory.md`
 - analyst, builder, and reviewer → `code-quality.md`
-- `edit == "owned"` → `implementation.md`
+- `edit == "owned"` and `shell` starts with `verify` → `implementation.md`
 - `shell` starts with `verify` **or** `git == "inspect"` → `verification.md`
 - `web == true` → `web-use.md`
 
-Worker guidance is appended in that order (the builder gets memory, code quality, implementation,
-then verification; reviewer gets memory, code quality, then verification; analyst gets memory,
-code quality, then web research; designer gets memory then web research).
+Worker guidance is appended in that order: builder gets code quality, implementation, then
+verification; reviewer gets code quality then verification; analyst gets code quality then web
+research; designer gets web research. Archivist receives only its authority kernel and loads
+`codavio-archive`. Its `owned` edit scope is restricted to assigned documentation by the role
+contract; `shell: none`, `git: none`, `web: false`, and `delegate: false` remove executable,
+network, shipping, and delegation tools. Discovery assignments remain read-only by contract.
 
 ## Gray-zone adjudication
 

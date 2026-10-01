@@ -55,6 +55,10 @@
       "model": "gpt-6-luna", "reasoning": "low", "mode": "subagent", "git": "none", "web": false,
       "edit": "none", "shell": "none", "delegate": false, "guard": null
     },
+    "archivist": {
+      "model": "gpt-6-luna", "reasoning": "medium", "mode": "subagent", "git": "none", "web": false,
+      "edit": "owned", "shell": "none", "delegate": false, "guard": null
+    },
     "builder": {
       "model": "gpt-6-luna", "reasoning": "medium", "mode": "subagent", "git": "none", "web": false,
       "edit": "owned", "shell": "verify+integration", "delegate": false, "guard": "builder"
