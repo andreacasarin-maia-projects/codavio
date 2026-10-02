@@ -1,13 +1,17 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { coordinatorCommandBlocked, resolveGitRoot } from "./command-policy";
+import { coordinatorCommandBlocked, isWorktreeLifecycleCommand } from "./command-policy.ts";
 
 export default function coordinatorGuard(pi: ExtensionAPI): void {
   if (process.env.PI_SUBAGENT_CHILD_AGENT) return;
-  pi.on("tool_call", async (event) => {
+  pi.on("tool_call", async (event, ctx) => {
     if (event.toolName !== "bash") return;
     const command = String(event.input.command ?? "");
-    if (coordinatorCommandBlocked(command, resolveGitRoot(process.cwd()))) {
-      return { block: true, reason: "Coordinator guard permits only the listed worktree reads and approved project-local add forms; reviewer owns diff inspection." };
+    let worktreeApproved = false;
+    if (isWorktreeLifecycleCommand(command)) {
+      worktreeApproved = ctx.hasUI && await ctx.ui.confirm("Approve requested workspace change?", command);
+    }
+    if (coordinatorCommandBlocked(command, worktreeApproved)) {
+      return { block: true, reason: "Worktree changes require visible approval of a direct, non-forced command; reviewer owns diff inspection." };
     }
   });
 }

@@ -1,4 +1,4 @@
-# Stable work identity and managed checkout ownership
+# Stable work identity and external checkout ownership
 
 Scope: runtime work items, resume, and worktree lifecycle.
 
@@ -6,23 +6,28 @@ Scope: runtime work items, resume, and worktree lifecycle.
 
 Use feature-named `.ai/work/<work-id>.md` state independent of branch names and checkout paths.
 Keep runtime state inside the selected project checkout, allow multiple work items, and retain
-legacy branch-named records without silent migration. The active harness or workspace manager
-owns checkout lifecycle. Use `.worktrees/` only when no manager exists.
+legacy branch-named records without silent migration. Codavio works in the current checkout by
+default. Never create, switch, attach, or clean up worktrees automatically. Workspace changes
+require an explicit user request. Use the harness lifecycle when available; without a manager,
+the coordinator may use direct, non-forced Git worktree commands with visible approval.
 
 ## Context and rationale
 
 Repository memory established these choices. Branch-independent identity supports continuity
-across checkout changes; respecting manager ownership avoids conflicting lifecycle mechanisms.
+across checkout changes; leaving workspace selection and lifecycle outside Codavio avoids
+conflicting managers and unwanted checkout creation. Recorded checkout metadata supports resume
+without authorizing an automatic workspace switch.
 
 ## Alternatives and consequences
 
 Branch-derived identity ties delivery state to Git naming. Universal project-local worktrees
-ignore active manager ownership. The chosen approach requires explicit checkout metadata and
-safe resume selection. Unmanaged fallback creation remains coordinator-only, limited to the
-two narrow project-local `git worktree add` forms, with visible approval where arguments cannot
-be enforced. This grants no cleanup or migration authority.
+ignore external ownership. A manager-first policy with an unmanaged creation fallback still
+lets Codavio decide when to request a fresh checkout and duplicates lifecycle responsibility.
+That automatic fallback is removed. Explicit user requests may authorize workspace changes
+without making isolation a workflow requirement. Conflicting changes block dependent work; unsafe parallel writers
+are serialized. Task size, risk, and session duration do not mandate isolation.
 
 ## Reconsideration
 
-Revisit when a supported harness changes lifecycle guarantees. Exact creation, ownership, and
-resume rules remain in `skills/codavio-orchestrate/references/work-state.md`.
+Revisit if harnesses expose stronger workspace authorization controls. Current checkout
+and resume rules remain in `skills/codavio-orchestrate/references/work-state.md`.

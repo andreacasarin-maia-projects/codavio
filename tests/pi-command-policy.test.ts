@@ -1,9 +1,7 @@
 import test from "node:test";
+import coordinatorGuard from "../pi/extensions/coordinator-guard.ts";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, symlinkSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-import { builderCommandBlocked, coordinatorCommandBlocked, isApprovedUnmanagedWorktreeAdd, isReviewerCommand, isShipperCommand, resolveGitRoot } from "../pi/extensions/command-policy.ts";
+import { builderCommandBlocked, coordinatorCommandBlocked, isWorktreeLifecycleCommand, isReviewerCommand, isShipperCommand } from "../pi/extensions/command-policy.ts";
 
 test("reviewer allows only direct inspection Git commands", () => {
   for (const command of ["git status", "git diff --stat", "git log -1", "git worktree list", "git worktree list --porcelain"]) {
@@ -36,18 +34,12 @@ test("coordinator guard blocks Git diff and log reads plus worktree lifecycle", 
   }
 });
 
-test("coordinator fallback accepts only direct project-local worktree add forms", () => {
+test("coordinator blocks all worktree mutations including former fallback forms", () => {
   const root = "/repo/project";
   const target = `${root}/.worktrees/guest-checkout`;
-  const allowed = [
+  const rejected = [
     `git worktree add -b feature/guest-checkout ${target}`,
     `git worktree add ${target} feature/guest-checkout`,
-  ];
-  for (const command of allowed) {
-    assert.equal(isApprovedUnmanagedWorktreeAdd(command, root), true, command);
-    assert.equal(coordinatorCommandBlocked(command, root), false, command);
-  }
-  const rejected = [
     `git worktree add --force -b feature/guest-checkout ${target}`,
     `git worktree add -B feature/guest-checkout ${target}`,
     `git worktree add --detach ${target}`,
@@ -70,13 +62,47 @@ test("coordinator fallback accepts only direct project-local worktree add forms"
     `git --git-dir=${root}/.git worktree add -b feature/guest-checkout ${target}`,
   ];
   for (const command of rejected) {
-    assert.equal(isApprovedUnmanagedWorktreeAdd(command, root), false, command);
-    assert.equal(coordinatorCommandBlocked(command, root), true, command);
+    assert.equal(coordinatorCommandBlocked(command), true, command);
   }
-  for (const missingRoot of [undefined, ""]) {
-    assert.equal(isApprovedUnmanagedWorktreeAdd(`git worktree add -b feature/guest-checkout ${target}`, missingRoot), false);
-    assert.equal(coordinatorCommandBlocked(`git worktree add -b feature/guest-checkout ${target}`, missingRoot), true);
+});
+
+test("only direct non-forced worktree mutations can receive approval", () => {
+  for (const command of [
+    "git worktree add -b feature/x /repo/x", "git worktree add /repo/x feature/x",
+    "git worktree remove /repo/x", "git worktree move /repo/x /repo/y",
+    "git worktree prune", "git worktree repair /repo/x", "git worktree lock /repo/x", "git worktree unlock /repo/x",
+  ]) {
+    assert.equal(isWorktreeLifecycleCommand(command), true, command);
+    assert.equal(coordinatorCommandBlocked(command), true, command);
+    assert.equal(coordinatorCommandBlocked(command, true), false, command);
   }
+  for (const command of [
+    "git worktree add --force /repo/x feature/x", "git worktree add -B feature/x /repo/x",
+    "git worktree remove -ff /repo/x", "git diff", "git log",
+    "sh -c 'git worktree prune'", "git -C /repo worktree prune", "git worktree prune; echo done",
+  ]) {
+    assert.equal(isWorktreeLifecycleCommand(command), false, command);
+    assert.equal(coordinatorCommandBlocked(command, true), true, command);
+  }
+});
+
+test("Pi coordinator requires visible approval for each workspace mutation", async () => {
+  let handler: ((event: unknown, context: unknown) => Promise<{ block: boolean } | undefined>) | undefined;
+  coordinatorGuard({ on: (_event: string, callback: typeof handler) => { handler = callback; } } as never);
+  assert.ok(handler);
+  const command = "git worktree add -b feature/x /repo/x";
+  for (const [hasUI, approved, blocked] of [[true, true, false], [true, false, true], [false, true, true]]) {
+    const prompts: string[] = [];
+    const result = await handler({ toolName: "bash", input: { command } }, {
+      hasUI,
+      ui: { confirm: async (_title: string, message: string) => { prompts.push(message); return approved; } },
+    });
+    assert.equal(result?.block ?? false, blocked);
+    assert.deepEqual(prompts, hasUI ? [command] : []);
+  }
+  const noPrompt = { hasUI: true, ui: { confirm: () => { assert.fail("read or blocked wrapper must not prompt"); } } };
+  assert.equal(await handler({ toolName: "bash", input: { command: "git worktree list" } }, noPrompt), undefined);
+  assert.equal((await handler({ toolName: "bash", input: { command: "sh -c 'git worktree prune'" } }, noPrompt))?.block, true);
 });
 
 test("coordinator blocks worktree lifecycle hidden in shell command strings", () => {
@@ -101,37 +127,13 @@ test("coordinator blocks worktree lifecycle hidden in shell command strings", ()
     "/bin/bash -c 'git worktree add -b feature/x /repo/project/.worktrees/x'",
     "/usr/bin/zsh -c 'git worktree prune'",
   ]) {
-    assert.equal(coordinatorCommandBlocked(command, "/repo/project"), true, command);
+    assert.equal(coordinatorCommandBlocked(command), true, command);
   }
   for (const command of ["sh -c 'echo hello'", "sh -c 'echo hello; echo world'", "bash -c 'git status'", "env sh -lc 'echo hello'", "env npm test"]) {
-    assert.equal(coordinatorCommandBlocked(command, "/repo/project"), false, command);
+    assert.equal(coordinatorCommandBlocked(command), false, command);
   }
   for (const command of ["git -c color.ui=false status", "git -c 'color.ui=false' status"]) {
-    assert.equal(coordinatorCommandBlocked(command, "/repo/project"), false, command);
-  }
-});
-
-test("coordinator fallback resolves the repository root when launched from a subdirectory", () => {
-  const cwd = path.join(process.cwd(), "pi", "extensions");
-  const root = resolveGitRoot(cwd);
-  assert.equal(root, process.cwd());
-  const command = `git worktree add -b feature/guest-checkout ${path.join(root!, ".worktrees", "guest-checkout")}`;
-  assert.equal(coordinatorCommandBlocked(command, root), false);
-  const nestedCommand = `git worktree add -b feature/guest-checkout ${path.join(cwd, ".worktrees", "guest-checkout")}`;
-  assert.equal(coordinatorCommandBlocked(nestedCommand, root), true);
-});
-
-test("coordinator fallback rejects a symlinked .worktrees directory", () => {
-  const root = mkdtempSync(path.join(tmpdir(), "codavio-policy-"));
-  const outside = mkdtempSync(path.join(tmpdir(), "codavio-outside-"));
-  try {
-    symlinkSync(outside, path.join(root, ".worktrees"));
-    const command = `git worktree add -b feature/guest-checkout ${path.join(root, ".worktrees", "guest-checkout")}`;
-    assert.equal(isApprovedUnmanagedWorktreeAdd(command, root), false);
-    assert.equal(coordinatorCommandBlocked(command, root), true);
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-    rmSync(outside, { recursive: true, force: true });
+    assert.equal(coordinatorCommandBlocked(command), false, command);
   }
 });
 

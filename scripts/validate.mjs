@@ -152,8 +152,10 @@ assert.deepEqual(manifest.roleSkills, ROLE_SKILLS);
 assert.deepEqual(names("skills"), [...SKILLS].sort());
 assert.deepEqual(names("workflow/roles"), ROLES.map((role) => role + ".md").sort());
 assert.deepEqual(Object.keys(capabilities.roles), ALL_ROLES);
-assert.equal(capabilities.roles.orchestrator.unmanagedWorktreeFallback, "ask");
-for (const role of ROLES) assert.equal("unmanagedWorktreeFallback" in capabilities.roles[role], false,
+assert.equal(capabilities.roles.orchestrator.worktreeLifecycle, "ask");
+for (const role of ROLES) assert.equal("worktreeLifecycle" in capabilities.roles[role], false,
+  role + " must not own worktree lifecycle");
+for (const role of ALL_ROLES) assert.equal("unmanagedWorktreeFallback" in capabilities.roles[role], false,
   role + " must not own unmanaged worktree lifecycle");
 for (const [role, capability] of Object.entries(capabilities.roles)) {
   assert.ok(["gpt-6-astra", "gpt-6-sol", "gpt-6-luna"].includes(capability.model),
@@ -203,15 +205,12 @@ assert.equal(spawnSync("git", ["check-ignore", "--no-index", ".ai/work/example.m
 contains("skills/codavio-orchestrate/references/work-state.md", [
   "`.ai/work/<work-id>.md`", "stable, lowercase, hyphenated feature name",
   "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist",
-  "A bounded change may contain one task", "minimal ephemeral envelope", "lifecycle_owner", "actual selected checkout path",
-  "Do not infer manager ownership from a checkout path", "Only if no manager exists",
-  "stop before dependent work", "Always keep `.ai/work/` inside the selected",
-  "use its recorded `worktree` as the selected checkout", "Route later location, attachment, or cleanup",
-  "first confirm `.worktrees/` is ignored", "Then request visible approval", "git worktree add -b <new-branch>",
-  "git worktree add <project-root>/.worktrees/<work-id> <existing-branch>",
-  "lifecycle_owner: unmanaged", "At entry and resume, read the current branch and short Git status",
-  "After any managed checkout is selected, created, or attached, immediately update the active work",
-  "actual selected checkout path in `worktree`", "lifecycle owner", "`lifecycle_owner`",
+  "A bounded change may contain one task", "minimal ephemeral envelope", "lifecycle_owner",
+  "Work in the current checkout by default", "Workspace changes require an explicit user request",
+  "Never create, switch, attach, or clean up worktrees",
+  "Always keep `.ai/work/` inside the current checkout",
+  "Recorded checkout metadata is resume context", "stop before dependent work",
+  "At entry and resume, read the current branch and short Git status",
   "## Dispatch and delivery contract", "After each task or parallel group, update `## Delivery state`",
   "Legacy records may retain a `route`", "current blockers and the next task explicit",
   "worker failure, or unexpected required-check failure",
@@ -432,13 +431,18 @@ contains(generated("opencode/agents/orchestrator.md"), [
   "mode: primary", "\"designer\": allow",
   "`codavio-orchestrate`", "every subsequent user turn",
   '"codavio-orchestrate": allow',
-  '"git worktree add *": ask',
 ]);
 for (const role of ROLES) {
   contains(generated("opencode/agents/orchestrator.md"), ['"' + role + '": allow']);
 }
-assert.ok(!read(generated("opencode/agents/orchestrator.md")).includes('"git worktree add *": allow'),
-  "OpenCode coordinator must ask before unmanaged worktree creation");
+contains(generated("opencode/agents/orchestrator.md"), [
+  '"git worktree add *": ask', '"git worktree remove *": ask', '"git worktree move *": ask',
+]);
+assert.ok(!read(generated("opencode/agents/orchestrator.md")).includes('"git worktree add *": allow'));
+for (const role of ROLES) {
+  const permissions = read(generated("opencode/agents/" + role + ".md"));
+  assert.ok(!permissions.includes('"git worktree add'), role + " must not receive worktree creation permission");
+}
 contains(generated("pi/pi/prompts/codavio.md"), [
   "load the `codavio-orchestrate` skill", "Reload it at the beginning of every subsequent turn",
   "stop instead of performing role work yourself",
@@ -513,16 +517,16 @@ for (const coordinator of [
 ]) {
   const text = read(coordinator).replace(/\s+/g, " ");
   for (const marker of [
-    "active harness or workspace manager", "Do not infer manager ownership from a checkout path",
-    "request a fresh checkout from the manager", "Do not directly relocate, delete, or recreate",
-    "Only if no manager exists, use an unmanaged checkout",
-    "stop before dependent work", "Always keep `.ai/work/` inside the selected checkout",
-    "After any managed checkout is selected, created, or attached, immediately update the active work",
-    "actual selected checkout path in `worktree`", "lifecycle owner", "`lifecycle_owner`",
+    "Work in the current checkout by default", "Workspace changes require an explicit user request",
+    "Never create, switch, attach, or clean up worktrees",
+    "also applies when the harness has no native worktree manager",
+    "Always keep `.ai/work/` inside the current checkout",
+    "Recorded checkout metadata is resume context", "stop before dependent work",
     "current blockers and the next task explicit",
   ]) assert.ok(text.includes(marker), coordinator + " missing ownership policy " + marker);
-  assert.ok(!text.includes("Create worktrees only under `<project-root>/.worktrees/`"),
-    coordinator + " retains the universal .worktrees/ requirement");
+  for (const obsolete of ["git worktree add", "request a fresh checkout", "normally uses one branch and isolated worktree"]) {
+    assert.ok(!text.includes(obsolete), coordinator + " retains worktree lifecycle guidance " + obsolete);
+  }
   assert.ok(read(coordinator).includes([
     "branch: feature/guest-checkout",
     "worktree: /actual/path/to/selected/checkout",

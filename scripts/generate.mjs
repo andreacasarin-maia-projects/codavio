@@ -51,7 +51,8 @@ function ocBash(role) {
   const c = CAPABILITIES.roles[role];
   if (c.shell === "none" && c.git === "none") return ["  bash: deny"];
   if (c.shell === "none") return ["  bash:", `    "*": deny`, ...ocGit(c.git),
-    ...(c.unmanagedWorktreeFallback === "ask" ? [`    "git worktree add *": ask`] : [])];
+    ...(c.worktreeLifecycle === "ask" ? ["add", "remove", "move", "prune", "repair", "lock", "unlock"]
+      .flatMap((action) => [`    "git worktree ${action}": ask`, `    "git worktree ${action} *": ask`]) : [])];
   const bs = CAPABILITIES.constants.builderShell;
   const lines = ["  bash:", `    "*": ask`, ...ocExpand(bs.fileOps),
     ...bs.redirect.map((r) => `    "${r}": allow`), ...ocExpand(bs.verification), ...ocExpand(bs.dockerRead)];

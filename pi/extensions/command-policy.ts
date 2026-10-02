@@ -1,7 +1,3 @@
-import path from "node:path";
-import { lstatSync, realpathSync } from "node:fs";
-import { execFileSync } from "node:child_process";
-
 type ParsedCommand = { argv: string[] } | { error: string };
 
 const unsafeShellSyntax = /[\r\n;|&`$<>\\{}()!~*?]/;
@@ -79,40 +75,6 @@ export function builderCommandBlocked(command: string): boolean {
   return lowered.some((argument) => argument === "git" || argument.endsWith("/git"));
 }
 
-export function isApprovedUnmanagedWorktreeAdd(command: string, projectRoot?: string): boolean {
-  if (!projectRoot) return false;
-  const parsed = parseCommand(command);
-  if (!isGitCommand(parsed)) return false;
-  const { argv } = parsed;
-  const root = path.resolve(projectRoot);
-  let target: string | undefined;
-  if (argv[1] === "worktree" && argv[2] === "add" && argv.length === 6 && argv[3] === "-b") {
-    if (argv[4].startsWith("-")) return false;
-    target = argv[5];
-  } else if (argv[1] === "worktree" && argv[2] === "add" && argv.length === 5) {
-    target = argv[3];
-    if (argv[4].startsWith("-")) return false;
-  } else {
-    return false;
-  }
-  if (!target) return false;
-  const prefix = path.join(root, ".worktrees");
-  const workId = path.basename(target);
-  if (target !== path.join(prefix, workId) || path.dirname(target) !== prefix || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(workId)) return false;
-  try {
-    if (lstatSync(prefix).isSymbolicLink()) return false;
-    if (path.relative(root, realpathSync(prefix)).startsWith("..")) return false;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") return false;
-  }
-  try {
-    if (lstatSync(target).isSymbolicLink()) return false;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "ENOENT") return false;
-  }
-  return true;
-}
-
 function gitAction(argv: string[]): { index: number; actionIndex: number } | undefined {
   const index = argv.findIndex((argument) => (argument.split("/").at(-1) ?? "") === "git");
   if (index < 0) return undefined;
@@ -123,14 +85,6 @@ function gitAction(argv: string[]): { index: number; actionIndex: number } | und
     else actionIndex += 1;
   }
   return { index, actionIndex };
-}
-
-export function resolveGitRoot(cwd: string): string | undefined {
-  try {
-    return execFileSync("git", ["-C", cwd, "rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
-  } catch {
-    return undefined;
-  }
 }
 
 function wrappedGitWorktreeLifecycle(argv: string[]): boolean {
@@ -182,7 +136,14 @@ function containsWorktreeLifecycle(command: string, argv: string[], allowRawMark
     new RegExp(`\\b${lifecycle}\\b`, "i").test(command);
 }
 
-export function coordinatorCommandBlocked(command: string, projectRoot?: string): boolean {
+export function isWorktreeLifecycleCommand(command: string): boolean {
+  const parsed = parseCommand(command);
+  if (!isGitCommand(parsed) || parsed.argv[1] !== "worktree") return false;
+  if (!["add", "remove", "move", "prune", "repair", "lock", "unlock"].includes(parsed.argv[2])) return false;
+  return !parsed.argv.slice(3).some((argument) => argument === "-B" || /^-f+$/.test(argument) || argument.startsWith("--force"));
+}
+
+export function coordinatorCommandBlocked(command: string, worktreeApproved = false): boolean {
   const parsed = parseCommand(command);
   if ("error" in parsed) {
     const payload = shellCommandString(command);
@@ -190,19 +151,14 @@ export function coordinatorCommandBlocked(command: string, projectRoot?: string)
     return containsWorktreeLifecycle(payload, [], true) || /\bgit\s+(?:diff|log)\b/i.test(payload);
   }
   const argv = parsed.argv;
-  if (isApprovedUnmanagedWorktreeAdd(command, projectRoot)) return false;
+  if (worktreeApproved && isWorktreeLifecycleCommand(command)) return false;
   if (containsWorktreeLifecycle(command, argv)) return true;
   if (wrappedGitWorktreeLifecycle(argv)) return true;
   const invocation = gitAction(argv);
   if (!invocation) return false;
-  const { index, actionIndex } = invocation;
+  const { actionIndex } = invocation;
   const action = argv[actionIndex];
   if (action === "diff" || action === "log") return true;
   if (action !== "worktree") return false;
-  const subcommand = argv[actionIndex + 1];
-  if (subcommand === "list") return false;
-  if (subcommand === "add") {
-    return argv[0] !== "git" || index !== 0 || actionIndex !== 1 || !isApprovedUnmanagedWorktreeAdd(command, projectRoot);
-  }
-  return true;
+  return argv[actionIndex + 1] !== "list";
 }

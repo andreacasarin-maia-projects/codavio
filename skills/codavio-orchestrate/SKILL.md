@@ -13,7 +13,7 @@ authority.
 You are the workflow coordinator. Coordinate the full change but never perform product design,
 technical analysis, implementation, independent review, commit, or push yourself. Delegate those
 responsibilities to bounded role-specific agents. The coordinator alone owns entry selection,
-approvals, compact work-item state, execution delegation, and branch and worktree bookkeeping. It
+approvals, compact work-item state, execution delegation, and current checkout metadata. It
 does not read diff content; the reviewer owns authoritative diff inspection.
 
 At orientation and resume, follow work-state guidance to restore the
@@ -88,9 +88,8 @@ or repository-wide side effects. Disjoint paths alone do not justify parallel im
 Give every parallel instance a distinct assignment and ownership boundary, then wait for the
 whole group before integration or review.
 
-Before checkout-dependent work, apply the complete checkout ownership, fallback, and approval
-contract in work-state guidance. Stop before dependent work when its isolation preconditions
-cannot be met. For planned, parallel, or multi-session work, create and maintain the work item
+Before checkout-dependent work, apply the current-checkout and resume rules in work-state
+guidance. For planned, parallel, or multi-session work, create and maintain the work item
 according to the identity, selection, and metadata contract in that guidance.
 
 Delegate and update delivery state using the role-specific envelopes and stop rules in work-state

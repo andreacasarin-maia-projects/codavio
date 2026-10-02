@@ -7,8 +7,8 @@ available numeric suffix without adding an approval gate. Never overwrite anothe
 
 At entry and resume, read the current branch and short Git status, then select the matching active
 work item using the rules below. Resume its compact recorded state instead of repeating completed
-approvals. Preserve unrelated user changes; stop or isolate when dirty changes overlap. Create the
-work item only for planned, parallel, or multi-session work.
+approvals. Preserve unrelated user changes; stop and report the conflict when dirty changes overlap.
+Create the work item only for planned, parallel, or multi-session work.
 
 Resolve the active work item in this order:
 
@@ -34,49 +34,30 @@ lifecycle_owner: codex
 ---
 ```
 
-Omit unavailable branch, worktree, or lifecycle owner values, including for a new project. Use
-the manager's identifying name for `lifecycle_owner`, or `unmanaged` for the `.worktrees/`
-fallback. `worktree` is the actual selected checkout path, not a path derived from the work ID or
-branch. Keep the work ID independent of branch and path. Legacy records may retain a `route`
-field; do not migrate or reinterpret it, and do not write one for new work.
+Omit unavailable branch, worktree, or lifecycle owner values, including for a new project.
+`worktree` records the current checkout path, not a path derived from the work ID or branch.
+When known, `lifecycle_owner` records the user or harness that manages the checkout; it grants
+Codavio no automatic lifecycle authority. Keep the work ID independent of branch and path.
+Legacy records may retain a `route` field; do not migrate or reinterpret it, and do not write
+one for new work.
+Existing records may omit checkout metadata; preserve them without forced migration.
 
-Existing records may omit `worktree` or `lifecycle_owner`; keep them valid and resolve ownership
-prospectively when selecting a checkout. Do not migrate or overwrite their metadata just to add
-these fields. For future work, first identify the active harness or workspace manager and inspect
-its available checkouts and ownership metadata. Reuse only a checkout that belongs to this project,
-is explicitly available to this task, has no conflicting work, and has compatible branch and
-state. Do not infer manager ownership from a checkout path. If the candidate is occupied,
-unsuitable, or ownership is uncertain, request a fresh checkout from the manager; never repurpose
-it. Let the manager create, locate, attach, and clean up its checkouts. Do not directly relocate,
-delete, or recreate a managed checkout. If needed isolation is unavailable or incompatible, report
-that and stop before dependent work. Avoid nested isolation inside a suitable isolated checkout.
-After any managed checkout is selected, created, or attached, immediately update the active work
-item with its actual selected checkout path in `worktree` and its lifecycle owner in
-`lifecycle_owner`.
-Only if no manager exists, use an unmanaged checkout under the active project's ignored
-`.worktrees/` directory. Always keep `.ai/work/` inside the selected checkout, regardless of its
-location, never under global harness configuration.
+Work in the current checkout by default. Never create, switch, attach, or clean up worktrees
+automatically. Workspace changes require an explicit user request; task size, risk, parallelism,
+session duration, and uncertain ownership are not authorization. This rule also applies when the
+harness has no native worktree manager. Always keep `.ai/work/` inside the current checkout,
+never under global harness configuration.
 
-For the unmanaged fallback, first confirm `.worktrees/` is ignored and the exact target
-`<project-root>/.worktrees/<work-id>` is free. Then request visible approval for exactly one
-direct command in one of these forms:
+For an explicitly requested workspace change, use the active harness or workspace manager's
+lifecycle when available. Only when no manager exists may the coordinator use direct Git worktree
+commands, subject to visible command approval. Do not force mutations or bypass manager ownership.
+Workers remain in their assigned checkout and have no lifecycle authority. After an authorized
+workspace change, record the actual checkout path and known lifecycle owner in the active work item.
+There is no automatic `.worktrees/` creation fallback or required worktree directory.
 
-```sh
-git worktree add -b <new-branch> <project-root>/.worktrees/<work-id>
-git worktree add <project-root>/.worktrees/<work-id> <existing-branch>
-```
-
-Use the first form for a new branch and the second for an existing compatible branch. The Pi
-guard accepts only these forms with a lowercase hyphenated work ID and a target directly under
-the active project's `.worktrees/`; the permission system still asks before execution. Do not
-use force, detach, alternate worktree options, wrappers, chained shell syntax, external paths,
-or any other worktree mutation. If the target is occupied or `.worktrees/` is not ignored,
-stop and report the blocker. Record `worktree` as the resulting checkout path and
-`lifecycle_owner: unmanaged`.
-
-When resuming an item with both fields, use its recorded `worktree` as the selected checkout and
-its `lifecycle_owner` to determine who manages it. Route later location, attachment, or cleanup
-through that owner; never infer a different owner from the path.
+Recorded checkout metadata is resume context, not an instruction to switch workspaces. If a
+resumed item's recorded `worktree` differs from the current checkout, stop before dependent work
+and ask the user to resolve the mismatch or explicitly request the intended workspace change.
 
 ## Dispatch and delivery contract
 
@@ -143,7 +124,6 @@ The work file is the canonical delivery-planning artifact, not the default conte
 project only role-relevant sections into minimal task envelopes; they do not make workers read the
 full file when a bounded projection is sufficient.
 
-Multiple work items may coexist. Material, risky, parallel, or multi-session implementation
-normally uses one branch and isolated worktree per work item. Merely using separate files does not
-make parallel writes safe; shared-worktree writers still require design-independent work,
-explicit disjoint ownership, and no repository-wide side effects.
+Multiple work items may coexist. Task size, risk, parallelism, and session duration do not
+require a new checkout. Parallel writers in the current checkout require design-independent
+work, explicit disjoint ownership, and no repository-wide side effects; otherwise serialize them.

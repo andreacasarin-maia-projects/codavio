@@ -23,7 +23,7 @@ Repository tooling and installation require Node.js 22.6 or newer.
 - **One request, one visible path.** The coordinator makes the route and approval gates
   explicit, so the work can be followed from intent to evidence.
 - **Structure that fits the task.** Quick changes stay compact; bug fixes and features add
-  analysis, planning, isolation, and review as their risk grows.
+  analysis, planning, and review as their risk grows.
 - **Focused roles.** Analysis, architecture, implementation, review, and shipping have
   separate responsibilities, tools, and model choices.
 - **Human decisions stay visible.** Material architecture, API, schema, security,
@@ -123,8 +123,7 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 - Explorer and builder roles are reusable capability profiles rather than singletons:
   independent explorer lanes may run concurrently, and multiple builders may run
   concurrently when their write scopes and side effects are disjoint.
-- Isolation follows the active harness or workspace manager's checkout lifecycle when available; `.worktrees/` is the unmanaged fallback only when no manager exists. See the canonical ownership policy in `skills/codavio-orchestrate/references/work-state.md`.
-- When no manager exists, the coordinator confirms `.worktrees/` is ignored and the target is free, then requests visible approval for one of the two direct project-local `git worktree add` forms in the canonical work-state guidance. Unsupported forms and other worktree mutations are denied.
+- Codavio works in the current checkout by default. Workspace changes require an explicit user request and use the harness lifecycle when available; there is no automatic creation fallback. See `skills/codavio-orchestrate/references/work-state.md` for the canonical checkout and resume rules.
 - The conversation is not the source of truth. Planned, parallel, or multi-session work uses a compact living feature-named work item independent of its branch name.
 - The work file is the single durable planning artifact. Coordinators project minimal role-specific
   task envelopes from it instead of sending lower-capability workers the whole plan or history.
@@ -133,7 +132,7 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 - Living ADRs hold current approved project decisions and relevant rationale. Update existing
   topic records, use Git for revision history, and load only task-relevant records. Legacy memory
   is a migration source; new decisions go to ADRs. README and usage docs remain part of delivery.
-- Orchestrator is coordination-only: it owns entry selection, approvals, `.ai/work` state, branch and worktree bookkeeping, and execution delegation; it does not perform product design, technical analysis, implementation, or diff inspection. Designer owns unresolved product and domain choices, Analyst owns the minimum-change implementation brief, and Reviewer owns authoritative diff inspection.
+- Orchestrator is coordination-only: it owns entry selection, approvals, `.ai/work` state, current checkout metadata, and execution delegation; it does not perform product design, technical analysis, implementation, or diff inspection. Designer owns unresolved product and domain choices, Analyst owns the minimum-change implementation brief, and Reviewer owns authoritative diff inspection.
 - Reviewer stays read-only and evidence-based; it does not execute tests or Docker. Shipping remains an independent least-privilege subagent gate.
 - Review corrections proceed autonomously when they stay inside approved behavior, scope, architecture, dependencies, migrations, acceptance criteria, and risk; changing one of those boundaries requires approval.
 
@@ -357,20 +356,21 @@ Only planned, parallel, or multi-session work needs a file:
 .ai/work/<work-id>.md
 ```
 
-The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, status, branch, actual selected checkout path, and lifecycle owner when available. Legacy `route` metadata remains valid but is not written for new work. Existing records that lack checkout metadata remain valid and are resolved prospectively. The file contains only the applicable leadership brief, discovery map, approved definition, durable implementation brief, delivery state, verification, review, acceptance, and shipping state. Formal task graphs and commit plans appear only when required. The coordinator keeps this file canonical and sends each worker only a minimal projection containing its task and relevant references. Compact sections are rewritten rather than appended as a transcript.
+The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, status, branch, current checkout path, and external lifecycle owner when available. Legacy `route` metadata remains valid but is not written for new work. Existing records that lack checkout metadata remain valid. Recorded paths provide resume context; a mismatch with the current checkout requires user resolution before dependent work. The file contains only the applicable leadership brief, discovery map, approved definition, durable implementation brief, delivery state, verification, review, acceptance, and shipping state. Formal task graphs and commit plans appear only when required. The coordinator keeps this file canonical and sends each worker only a minimal projection containing its task and relevant references. Compact sections are rewritten rather than appended as a transcript.
 
 Multiple work items may coexist. Codavio resolves an explicit work ID first, then matching branch or worktree metadata, then a sole active item; ambiguous candidates require selection. Existing `.ai/work/<branch-slug>.md` files remain recognized as legacy state and are never silently overwritten or renamed.
 
-The workflow creates feature-named `.ai/work/` state on demand under the selected Git worktree, independent of branch naming. Global installation never creates runtime project state.
+The workflow creates feature-named `.ai/work/` state on demand inside the current checkout, independent of branch naming. Global installation never creates runtime project state.
 
 Clear localized changes usually need no work file. Git, verification evidence, and the PR remain the durable history.
 
-## Worktrees
+## Workspaces
 
-- Clear localized work: current branch if clean and low risk.
-- Material, risky, parallel, or multi-session work: isolated branch and worktree selected through the active harness or workspace manager; use ignored `.worktrees/` only when no manager exists.
-- Parallel writers: shared worktree only for design-independent tasks with explicit disjoint paths and no repository-wide side effects.
-- Dirty repository with unrelated changes: stop for confirmation or isolate from clean `HEAD`.
+- Use the current checkout regardless of task size, risk, or session duration.
+- Never create, switch, attach, or clean up worktrees automatically. Workspace changes require an explicit user request.
+- For a requested change, use the harness or workspace manager when available. Without a manager, the coordinator may use direct Git worktree commands with visible approval; forced mutations remain blocked.
+- Parallel writers require design-independent tasks, explicit disjoint paths, and no repository-wide side effects; otherwise run them sequentially.
+- Preserve unrelated user changes. Stop and report overlapping changes before dependent work.
 
 ## Measuring token usage
 
