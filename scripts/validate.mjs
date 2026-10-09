@@ -459,7 +459,23 @@ const recoveryRoot = generated("codex/plugins/codavio/hooks");
 assert.equal(read(path.join(recoveryRoot, "orchestrator.md")).trim(), read("workflow/orchestrator.md").trim());
 assert.deepEqual(json(path.join(recoveryRoot, "hooks.json")),
   json("adapters/codex/plugins/codavio/hooks/hooks.json"));
-const recoveryOutput = JSON.parse(run(process.execPath, [path.join(recoveryRoot, "recover.mjs")]).stdout);
+const recoveryData = fs.mkdtempSync(path.join(os.tmpdir(), "codavio-hook-validation-"));
+let recoveryOutput;
+try {
+  const recoveryEvent = {
+    session_id: "validation", transcript_path: path.join(recoveryData, "root.jsonl"),
+    hook_event_name: "SessionStart", source: "compact",
+  };
+  const invokeRecovery = (event) => run(process.execPath, [path.join(recoveryRoot, "recover.mjs")], {
+    input: JSON.stringify(event), env: { ...process.env, PLUGIN_DATA: recoveryData },
+  }).stdout;
+  assert.equal(invokeRecovery(recoveryEvent), "", "inactive session must receive no context");
+  assert.equal(invokeRecovery({ ...recoveryEvent, hook_event_name: "UserPromptSubmit", prompt: "Use $codavio" }), "");
+  recoveryOutput = JSON.parse(invokeRecovery(recoveryEvent));
+  assert.equal(invokeRecovery({ ...recoveryEvent, session_id: "unrelated" }), "");
+} finally {
+  fs.rmSync(recoveryData, { recursive: true, force: true });
+}
 assert.equal(recoveryOutput.hookSpecificOutput.hookEventName, "SessionStart");
 assert.ok(recoveryOutput.hookSpecificOutput.additionalContext.includes(read("workflow/orchestrator.md").trim()));
 for (const role of ["explorer", "archivist", "builder", "reviewer", "orchestrator", "shipper"]) {

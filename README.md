@@ -236,8 +236,18 @@ node scripts/install.mjs codex
 ```
 
 The generated plugin bundles a `SessionStart` recovery hook for resume and compaction. It
-reinjects the canonical coordinator authority and the checkpoint reminder for an already-active
-Codavio workflow; it does not start workflows automatically. Review and trust the hook after
+emits context only after an explicit Codavio entry command activates that session. A silent
+`UserPromptSubmit` hook recognizes `$codavio`, `$codavio-orchestrate`, `/codavio`, or
+`/skill:codavio-orchestrate` at the start of a prompt, optionally preceded by `use`, `run`,
+`start`, `resume`, or `invoke` and `please`. `Use Codavio` is also supported. Mentions in
+questions or quoted examples do not activate recovery. Activation is stored under `PLUGIN_DATA`,
+keyed by session ID and transcript path, never inferred from repository work items. Explicit
+`pause Codavio`, `cancel Codavio`, `stop Codavio`, `exit Codavio`, or `do not use Codavio`
+clears it. Activation persists until an explicit exit; the recovered instructions still tell
+the model to ignore completed workflows. Existing sessions must invoke Codavio again after
+the update to activate recovery. Missing identity or plugin storage keeps the hook silent.
+Codex still dispatches the hook commands wherever the plugin is enabled; unrelated sessions
+receive no Codavio context. Review and trust the hook after
 installing or updating the plugin (CLI: `/hooks`). Codex skips new or changed untrusted hooks.
 The hook requires `node` on the executable path. See the official
 [Codex hooks documentation](https://learn.chatgpt.com/docs/hooks#review-and-trust-hooks).

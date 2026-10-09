@@ -14,8 +14,12 @@ role. Missing evidence keeps work pending rather than granting the coordinator a
 substitute for a worker.
 In Codex, bundle a small resume/compaction hook that restores the canonical coordinator kernel
 as developer context and asks an active workflow to reload its skill and work checkpoint.
-The hook is conditional guidance, not automatic workflow activation or a tool blocker, and uses
-Codex's normal hook trust review. Do not duplicate the authority kernel in the adapter.
+The hook records explicit entry commands through `UserPromptSubmit` in plugin-owned data keyed
+by session ID and transcript path. It emits recovery context only for that identity; unrelated
+sessions, worker transcripts, missing identity, and missing storage receive no output. Explicit
+workflow exits clear activation. Do not infer activation from a work item or parse unstable
+transcript formats. This is recovery guidance, not a tool blocker, and uses Codex's normal hook
+trust review. Do not duplicate the authority kernel in the adapter.
 
 Designer or analyst involvement requires one evolving feature document in the canonical work
 item, regardless of perceived difficulty or task size, combining the user's intent,
