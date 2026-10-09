@@ -214,6 +214,11 @@ contains("skills/codavio-orchestrate/references/work-state.md", [
   "## Dispatch and delivery contract", "After each task or parallel group, update `## Delivery state`",
   "Legacy records may retain a `route`", "current blockers and the next task explicit",
   "worker failure, or unexpected required-check failure",
+  "After compaction", "Every worker return", "Last handoff:", "Next: explorer",
+  "A missing entry stays pending", "before that invocation",
+  "The work item is the shared feature document", "not another",
+  "ADR assessment", "confirmed decisions, rationale, and resolved edge cases",
+  "A link alone is insufficient",
 ]);
 contains("workflow/capabilities.md", ["roleSkills", "Portable Agent Skill", "native `skill` permission"]);
 contains("templates/AGENTS.global.md", [
@@ -238,23 +243,40 @@ contains("workflow/orchestrator.md", [
 contains("skills/codavio-design/SKILL.md", [
   "product and domain design partner", "definition confidence", "`HIGH`", "`MEDIUM`", "`LOW`",
   "Event Storming", "actor and event flows", "proposed definition", "Never treat a recommendation as approval",
+  "same evolving feature", "Return section-ready content",
+  "Every designer assignment in a Codavio workflow requires a shared feature document",
 ]);
 contains("skills/codavio-analyze/SKILL.md", [
   "smallest repository-native implementation brief", "closest exemplary implementation",
   "### Minimum change", "justification for every new abstraction", "Parallel builders require design-independent work",
   "Default to one focused commit", "Stop rather than choosing a new public API",
+  "same evolving feature", "not a disconnected analysis report or a second plan document",
+  "Every analyst assignment in a Codavio workflow requires a shared feature document",
 ]);
 contains("skills/codavio-review/SKILL.md", [
   "readability and simplicity", "performance and resource bounds", "maintained result",
   "approximately 500 lines", "Size alone is not a finding", "fragmented micro-files",
   "`BLOCKER`, `OPTIONAL`, or `FYI`", "smallest acceptable correction",
   "commit plan maps cleanly",
+  "Missing assessment, unfinished assigned documents", "required ADR is a `BLOCKER`",
+  "actual builder verification evidence",
 ]);
 contains("skills/codavio-explore/SKILL.md", ["purpose and focused questions", "supply evidence"]);
 contains("skills/codavio-orchestrate/SKILL.md", [
   "`Start: Builder`", "`Start: Analyst`", "`Start: Designer`", "Silence is never approval",
   "shipping approval", "Prefer one builder", "ADR and documentation closeout",
   "at the beginning of every active turn", "Deviations change routing", "authority.",
+  "## Recovery checkpoint", "Repository exploration requires an actual",
+  "Persist each analysis/exploration", "Create the work item before the first designer or analyst",
+  "explicitly assess ADR and documentation impact", "both categories are `not needed`",
+  "Before the first builder invocation", "an analyst's chat response alone is not the",
+  "one evolving feature document", "Design and analysis may",
+  "Whenever a designer or analyst is invoked", "not perceived difficulty",
+  "this is the handoff, not a separate document-approval ceremony",
+  "When a builder discovers an edge case", "Extract significant cross-task decisions",
+]);
+contains("skills/codavio-build/SKILL.md", [
+  "saved work-item path and section", "a conversation-only plan or document link alone",
 ]);
 for (const role of ALL_ROLES) {
   const relative = skillSource(role);
@@ -424,6 +446,22 @@ for (const name of names("pi/extensions")) {
   assert.equal(read(generated("pi/pi/extensions/" + name)), read("pi/extensions/" + name),
     "generated Pi extension differs from its native guard source: " + name);
 }
+assert.deepEqual(json(generated("pi/workflow/capabilities.json")), capabilities,
+  "Pi runtime guard must use the canonical policy");
+run(process.execPath, ["--experimental-strip-types", "--input-type=module", "--eval", `
+  import assert from "node:assert/strict";
+  import { coordinatorCommandBlocked } from "./build/pi/pi/extensions/command-policy.ts";
+  assert.equal(coordinatorCommandBlocked("git status --short"), false);
+  assert.equal(coordinatorCommandBlocked("npm test"), true);
+  assert.equal(coordinatorCommandBlocked("git push"), true);
+`]);
+const recoveryRoot = generated("codex/plugins/codavio/hooks");
+assert.equal(read(path.join(recoveryRoot, "orchestrator.md")).trim(), read("workflow/orchestrator.md").trim());
+assert.deepEqual(json(path.join(recoveryRoot, "hooks.json")),
+  json("adapters/codex/plugins/codavio/hooks/hooks.json"));
+const recoveryOutput = JSON.parse(run(process.execPath, [path.join(recoveryRoot, "recover.mjs")]).stdout);
+assert.equal(recoveryOutput.hookSpecificOutput.hookEventName, "SessionStart");
+assert.ok(recoveryOutput.hookSpecificOutput.additionalContext.includes(read("workflow/orchestrator.md").trim()));
 for (const role of ["explorer", "archivist", "builder", "reviewer", "orchestrator", "shipper"]) {
   contains(generated("opencode/agents/" + role + ".md"), ["webfetch: deny", "websearch: deny"]);
 }
@@ -494,6 +532,7 @@ assert.equal(packageJson.scripts.generate, "node scripts/generate.mjs");
 assert.equal(packageJson.scripts.validate, "node scripts/validate.mjs");
 
 const plugin = json("codex/plugins/codavio/.codex-plugin/plugin.json");
+assert.equal(plugin.hooks, "./hooks/hooks.json");
 assert.equal(plugin.name, "codavio");
 assert.equal(plugin.skills, "./skills/");
 const marketplace = json("codex/.agents/plugins/marketplace.json");
@@ -640,6 +679,11 @@ try {
   assert.equal(installedPlugin, path.join(installedMarketplace, "plugins/codavio"));
   const installedPluginDefinition = JSON.parse(fs.readFileSync(
     path.join(installedPlugin, ".codex-plugin/plugin.json"), "utf8"));
+  const installedHooks = path.resolve(installedPlugin, installedPluginDefinition.hooks);
+  assert.equal(installedHooks, path.join(installedPlugin, "hooks/hooks.json"));
+  assert.ok(fs.existsSync(path.join(installedPlugin, "hooks/recover.mjs")));
+  assert.equal(fs.readFileSync(path.join(installedPlugin, "hooks/orchestrator.md"), "utf8").trim(),
+    read("workflow/orchestrator.md").trim());
   const installedSkill = path.resolve(installedPlugin, installedPluginDefinition.skills,
     "codavio-orchestrate");
   assert.equal(installedSkill, path.join(installedPlugin, "skills/codavio-orchestrate"));

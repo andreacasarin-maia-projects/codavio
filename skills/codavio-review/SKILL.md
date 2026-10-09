@@ -37,6 +37,14 @@ commands or examples, and missing assigned documentation. Send corrections throu
 coordinator to the archivist; do not load documentation maintenance procedures or demand ADRs
 for ordinary implementation details.
 
+Require an explicit documentation and ADR assessment in the supplied delivery evidence, including
+concrete reasons when either is `not needed`. Missing assessment, unfinished assigned documents,
+or an approved durable decision missing its required ADR is a `BLOCKER`, even when tests pass.
+Check the assessment against the final diff rather than accepting the coordinator's label alone.
+Require actual builder verification evidence for implementation; a coordinator's claimed check
+or a planned invocation does not satisfy the role contract. Return missing evidence to its owner
+through the coordinator rather than completing that role's work yourself.
+
 Apply the code-quality guidance to the maintained result, not only the changed lines. When a
 touched human-authored source file approaches or exceeds approximately 500 lines, or the change
 materially grows an already-large file, inspect enough of the whole file to assess its reasons to

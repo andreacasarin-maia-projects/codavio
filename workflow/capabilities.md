@@ -49,6 +49,9 @@ without a manager, direct Git worktree commands require visible approval. The Pi
 confirms each direct, non-forced lifecycle command and blocks it without a UI or approval. Wrapped
 and forced mutations remain blocked. Workers have no lifecycle permission. Read-only
 `git worktree list` remains available at the listed Git levels.
+The main Pi coordinator accepts only exact commands from `constants.git.orient`, plus approved
+direct lifecycle commands. Its guard imports the canonical capabilities, copied into the generated
+Pi package, and denies shell wrappers, added flags, general commands, verification, and shipping.
 
 ### `edit` scope
 

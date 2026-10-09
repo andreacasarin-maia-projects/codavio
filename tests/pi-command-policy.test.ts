@@ -25,12 +25,15 @@ test("shell syntax and unsafe builder commands are rejected", () => {
   }
 });
 
-test("coordinator guard blocks Git diff and log reads plus worktree lifecycle", () => {
+test("coordinator guard allows only canonical Git orientation commands", () => {
   for (const command of ["git diff", "git diff --stat", "git log", "git log -1", "/usr/bin/git diff", "command git log"]) {
     assert.equal(coordinatorCommandBlocked(command), true, command);
   }
-  for (const command of ["git status --short", "git branch --show-current", "git rev-parse --show-toplevel", "git worktree list", "npm test", "env npm test", "ls"]) {
+  for (const command of ["git status --short", "git branch --show-current", "git rev-parse --show-toplevel", "git worktree list"]) {
     assert.equal(coordinatorCommandBlocked(command), false, command);
+  }
+  for (const command of ["npm test", "env npm test", "ls", "rg builder", "cat package.json", "node scripts/generate.mjs", "git add file", "git commit -m fix", "git push", "git status --short --ignored", "git branch --show-current feature/x", "git worktree list --porcelain"]) {
+    assert.equal(coordinatorCommandBlocked(command), true, command);
   }
 });
 
@@ -103,6 +106,9 @@ test("Pi coordinator requires visible approval for each workspace mutation", asy
   const noPrompt = { hasUI: true, ui: { confirm: () => { assert.fail("read or blocked wrapper must not prompt"); } } };
   assert.equal(await handler({ toolName: "bash", input: { command: "git worktree list" } }, noPrompt), undefined);
   assert.equal((await handler({ toolName: "bash", input: { command: "sh -c 'git worktree prune'" } }, noPrompt))?.block, true);
+  for (const command of ["npm test", "cat package.json", "git commit -m fix", "sh -c 'npm test'"]) {
+    assert.equal((await handler({ toolName: "bash", input: { command } }, noPrompt))?.block, true, command);
+  }
 });
 
 test("coordinator blocks worktree lifecycle hidden in shell command strings", () => {
@@ -130,10 +136,10 @@ test("coordinator blocks worktree lifecycle hidden in shell command strings", ()
     assert.equal(coordinatorCommandBlocked(command), true, command);
   }
   for (const command of ["sh -c 'echo hello'", "sh -c 'echo hello; echo world'", "bash -c 'git status'", "env sh -lc 'echo hello'", "env npm test"]) {
-    assert.equal(coordinatorCommandBlocked(command), false, command);
+    assert.equal(coordinatorCommandBlocked(command), true, command);
   }
   for (const command of ["git -c color.ui=false status", "git -c 'color.ui=false' status"]) {
-    assert.equal(coordinatorCommandBlocked(command), false, command);
+    assert.equal(coordinatorCommandBlocked(command), true, command);
   }
 });
 

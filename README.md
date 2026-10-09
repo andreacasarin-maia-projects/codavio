@@ -35,6 +35,18 @@ Repository tooling and installation require Node.js 22.6 or newer.
 
 ## How it works
 
+Whenever a designer or analyst is involved, your initial intent develops into one shared feature document. The
+designer refines behavior and acceptance scenarios; the analyst adds repository evidence,
+technical decisions, tasks, and verification. They can revisit affected sections as questions
+are resolved. The orchestrator saves their contributions and gives each builder the relevant
+passages, rather than the full conversation. Material edge cases come back to you, and their
+answers update the same document. At completion, the archivist extracts significant decisions
+and rationale into living ADRs and updates affected documentation before review and approved
+shipping. There is no separate PRD-to-plan document handover or document-approval ceremony.
+This requirement follows the roles invoked, regardless of perceived difficulty or task size.
+Direct-builder and documentation-only routes do not require a feature document unless they
+later need a designer or analyst. Parallel or multi-session work still uses compact runtime state.
+
 ```text
 codavio-orchestrate
   → coordinator visibly starts with Builder, Analyst, Designer, or Archivist
@@ -44,6 +56,7 @@ codavio-orchestrate
   → Analyst finds the repository-native minimum change only when technical analysis is needed
   → Designer or Analyst may request focused internal Explorer evidence
   → approve only material unresolved technical decisions
+  → save the shared definition and implementation plan, then project worker assignments
   → delegate every implementation, test, and Docker action to a builder
   → builder performs a final simplification pass
   → Archivist maintains relevant living ADRs and human-facing documentation
@@ -119,12 +132,17 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
   read/search and edit/write tools only; executable documentation checks belong to builders.
 - Baseline checks are encouraged for complex or high-risk work, not mandatory. If a baseline fails, a builder repairs it before continuing and retains the evidence.
 - Bug fixes add regression coverage only within an existing suitable test suite; otherwise they use and document the strongest existing verification.
-- Worktrees isolate material, risky, parallel, multi-session work or unrelated dirty changes; parallel writers require design-independent tasks and explicit disjoint ownership.
+- Parallel writers require design-independent tasks and explicit disjoint ownership; overlapping dirty changes block dependent work.
 - Explorer and builder roles are reusable capability profiles rather than singletons:
   independent explorer lanes may run concurrently, and multiple builders may run
   concurrently when their write scopes and side effects are disjoint.
 - Codavio works in the current checkout by default. Workspace changes require an explicit user request and use the harness lifecycle when available; there is no automatic creation fallback. See `skills/codavio-orchestrate/references/work-state.md` for the canonical checkout and resume rules.
 - The conversation is not the source of truth. Planned, parallel, or multi-session work uses a compact living feature-named work item independent of its branch name.
+- Designer and analyst invocations create that work item before starting. Every handoff records
+  evidence, unfinished gates, and the next role; compaction resumes from this checkpoint.
+- Final review requires an explicit documentation and ADR assessment: completed required paths,
+  or a concrete reason each category needs no changes. Analyzed or designed work delegates that
+  assessment to the archivist; an obvious direct-builder change can record no impact directly.
 - The work file is the single durable planning artifact. Coordinators project minimal role-specific
   task envelopes from it instead of sending lower-capability workers the whole plan or history.
 - Analyzed work uses the smallest applicable implementation brief. Task graphs and commit plans
@@ -194,9 +212,11 @@ installation to confirm that child-agent approval forwarding is active. The desi
 analyst use Pi's `web_search`, `fetch_content`, and `get_search_content` tools for
 documentation lookup and search; the installer adds the
 [`pi-web-access`](https://github.com/nicobailon/pi-web-access) extension
-(`pi install npm:pi-web-access`) automatically so those tools work. A coordinator guard
-blocks the main Pi session's `git diff`/`git log` so diff inspection stays with the
-reviewer. The global
+(`pi install npm:pi-web-access`) automatically so those tools work. The coordinator guard
+allows the main Pi session only the exact canonical Git orientation commands and visibly approved
+direct workspace changes. It blocks shell exploration, tests, implementation commands, and Git
+shipping; those actions require their bounded worker roles. This guard applies to the main session
+whenever the package is loaded. The global
 package applies only to repositories you trust: Pi permissions are a curated safe list,
 not an OS sandbox. Log in to OpenAI in Pi and choose `gpt-6-sol` with `medium` reasoning for the
 main coordinator when available. Each delegated role pins the model and reasoning shown in the
@@ -214,6 +234,13 @@ Install the generated local marketplace, plugin, and minimal global behavioral b
 ```bash
 node scripts/install.mjs codex
 ```
+
+The generated plugin bundles a `SessionStart` recovery hook for resume and compaction. It
+reinjects the canonical coordinator authority and the checkpoint reminder for an already-active
+Codavio workflow; it does not start workflows automatically. Review and trust the hook after
+installing or updating the plugin (CLI: `/hooks`). Codex skips new or changed untrusted hooks.
+The hook requires `node` on the executable path. See the official
+[Codex hooks documentation](https://learn.chatgpt.com/docs/hooks#review-and-trust-hooks).
 
 The installer generates and registers the marketplace under `build/codex/`, installs the
 `codavio` plugin, and links its generated global guidance to
@@ -350,11 +377,18 @@ other workers receive relevant decisions instead of this procedure or the whole 
 When `.ai/` is ignored, include only `.ai/adrs/` in version control; keep `.ai/work/` runtime state
 ignored. No mandatory index or historical backfill is required.
 
-Only planned, parallel, or multi-session work needs a file:
+The shared feature document for planned, parallel, or multi-session work is created before any
+designer or analyst invocation:
 
 ```text
 .ai/work/<work-id>.md
 ```
+
+This one file combines the product brief, implementation plan, decisions and resolved edge
+cases, and compact delivery progress. `work-state.md` is the coordinator's storage and recovery
+reference, not another document the user or workers must produce. Designer and analyst skills
+define their respective contributions; the coordinator preserves them and supplies workers only
+the sections relevant to their assignments.
 
 The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, status, branch, current checkout path, and external lifecycle owner when available. Legacy `route` metadata remains valid but is not written for new work. Existing records that lack checkout metadata remain valid. Recorded paths provide resume context; a mismatch with the current checkout requires user resolution before dependent work. The file contains only the applicable leadership brief, discovery map, approved definition, durable implementation brief, delivery state, verification, review, acceptance, and shipping state. Formal task graphs and commit plans appear only when required. The coordinator keeps this file canonical and sends each worker only a minimal projection containing its task and relevant references. Compact sections are rewritten rather than appended as a transcript.
 
@@ -363,6 +397,17 @@ Multiple work items may coexist. Codavio resolves an explicit work ID first, the
 The workflow creates feature-named `.ai/work/` state on demand inside the current checkout, independent of branch naming. Global installation never creates runtime project state.
 
 Clear localized changes usually need no work file. Git, verification evidence, and the PR remain the durable history.
+If a bounded change grows into analysis or repeated uncertainty handoffs, persist its current
+evidence before continuing. After every handoff, delivery state names the last actual role
+invocation, evidence, unfinished gates, documentation/ADR disposition, and next role.
+
+Portable checkpoints and reviewer gates are model-followed procedures. OpenCode permissions
+restrict coordinator writes and shell commands; Pi's coordinator guard restricts shell commands.
+Coordinator repository reads and Pi file edits still need instruction compliance. The Codex
+adapter supplies role instructions and a resume/compaction recovery hook, not a runtime tool interceptor,
+so it cannot mechanically
+prevent the main session from exploring or implementing. Passing repository checks validates
+generation and guard behavior; it does not prove a model follows every gate in a long conversation.
 
 ## Workspaces
 

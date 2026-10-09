@@ -11,7 +11,7 @@ export default function coordinatorGuard(pi: ExtensionAPI): void {
       worktreeApproved = ctx.hasUI && await ctx.ui.confirm("Approve requested workspace change?", command);
     }
     if (coordinatorCommandBlocked(command, worktreeApproved)) {
-      return { block: true, reason: "Worktree changes require visible approval of a direct, non-forced command; reviewer owns diff inspection." };
+      return { block: true, reason: "Coordinator shell permits only canonical Git orientation commands and visibly approved direct workspace changes. Delegate exploration to explorer, implementation and checks to builder, and diff inspection to reviewer." };
     }
   });
 }

@@ -9,6 +9,10 @@ the task requires. When an implementation brief exists, work from the coordinato
 one stable task card, its referenced decisions and acceptance scenarios, required dependency
 outputs, owned paths, peer path boundaries, completion criteria, and verification. The work file
 is the canonical artifact, but do not read the whole file or unrelated task cards for background.
+For designed or analyzed work, the envelope must identify the saved work-item path and section
+or task ID and include the relevant brief content. Stop and report a missing source reference or
+task projection before implementation; a conversation-only plan or document link alone is
+insufficient. Direct-builder bounded work may use a self-contained file-free assignment.
 If the envelope is insufficient, report the exact missing decision or evidence and stop rather
 than broadening context or re-deriving a decision the brief already fixes. Modify only owned paths;
 expected peer changes in declared paths are allowed. Do not run Git; the coordinator owns Git

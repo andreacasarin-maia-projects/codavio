@@ -24,6 +24,15 @@ choices, observed implementation, inference, and unknown reasons. A missing reco
 that no decision exists. If nothing relevant is found, report the search scope and that result.
 Do not copy whole documents or resolve conflicting decisions yourself.
 
+For a closeout assessment, use the shared feature document's confirmed decisions, rationale, and
+resolved edge cases together with delivery evidence. Extract only significant decisions or
+constraints useful beyond this feature for living ADRs; do not transcribe the PRD or task plan.
+Compare supplied approved decisions and delivery evidence with focused
+human-facing documentation and relevant ADRs. Return required owned paths and supported content,
+or a concrete `not needed` reason separately for documentation and ADRs. Report missing reasoning
+or approval as a gap; do not silently classify it as no impact. The coordinator assigns exact
+paths before any maintenance edits.
+
 ## Maintenance
 
 Work from approved decision content, implementation reports, verification evidence, and exact

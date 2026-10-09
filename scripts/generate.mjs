@@ -345,7 +345,7 @@ function outputs() {
   }
   add(result, "build/opencode/AGENTS.md", read("templates/AGENTS.global.md") + "\n");
 
-  for (const relative of ["package.json", "package-lock.json"]) {
+  for (const relative of ["package.json", "package-lock.json", "workflow/capabilities.json"]) {
     add(result, "build/pi/" + relative, fs.readFileSync(absolute(relative), "utf8"));
   }
   for (const name of fs.readdirSync(absolute("pi/extensions")).sort()) {
@@ -371,6 +371,8 @@ function outputs() {
   }
   add(result, "build/codex/plugins/codavio/skills/codavio/SKILL.md",
     generated("adapters/codex/plugins/codavio/skills/codavio/SKILL.md", codexAliasSkill()));
+  copyTree(result, "adapters/codex/plugins/codavio/hooks", "build/codex/plugins/codavio/hooks");
+  add(result, "build/codex/plugins/codavio/hooks/orchestrator.md", orchestratorBody() + "\n");
   add(result, "build/codex/plugins/codavio/skills/codavio/agents/openai.yaml",
     fs.readFileSync(absolute("codex/plugins/codavio/skills/codavio/agents/openai.yaml"), "utf8"));
   for (const skill of Object.values(MANIFEST.roleSkills)) {

@@ -11,6 +11,7 @@
   "license": "MIT",
   "keywords": ["development", "workflow", "review", "multi-agent"],
   "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "Codavio",
     "shortDescription": "An adaptable development workflow for coding agents.",

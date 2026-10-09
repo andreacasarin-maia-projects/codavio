@@ -27,6 +27,15 @@ The designer and analyst own reasoning, the coordinator routes existing approval
 archivist retrieves relevant documented choices and maintains approved files. The reviewer
 checks consistency, and the shipper includes approved documentation. Keep
 README, usage, and maintenance documentation useful to humans and AI; ADRs do not replace it.
+Before final review, explicitly assess both documentation and ADR impact and record completed
+required paths or a concrete reason each category needs no changes. Designed or analyzed work
+uses an archivist assessment; an obvious direct-builder change may record no impact directly.
+Missing assessment or an unfinished required record blocks final closeout. Ordinary implementation
+details do not require ADRs, and documentation adds no separate approval gate.
+The shared feature document supplies approved decisions, their rationale, and resolved edge
+cases for this closeout. Extract significant project choices and constraints useful beyond the
+feature; retain feature-specific task and delivery detail in the feature document. Do not invent
+an ADR by copying a PRD or task plan wholesale.
 
 The user chose a dedicated archivist to centralize discovery and writing rather than injecting
 ADR lifecycle procedures into every role. Other workers receive compact source-linked decision
