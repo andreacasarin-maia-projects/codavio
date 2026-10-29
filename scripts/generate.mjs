@@ -236,10 +236,6 @@ function piPrompt(roles) {
     "an orchestrator subagent exists. Invoke only these " + CODE + "pi-subagents" + CODE + " roles:",
     roles.join(", ") + ". Use each role's pinned model and reasoning without a per-run override.",
     "Do not delegate to any other role or allow nested delegation.",
-    "Before interpreting this request, load the " + CODE + skillFor("orchestrator") + CODE +
-      " skill. Reload it at the beginning of every subsequent turn while this workflow remains active.",
-    "If it cannot be loaded, stop instead of performing role work yourself.",
-    "",
     "For delegated command work, specify the narrowest direct repository command required.",
     "Keep compact state at " + CODE + ".ai/work/<work-id>.md" + CODE + " in the active worktree.",
     "", orchestratorBody(),
@@ -275,7 +271,7 @@ function codexSkillBootstrap(roles) {
       CODE + CAPABILITIES.roles.orchestrator.model + CODE + " at " +
       CODE + CAPABILITIES.roles.orchestrator.reasoning + CODE + " reasoning when selecting it.",
     codexModelSentence(roles) + " Use",
-    CODE + 'fork_turns: "none"' + CODE + " or a bounded positive turn count whenever setting a model or reasoning",
+    CODE + 'fork_turns: "none"' + CODE + " whenever setting a model or reasoning",
     "override, include all necessary context, and tell every role not to spawn subagents.",
     "",
     "Load exactly one matching role brief for each delegation:",
@@ -283,10 +279,6 @@ function codexSkillBootstrap(roles) {
     "",
     "If collaboration tools are unavailable, stop and explain that the workflow",
     "requires Codex subagents.",
-    "",
-    "Treat this workflow as active across subsequent user turns until it reaches a terminal state",
-    "or the user explicitly pauses, cancels, or exits it. At the start of each such turn, reload",
-    CODE + skillFor("orchestrator") + CODE + " before acting. Deviations change routing, never authority.",
   ].join("\n");
 }
 
@@ -383,7 +375,8 @@ function outputs() {
   const orchestrate = skillParts(skillFor("orchestrator"));
   add(result, "build/codex/plugins/codavio/skills/" + skillFor("orchestrator") + "/SKILL.md",
     generatedFrom(orchestrate.frontmatter,
-      codexSkillBootstrap(MANIFEST.harnesses.codex.roles) + "\n\n" + orchestrate.body));
+      codexSkillBootstrap(MANIFEST.harnesses.codex.roles) + "\n\n" +
+      orchestratorBody() + "\n\n" + orchestrate.body));
   for (const role of MANIFEST.harnesses.codex.roles) {
     add(result, "build/codex/plugins/codavio/skills/" + skillFor("orchestrator") + "/references/" + role + ".md",
       NOTICE + "\n\n" + codexRoleBrief(role));

@@ -6,13 +6,8 @@ task summaries, check results, and facts readily discoverable from code do not n
 `MEMORY.md` is a legacy migration source, not the destination for new decisions. Applicable
 `AGENTS.md` files, when present, govern instructions; they are not a project decision store.
 
-Discover the repository's decision directory through documentation and file names. Follow its
-established location; absent one, use `.ai/adrs/<stable-topic>.md`. Even without ADRs, search
-relevant README files, design docs, legacy memory, code comments, and available work items for
-prior decisions. Search titles, scope, and affected concerns, then read only relevant sources.
-Do not load entire directories or Git history by default. Follow replacement links in historical
-ADR collections. Distinguish approved choices, observed implementation, inference, and unknown
-rationale; report conflicts rather than treating code or an old record as approval for a change.
+Use the skill's discovery procedure to find relevant prior decisions. Follow the repository's
+ADR location; absent one, use `.ai/adrs/<stable-topic>.md`.
 Keep ADRs versioned; if `.ai/` is ignored, request a bounded builder change to include a narrow
 exception for `.ai/adrs/` while keeping runtime `.ai/work/` state ignored.
 

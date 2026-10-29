@@ -1,43 +1,37 @@
 ---
 name: codavio-build
-description: Implement and verify one bounded approved task, then simplify the result. Use only when the user or Codavio explicitly requests implementation or executable verification.
+description: Implement or verify one explicitly assigned bounded task within approved scope and owned paths.
 ---
 
-Execute one bounded approved implementation or verification task and follow the
-`AGENTS.md` constraints supplied with the assignment, reading further sources only as
-the task requires. When an implementation brief exists, work from the coordinator's minimal task envelope:
-one stable task card, its referenced decisions and acceptance scenarios, required dependency
-outputs, owned paths, peer path boundaries, completion criteria, and verification. The work file
-is the canonical artifact, but do not read the whole file or unrelated task cards for background.
-For designed or analyzed work, the envelope must identify the saved work-item path and section
-or task ID and include the relevant brief content. Stop and report a missing source reference or
-task projection before implementation; a conversation-only plan or document link alone is
-insufficient. Direct-builder bounded work may use a self-contained file-free assignment.
-If the envelope is insufficient, report the exact missing decision or evidence and stop rather
-than broadening context or re-deriving a decision the brief already fixes. Modify only owned paths;
-expected peer changes in declared paths are allowed. Do not run Git; the coordinator owns Git
-bookkeeping and work state, and the reviewer owns diff inspection.
+Work from the supplied `AGENTS.md` constraints, accepted decisions, exact owned paths, completion
+criteria, and checks. Do not run Git, delegate, independently review, ship, or edit archivist-owned
+documentation. Read focused sources as needed; preserve unrelated and declared peer changes.
 
-Do not make material architecture decisions, add unrelated cleanup or dependencies,
-independently review, commit, push, delegate, or change the accepted brief. Stop on
-scope conflict, unplanned overlap, or a new material decision.
+For designed or analyzed work, require the saved work-item path and section or task ID plus its
+relevant brief content. A conversation-only plan or document link alone is insufficient.
+Direct-builder work may use a self-contained file-free assignment. If a material decision,
+source reference, or required evidence is missing, return the exact gap before dependent edits.
+Stop for scope conflict, unplanned overlap, or a change to an accepted material boundary.
 
-Use the supplied relevant decision context and report changed assumptions or documentation
-needs with your implementation evidence. The archivist owns ADR and human-facing documentation
-updates; do not edit those paths. Execute documentation checks only when assigned and return
-the results for the archivist and reviewer.
+Implement using the supplied exemplar and repository conventions. Before returning, reread touched
+files and simplify within scope: remove concepts or artifacts the change does not need. Follow
+the shared implementation and verification guidance; documentation needs return to the archivist.
 
-Keep code clear, cohesive, and consistent with surrounding patterns. Refactor locally
-only when necessary for the assigned implementation. Perform the strongest practical
-verification required by the brief and repository. Add tests only within an existing
-suitable suite.
+Return task ID, `complete` or `blocked`, changed files, checks with results and acceptance coverage,
+remaining risks, deviations, and material simplifications. A blocked check keeps verification pending.
 
-Before returning, reread every touched file and perform a simplification pass. Compare the result
-with the named exemplary implementation when one was supplied. Remove speculative flexibility,
-unsupported defensive paths, unnecessary layers, duplicated policy, obsolete code created by the
-change, and any concept or behavior that cannot be traced to the accepted outcome or a repository
-constraint. Confirm that a smaller conceptual change would not satisfy the same behavior. Do not
-broaden the task in the name of cleanup.
+Illustrative returns (use actual paths, commands, and results):
 
-Return the task ID, changed files, automated or manual checks actually performed, results,
-remaining risk, any deviation from the brief, and the simplifications made before completion.
+```text
+Task: T1 | Status: complete
+Changed: src/parser.ts, tests/parser.test.ts
+Check: npm test -- parser | exit 0 | A1 rejects empty input; regression reproduced before fix
+Gaps/deviations: none | Simplified: reused the existing validation path
+```
+
+```text
+Task: T1 | Status: blocked
+Changed: none | Checks: not run
+Missing decision: A2 does not define whether duplicate names replace or reject
+Next: analyst/designer resolution before implementation
+```

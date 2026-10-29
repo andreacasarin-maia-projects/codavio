@@ -1,40 +1,28 @@
 ## Work-item state
 
-The work item is the shared feature document: it holds the user's intent, the designer's product
-definition, the analyst's implementation plan, resolved questions and rationale, and compact
-delivery evidence. This reference defines its storage and recovery mechanics; it is not another
-feature deliverable. The coordinator saves role contributions in that one document and projects
-the relevant passages into worker assignments. Do not split out a separate PRD, technical plan,
-or progress document by default.
+The work item is the shared feature document at `.ai/work/<work-id>.md` in the active checkout.
+Use it for planned, parallel, or multi-session work; the skill defines when planning requires it.
+A direct-builder change may remain file-free
+until analysis, repeated uncertainty handoffs, or another session requires persistence.
 
-Use `.ai/work/<work-id>.md` for planned, parallel, or multi-session work. Designer or analyst
-invocation makes work planned: create the item before that invocation, not after analysis ends.
-Persist direct-builder work before it grows into analysis, repeated uncertainty handoffs, or
-another session. A work ID is a
-stable, lowercase, hyphenated feature name such as `guest-checkout`; it is not derived from
-the Git branch. If the preferred slug belongs to a different item, append the smallest
-available numeric suffix without adding an approval gate. Never overwrite another work item.
+Use a stable, lowercase, hyphenated feature name independent of branch and path. If occupied by
+another item, append the smallest available numeric suffix; never overwrite it. Recognize
+legacy `.ai/work/<branch-slug>.md` files without silently renaming or migrating them.
+Multiple work items may coexist.
 
-At entry and resume, read the current branch and short Git status, then select the matching active
-work item using the rules below. Resume its compact recorded state instead of repeating completed
-approvals. Preserve unrelated user changes; stop and report the conflict when dirty changes overlap.
-Create the work item only for planned, parallel, or multi-session work.
-After compaction, reload orchestration and this guidance, then read the selected item before
-resuming. If required evidence is missing, retain the obligation as pending and route it to its
-owner; do not infer that analysis, documentation, review, or approval was completed.
+## Selection and resume
 
-Resolve the active work item in this order:
+At entry and resume, read the current branch and short Git status. Preserve unrelated changes;
+overlapping dirty changes block dependent work. Select the item in this order:
 
-1. an explicit work ID supplied by the user or resumed state
-2. one item whose metadata matches the active worktree or branch
-3. the only nonterminal item in the active worktree
-4. otherwise list the plausible items and ask which one to resume
+1. Explicit work ID supplied by the user or resumed state.
+2. One nonterminal item matching the current worktree or branch.
+3. The only nonterminal item in the active checkout.
+4. Otherwise ask which plausible item to resume; do not revive completed work automatically.
 
-Recognize legacy `.ai/work/<branch-slug>.md` files when they match the current branch. Preserve
-them and offer a feature-name migration when the item next becomes active; never overwrite or
-silently rename runtime state.
-
-Start a new work item with compact metadata:
+After compaction, reload the skill and selected item before acting. Restore approvals rather
+than repeating them; follow the skill's recovery checkpoint for missing evidence and dispatch.
+An explicit request may inspect a terminal item; reopen it only for requested follow-up work.
 
 ```yaml
 ---
@@ -47,121 +35,74 @@ lifecycle_owner: codex
 ---
 ```
 
-Omit unavailable branch, worktree, or lifecycle owner values, including for a new project.
-`worktree` records the current checkout path, not a path derived from the work ID or branch.
-When known, `lifecycle_owner` records the user or harness that manages the checkout; it grants
-Codavio no automatic lifecycle authority. Keep the work ID independent of branch and path.
-Legacy records may retain a `route` field; do not migrate or reinterpret it, and do not write
-one for new work.
-Existing records may omit checkout metadata; preserve them without forced migration.
+Omit unavailable checkout metadata. `lifecycle_owner` identifies the managing user or harness,
+not authority to change workspaces. Legacy records may retain a `route` field and missing
+metadata; do not rewrite them solely to adopt new terminology.
+
+Use the current gate as status: `design`, `definition-approved`, `analysis`, `analysis-approved`,
+`building`, `review`, or `accepted`. `paused` and `blocked` remain resumable. Terminal statuses are
+`completed` (requested endpoint satisfied without shipping), `shipped`, and `cancelled`.
+Legacy `discovery`, `planning`, and `plan-approved` remain valid. A missing check or approval
+never qualifies as completion.
+
+## Checkout ownership
 
 Work in the current checkout by default. Never create, switch, attach, or clean up worktrees
-automatically. Workspace changes require an explicit user request; task size, risk, parallelism,
-session duration, and uncertain ownership are not authorization. This rule also applies when the
-harness has no native worktree manager. Always keep `.ai/work/` inside the current checkout,
-never under global harness configuration.
+automatically. Workspace changes require an explicit user request. This also applies when the
+harness has no native worktree manager; task size, risk, and parallelism grant no authority.
+Always keep `.ai/work/` inside the current checkout, never under global harness configuration.
 
-For an explicitly requested workspace change, use the active harness or workspace manager's
-lifecycle when available. Only when no manager exists may the coordinator use direct Git worktree
-commands, subject to visible command approval. Do not force mutations or bypass manager ownership.
-Workers remain in their assigned checkout and have no lifecycle authority. After an authorized
-workspace change, record the actual checkout path and known lifecycle owner in the active work item.
-There is no automatic `.worktrees/` creation fallback or required worktree directory.
+For an authorized workspace change, use the harness lifecycle when available. Without a manager,
+direct non-forced Git worktree commands require visible approval. Workers have no lifecycle
+authority. Record the actual new path and manager after an approved change.
 
-Recorded checkout metadata is resume context, not an instruction to switch workspaces. If a
-resumed item's recorded `worktree` differs from the current checkout, stop before dependent work
-and ask the user to resolve the mismatch or explicitly request the intended workspace change.
+Recorded checkout metadata is resume context, not a workspace-switch instruction. If the stored
+path differs, stop before dependent work and ask the user to resolve the mismatch or explicitly
+request a workspace change. There is no automatic creation fallback.
 
 ## Dispatch and delivery contract
 
-Each builder envelope identifies the source work-item path and section or task ID, and includes
-the relevant task text, referenced decisions, acceptance scenarios, and dependency evidence from
-that saved version. A link alone is insufficient; the builder should not reconstruct its task
-from the full document or conversation. Direct-builder bounded work may remain file-free under
-the entry rules above.
+For every delegation, project a minimal ephemeral envelope: assignment and requested endpoint,
+active checkout, applicable `AGENTS.md` constraints, relevant decisions/evidence, exact owned paths
+for writers, peer boundaries, and completion criteria. Include only what that role needs; never
+send the full work item or unrelated history. Use each role's skill for its procedure and return
+format. Insufficient authority or a missing decision returns to the coordinator; focused reads
+needed to carry out the assignment remain allowed within role authority.
 
-For every delegation, project a minimal ephemeral envelope from the canonical work item and
-include applicable `AGENTS.md` constraints. Builders receive one bounded task, only its referenced
-decisions and acceptance scenarios, dependency outputs, exact owned paths, completion and
-verification criteria, exemplary implementation when identified, and peer path boundaries.
-Explorers receive only their purpose, focused questions, and necessary constraints. Archivists
-receive affected concerns and questions for read-only discovery, or approved decision
-content, implementation reports, verification evidence, and exact documentation ownership for
-maintenance. Their source-linked briefs are projected into dependent workers' envelopes.
-Integration builders receive completed-task summaries and the integration contract. Reviewers receive the
-accepted definition and implementation brief, relevant ADRs, evidence, and complete diff. Shippers
-receive the approved commit plan when one exists and shipping preconditions. Do not send the
-entire work item, unrelated tasks, or history. Agents read further focused sources only when their
-task genuinely requires it. If an envelope is insufficient, require the agent to report the exact
-missing decision or evidence instead of broadening its context.
+A builder envelope for designed or analyzed work identifies the saved work-item path and section
+or task ID and includes the relevant task text, decisions, acceptance scenarios, dependency
+outputs, exemplar when known, and verification contract. A link alone is insufficient.
+Direct-builder bounded work may use a self-contained file-free assignment.
 
-Builders own implementation and executable verification. They return the task ID, changed files,
-checks, results, and remaining risk. After each task or parallel group, update `## Delivery state`
-by task ID and check fresh short status plus the builders' returned reports for scope and
-completion; do not read diff content. Stop for changed scope, paths outside owned scope, new
-material decisions, worker failure, or unexpected required-check failure. Conflicting-edit and
-content review belong to the reviewer. On conflicts or failures, report the blocker and stop
-dependent work until the approved workflow resolves it.
+Reviewers receive the target diff, accepted intent, relevant constraints, and available evidence;
+change-delivery review also requires the documentation/ADR assessment and closeout evidence.
+Shippers receive approved scope, commit groups, branch, remote, and gate evidence.
 
-Archivists own documentation discovery and edits, not material decisions or executable checks.
-Record their changed paths, relevant decision references, inspection evidence, and gaps in the
-same delivery state. Keep builder and archivist write scopes disjoint and serialize shared-doc edits.
+Every worker return updates `## Delivery state` before the next dispatch. After each task or
+parallel group, check fresh short status and worker reports for scope and completion; the
+reviewer owns diff inspection. Keep writer paths disjoint and serialize shared-document edits.
 
-Use the smallest status that describes the current gate: `design`, `definition-approved`,
-`analysis`, `analysis-approved`, `building`, `review`, `accepted`, `shipped`, `paused`, or
-`blocked`. Existing `discovery`, `planning`, and `plan-approved` values remain valid legacy state;
-do not migrate them only to change terminology. Update metadata and compact sections in place
-rather than appending a transcript.
+## Compact checkpoint
 
-Keep only applicable sections:
+Keep only applicable sections: `## Leadership brief` (deliverable and stopping point),
+`## Discovery map`, `## Approved definition`, `## Decisions and assumptions`,
+`## Implementation plan`, `## Delivery state`, `## Verification`, `## Review`, and
+`## Acceptance and shipping`. Save role contributions in place, not as a transcript. Proposed
+choices, approvals, and unknowns stay distinct. Use stable decision/task/acceptance/commit IDs
+only when later sections reference them. A bounded change may contain one task and its checks.
 
-- `## Leadership brief`
-- `## Discovery map`
-- `## Approved definition`
-- `## Decisions and assumptions`
-- `## Implementation plan`
-- `## Delivery state`
-- `## Verification`
-- `## Review`
-- `## Acceptance and shipping`
-
-For analyzed work, keep the durable implementation brief inside `## Implementation plan` using
-only the applicable subsections from the analyst's output. A bounded change may contain one task
-statement and verification contract rather than a formal graph. Use stable decision (`D1`), task
-(`T1`), acceptance (`A1`), and commit-group (`C1`) IDs only when later sections need to reference
-them. `## Delivery state` records compact status and evidence without copying task definitions.
-For reliable resume, keep current blockers and the next task explicit and compact in delivery
-state or the applicable recovery section; update them whenever work pauses, resumes, or advances.
-Every worker return, including an analysis/exploration cycle, updates the checkpoint before the
-next dispatch. Keep it compact inside `## Delivery state`, for example:
+Keep current blockers and the next task explicit. For example:
 
 ```text
-Last handoff: analyst T1 — brief recorded in Implementation plan; repository question remains
-Next: explorer — confirm the existing permission hook before analyst resumes
-Pending: analysis, builder verification, documentation/ADR assessment, review, shipping approval
+Last handoff: analyst T1 — brief saved; permission-hook behavior remains unknown
+Next: explorer — confirm the hook before analyst resumes
+Pending: analysis, verification, documentation/ADR assessment, review, shipping approval
 Documentation: pending assessment
 ADRs: D1 approved — .ai/adrs/role-boundaries.md pending maintenance
 ```
 
-Record actual role invocations and their returned paths or evidence, not intentions to delegate.
-Before final review, each documentation category must show completed owned paths and evidence,
-or `not needed` with a concrete reason. A missing entry stays pending. Reopen affected checks,
-documentation assessment, and review when later work changes their basis. File-free bounded work
-uses the same checkpoint and evidence contract in the coordinator's compact handoff summary.
-
-When decisions require ADRs, record their paths and approval evidence in the applicable decision
-or plan section; delivery state records documentation completion without duplicating ADR content.
-Keep proposed choices distinct from current approved records. Work items hold delivery state;
-living ADRs hold cross-task decisions, including relevant rationale recovered from legacy memory
-or other project documentation.
-
-The work file is the canonical delivery-planning artifact, not the default context payload. Coordinators
-project only role-relevant sections into minimal task envelopes; they do not make workers read the
-full file when a bounded projection is sufficient.
-At closeout, its confirmed decisions, rationale, and resolved edge cases supply the archivist's
-ADR assessment. ADRs retain significant project choices across features; the feature document
-retains the complete feature-specific intent and delivery context.
-
-Multiple work items may coexist. Task size, risk, parallelism, and session duration do not
-require a new checkout. Parallel writers in the current checkout require design-independent
-work, explicit disjoint ownership, and no repository-wide side effects; otherwise serialize them.
+Store returned evidence and actual role invocations, not intentions or duplicated task text.
+File-free work uses the same compact checkpoint in the handoff summary. Documentation categories
+stay pending until their owned paths and evidence or reasoned `not needed` assessment are recorded.
+The feature document retains feature-specific intent and delivery evidence; living ADRs retain
+approved cross-task decisions and rationale.

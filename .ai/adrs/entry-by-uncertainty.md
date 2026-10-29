@@ -7,7 +7,8 @@ Scope: selecting the initial role and changing routes as evidence develops.
 Ambiguous product or domain choices start with the designer; defined non-trivial changes start
 with the analyst; obvious localized changes with clear verification start with the builder.
 Documentation-only discovery or maintenance of defined behavior starts with the archivist.
-New evidence may change the route without changing role authority.
+Focused evidence-only requests may enter with an explorer; reviews of existing work may enter
+with a reviewer. New evidence may change the route without changing role authority.
 
 ## Context and rationale
 

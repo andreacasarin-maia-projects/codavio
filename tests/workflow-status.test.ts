@@ -83,3 +83,44 @@ status: planning
   const legacy = await notify(statusHandler(), root);
   assert.match(legacy.message, /feature-current \[legacy branch-named state\]/);
 });
+
+for (const status of ["completed", "shipped", "cancelled"]) {
+  test(`workflow status lists ${status} work without selecting it as active`, async (t) => {
+    const root = repository(t);
+    writeFileSync(join(root, ".ai", "work", "finished.md"), `---
+work_id: finished
+status: ${status}
+branch: feature/current
+worktree: ${root}
+---
+`);
+
+    const handler = statusHandler();
+    const listed = await notify(handler, root);
+    assert.match(listed.message, /^Work items:/);
+    assert.ok(listed.message.includes(`finished [${status}]`));
+    const explicit = await notify(handler, root, "finished");
+    assert.ok(explicit.message.startsWith(`Work item: finished [${status}]`));
+
+    writeFileSync(join(root, ".ai", "work", "ongoing.md"), `---
+work_id: ongoing
+status: analysis
+---
+`);
+    const selected = await notify(handler, root);
+    assert.match(selected.message, /^Active work item: ongoing \[analysis\]/);
+  });
+}
+
+for (const status of ["paused", "blocked"]) {
+  test(`workflow status keeps ${status} work available for resume`, async (t) => {
+    const root = repository(t);
+    writeFileSync(join(root, ".ai", "work", "ongoing.md"), `---
+work_id: ongoing
+status: ${status}
+---
+`);
+    const result = await notify(statusHandler(), root);
+    assert.ok(result.message.startsWith(`Active work item: ongoing [${status}]`));
+  });
+}

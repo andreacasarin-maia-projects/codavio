@@ -1,33 +1,21 @@
 ## Code quality guidance
 
-- Treat code as an ongoing liability. Prefer the smallest maintainable surface that fully
-  satisfies approved behavior, minimizing concepts, states, branches, interfaces, dependencies,
-  and compatibility paths rather than raw line count. Do not add speculative flexibility.
-- Organize code by reasons to change: keep behavior that changes for the same policy or owner
-  together, and separate behavior that changes for different ones. Favor cohesive modules, clear
-  ownership, deliberate dependency direction, and one authoritative home for each policy and
-  invariant. Hide volatile design decisions behind narrow explicit interfaces rather than leaking
-  their representation or lifecycle across callers.
-- Reduce cognitive load and change blast radius. Prefer local reasoning, explicit dependencies and
-  state transitions, visible side effects, straightforward control flow, precise names, and error
-  semantics that callers cannot accidentally ignore. Comments preserve non-obvious intent and
-  constraints; they do not compensate for avoidable structural complexity.
-- Make abstractions earn their cost by removing concepts or change coupling. Avoid both duplicated
-  policy and premature generalization, global state and action at a distance, pass-through layers,
-  mode flags that combine distinct behaviors, and interfaces with no current consumer need.
-  Extraction is useful only when it creates a cohesive boundary; fragmented micro-files can be
-  harder to understand than one well-structured module.
-- Treat tests as maintained code. Keep them behavior-focused, readable, deterministic, and close
-  enough to the owning behavior that failures reveal what contract broke.
-- Use approximately 500 human-authored lines in one source file as a responsibility-review trigger,
-  not a failure threshold. When a change creates, materially grows, or adds another concern to such
-  a file, inspect the whole file for multiple reasons to change, weak cohesion, hidden coupling, and
-  difficult navigation. Split only along stable responsibility boundaries that improve local
-  reasoning. Generated or vendored code and cohesive declarative data may justify an exception.
-- For a refactor touching more than approximately 500 human-authored lines, automate the mechanical
-  transformation where practical and isolate it from semantic edits. For any large diff, prefer
-  self-contained reviewable steps, but judge conceptual scope, risk, and reviewer comprehension
-  rather than using line count as a merge gate. Large deletions and trustworthy generated changes
-  do not carry the same review cost as equivalent handwritten logic.
-- Apply these principles to the approved change and the code it materially worsens. Do not turn
-  them into drive-by cleanup or replace repository conventions without an approved reason.
+- Treat code as an ongoing liability. Minimize maintained concepts, states, interfaces, dependencies,
+  and execution paths rather than raw line count. Add no speculative flexibility.
+- Organize by reasons to change: cohesive responsibilities, explicit ownership and dependencies,
+  deliberate dependency direction, and one authoritative home per policy. Hide volatile design
+  decisions behind narrow interfaces. Favor local reasoning, visible side effects, straightforward
+  control flow, precise names, and error semantics callers cannot accidentally ignore.
+- Make abstractions remove concepts or change coupling. Avoid duplicated policy, premature
+  generalization, global state, pass-through layers, and mode flags joining distinct behaviors.
+  Cohesive modules are preferable to fragmented micro-files. Comments explain non-obvious intent.
+- Treat tests as maintained code: behavior-focused, deterministic, readable, and close to their owner.
+- Use approximately 500 human-authored lines as a responsibility-review trigger, not a size gate.
+  When a change creates, materially grows, or adds a concern to such a file, inspect its cohesion,
+  coupling, and navigation. Split only when stable responsibility boundaries reduce cognitive load
+  and change blast radius. Generated, vendored, or cohesive declarative code may justify exceptions.
+- For refactors over that scale, automate the mechanical work where practical and separate it from
+  semantic edits. Judge large diffs by conceptual risk and reviewability; deletions and trustworthy
+  generated changes need not carry the same cost as handwritten logic.
+- Apply this guidance within approved scope and to code the change materially worsens, without
+  drive-by cleanup or replacing repository conventions.

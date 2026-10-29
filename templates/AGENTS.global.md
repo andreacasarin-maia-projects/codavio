@@ -1,65 +1,23 @@
-# CLAUDE.md
+# Development guidance
 
-Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+## Think Before Coding
 
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+Define the requested outcome and observable completion criteria. State relevant assumptions;
+resolve routine, reversible details using repository conventions. Ask only when missing input
+could materially change behavior, scope, cost, risk, or authority. Continue other authorized work.
 
-## 1. Think Before Coding
+## Simplicity First
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+Prefer the smallest maintainable solution: fewer concepts and execution paths, not merely fewer
+lines. Add abstractions, dependencies, or flexibility only when the requested outcome needs them.
 
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+## Surgical Changes
 
-## 2. Simplicity First
+Match existing patterns and preserve unrelated work. Remove only code and artifacts made obsolete
+by your change; report pre-existing problems without expanding scope.
 
-**Minimum code that solves the problem. Nothing speculative.**
+## Goal-Driven Execution
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
-
-## 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
-
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
-
-The test: Every changed line should trace directly to the user's request.
-
-## 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
----
-
-**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+Use a brief plan for multi-step work. Verify changes proportionately with existing checks and add
+behavior-focused tests only in a suitable existing suite. Report actual results and remaining
+gaps. When the requested deliverable and required checks are complete, stop and report.

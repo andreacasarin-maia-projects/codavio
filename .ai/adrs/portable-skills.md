@@ -29,6 +29,12 @@ projects minimal role-specific envelopes rather than sending workers the whole d
 decision collection. Storage and resume guidance is internal support, not a separate deliverable
 or document-approval ceremony. Material questions return to the user and update the same document.
 
+Scope the workflow to the requested deliverable. Review, research, and planning requests can
+complete without implementation or shipping; finished work must not be selected automatically
+for resume. Required checks and approvals still gate changes within scope. Keep instructions
+narrow: authority in kernels, delivery routing in the skill, storage/recovery mechanics in its
+reference, and shared quality, verification, and research policy in their canonical guidance.
+
 ## Context and rationale
 
 These choices were recorded in memory and support the repository's goal of predictable behavior

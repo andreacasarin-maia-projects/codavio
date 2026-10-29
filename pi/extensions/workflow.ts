@@ -95,9 +95,9 @@ export default function workflow(pi: ExtensionAPI): void {
         return;
       }
 
-      const contextMatches = items.filter((item) =>
+      const nonterminal = items.filter((item) => !["completed", "shipped", "cancelled"].includes(item.status ?? ""));
+      const contextMatches = nonterminal.filter((item) =>
         item.branch === currentBranch || matchesWorktree(root, item.worktree) || item.legacy);
-      const nonterminal = items.filter((item) => item.status !== "shipped");
       const inferred = contextMatches.length === 1 ? contextMatches[0] : nonterminal.length === 1 ? nonterminal[0] : undefined;
       if (inferred) {
         ctx.ui.notify(`Active work item: ${describe(inferred)}\n${inferred.path}`, "info");

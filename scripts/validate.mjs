@@ -181,9 +181,10 @@ contains("workflow/guidance/implementation.md", [
   "existing repository", "approved change boundary", "credentials or secrets", "Preserve unrelated",
 ]);
 contains("workflow/guidance/code-quality.md", [
-  "ongoing liability", "reasons to change", "cognitive load", "change blast radius",
-  "approximately 500 human-authored lines", "responsibility-review trigger",
-  "volatile design decisions", "automate the", "semantic edits", "fragmented micro-files",
+  "ongoing liability",
+  "reasons to change",
+  "approximately 500 human-authored lines",
+  "responsibility-review trigger",
 ]);
 contains("workflow/guidance/verification.md", [
   "observable completion criteria", "repository-defined checks", "regression coverage",
@@ -203,21 +204,14 @@ assert.equal(spawnSync("git", ["check-ignore", "--no-index", ".ai/adrs/living-ad
 assert.equal(spawnSync("git", ["check-ignore", "--no-index", ".ai/work/example.md"],
   { cwd: ROOT }).status, 0, "runtime work state must remain ignored");
 contains("skills/codavio-orchestrate/references/work-state.md", [
-  "`.ai/work/<work-id>.md`", "stable, lowercase, hyphenated feature name",
-  "legacy `.ai/work/<branch-slug>.md`", "Multiple work items may coexist",
-  "A bounded change may contain one task", "minimal ephemeral envelope", "lifecycle_owner",
-  "Work in the current checkout by default", "Workspace changes require an explicit user request",
-  "Never create, switch, attach, or clean up worktrees",
-  "Always keep `.ai/work/` inside the current checkout",
-  "Recorded checkout metadata is resume context", "stop before dependent work",
-  "At entry and resume, read the current branch and short Git status",
-  "## Dispatch and delivery contract", "After each task or parallel group, update `## Delivery state`",
-  "Legacy records may retain a `route`", "current blockers and the next task explicit",
-  "worker failure, or unexpected required-check failure",
-  "After compaction", "Every worker return", "Last handoff:", "Next: explorer",
-  "A missing entry stays pending", "before that invocation",
-  "The work item is the shared feature document", "not another",
-  "ADR assessment", "confirmed decisions, rationale, and resolved edge cases",
+  "`.ai/work/<work-id>.md`",
+  "stable, lowercase, hyphenated feature name",
+  "legacy `.ai/work/<branch-slug>.md`",
+  "## Selection and resume",
+  "## Dispatch and delivery contract",
+  "## Compact checkpoint",
+  "`completed`",
+  "`cancelled`",
   "A link alone is insufficient",
 ]);
 contains("workflow/capabilities.md", ["roleSkills", "Portable Agent Skill", "native `skill` permission"]);
@@ -237,46 +231,58 @@ for (const role of ROLES) {
   contains("workflow/roles/" + role + ".md", [skillFor(role), "load", "stop"]);
 }
 contains("workflow/orchestrator.md", [
-  "coordination-only", "`codavio-orchestrate`", "every subsequent user turn",
-  "remembered from an earlier turn", "deviation changes routing", "authority. Continue", "stop",
+  "coordination-only",
+  "`codavio-orchestrate`",
+  "every subsequent user turn",
+  "deviations change routing, never authority",
+  "stop",
 ]);
 contains("skills/codavio-design/SKILL.md", [
-  "product and domain design partner", "definition confidence", "`HIGH`", "`MEDIUM`", "`LOW`",
-  "Event Storming", "actor and event flows", "proposed definition", "Never treat a recommendation as approval",
-  "same evolving feature", "Return section-ready content",
-  "Every designer assignment in a Codavio workflow requires a shared feature document",
+  "product and domain design partner",
+  "definition confidence",
+  "`HIGH`",
+  "`MEDIUM`",
+  "`LOW`",
+  "Never treat a recommendation as approval",
 ]);
 contains("skills/codavio-analyze/SKILL.md", [
-  "smallest repository-native implementation brief", "closest exemplary implementation",
-  "### Minimum change", "justification for every new abstraction", "Parallel builders require design-independent work",
-  "Default to one focused commit", "Stop rather than choosing a new public API",
-  "same evolving feature", "not a disconnected analysis report or a second plan document",
+  "smallest repository-native implementation brief",
+  "### Minimum change",
+  "### Verification",
+  "Default to one focused commit",
   "Every analyst assignment in a Codavio workflow requires a shared feature document",
 ]);
 contains("skills/codavio-review/SKILL.md", [
-  "readability and simplicity", "performance and resource bounds", "maintained result",
-  "approximately 500 lines", "Size alone is not a finding", "fragmented micro-files",
-  "`BLOCKER`, `OPTIONAL`, or `FYI`", "smallest acceptable correction",
-  "commit plan maps cleanly",
-  "Missing assessment, unfinished assigned documents", "required ADR is a `BLOCKER`",
+  "Remain read-only",
+  "`BLOCKER`, `OPTIONAL`, or `FYI`",
+  "smallest acceptable correction",
   "actual builder verification evidence",
+  "standalone review",
 ]);
-contains("skills/codavio-explore/SKILL.md", ["purpose and focused questions", "supply evidence"]);
+contains("skills/codavio-explore/SKILL.md", [
+  "purpose and focused questions",
+  "supply evidence",
+]);
 contains("skills/codavio-orchestrate/SKILL.md", [
-  "`Start: Builder`", "`Start: Analyst`", "`Start: Designer`", "Silence is never approval",
-  "shipping approval", "Prefer one builder", "ADR and documentation closeout",
-  "at the beginning of every active turn", "Deviations change routing", "authority.",
-  "## Recovery checkpoint", "Repository exploration requires an actual",
-  "Persist each analysis/exploration", "Create the work item before the first designer or analyst",
-  "explicitly assess ADR and documentation impact", "both categories are `not needed`",
-  "Before the first builder invocation", "an analyst's chat response alone is not the",
-  "one evolving feature document", "Design and analysis may",
-  "Whenever a designer or analyst is invoked", "not perceived difficulty",
-  "this is the handoff, not a separate document-approval ceremony",
-  "When a builder discovers an edge case", "Extract significant cross-task decisions",
+  "## Scope and entry",
+  "## Recovery checkpoint",
+  "## Approvals and execution",
+  "## Delivery closeout",
+  "`Start: Builder`",
+  "`Start: Analyst`",
+  "`Start: Designer`",
+  "`Start: Explorer`",
+  "`Start: Reviewer`",
+  "Silence is never approval",
+  "Create the work item before the first designer or analyst",
+  "Before the first builder invocation",
+  "explicit shipping",
+  "Prefer one builder",
 ]);
 contains("skills/codavio-build/SKILL.md", [
-  "saved work-item path and section", "a conversation-only plan or document link alone",
+  "saved work-item path and section",
+  "conversation-only plan or document link alone",
+  "Status: blocked",
 ]);
 for (const role of ALL_ROLES) {
   const relative = skillSource(role);
@@ -498,8 +504,8 @@ for (const role of ROLES) {
   assert.ok(!permissions.includes('"git worktree add'), role + " must not receive worktree creation permission");
 }
 contains(generated("pi/pi/prompts/codavio.md"), [
-  "load the `codavio-orchestrate` skill", "Reload it at the beginning of every subsequent turn",
-  "stop instead of performing role work yourself",
+  "`codavio-orchestrate`", "every subsequent user turn", "coordination-only",
+  "never substitute coordinator work",
 ]);
 for (const role of ["archivist", "builder", "reviewer", "shipper"]) {
   const permissions = read(generated("pi/pi/agents/" + role + ".md"));
@@ -589,6 +595,11 @@ for (const coordinator of [
   ].join("\n")), coordinator + " has invalid work-state example metadata indentation");
 }
 const codexSkillPath = generated("codex/plugins/codavio/skills/codavio-orchestrate/SKILL.md");
+for (const relative of [generated("opencode/agents/orchestrator.md"),
+  generated("pi/pi/prompts/codavio.md"), codexSkillPath]) {
+  assert.equal(read(relative).split(read("workflow/orchestrator.md").trim()).length, 2,
+    relative + " must embed the canonical coordinator kernel exactly once");
+}
 contains(codexSkillPath, [
   "name: codavio-orchestrate", "# Codavio orchestration runtime", "`gpt-6-astra`", "`gpt-6-sol`",
   "`gpt-6-luna`", "`medium` reasoning", "`high` reasoning", "`low` reasoning",

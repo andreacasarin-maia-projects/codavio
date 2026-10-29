@@ -44,12 +44,16 @@ answers update the same document. At completion, the archivist extracts signific
 and rationale into living ADRs and updates affected documentation before review and approved
 shipping. There is no separate PRD-to-plan document handover or document-approval ceremony.
 This requirement follows the roles invoked, regardless of perceived difficulty or task size.
+Reviews, research, and plans stop at their requested deliverable without starting implementation.
+Explicitly bounded implementation can finish after verification, documentation closeout, and review;
+ordinary delivery proceeds to shipping approval. Applicable material-outcome acceptance still applies.
 Direct-builder and documentation-only routes do not require a feature document unless they
 later need a designer or analyst. Parallel or multi-session work still uses compact runtime state.
 
 ```text
 codavio-orchestrate
-  → coordinator visibly starts with Builder, Analyst, Designer, or Archivist
+  → coordinator selects the requested endpoint and announces its entry role
+  → standalone evidence, plan, or review requests stop after that deliverable
   → Archivist supplies relevant prior decisions when needed, before dependent work
   → Designer resolves material product or domain choices only when needed
   → approve a material product definition
@@ -70,7 +74,8 @@ Role behavior:
 
 - Designer resolves material product and domain uncertainty: it evaluates definition confidence, asks only decision-changing questions with recommendations, uses Event Storming and flow analysis when useful, and proposes the definition.
 - Analyst turns defined behavior and focused repository evidence into the smallest executable implementation brief, naming the closest exemplar and justifying every new concept.
-- Explorer answers focused internal evidence questions; it never chooses product behavior or technical design.
+- Explorer answers focused internal evidence questions with source locations, inference, and unknowns;
+  it never chooses product behavior or technical design.
 - Archivist retrieves relevant documented decisions and maintains approved ADRs, README files,
   and technical documentation. Discovery assignments are read-only; writing assignments own
   exact documentation paths. It does not choose architecture or execute commands.
@@ -125,12 +130,17 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
   labels such as bug or feature do not determine the path.
 - An explicit, unambiguous request serves as approval for its stated behavior.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
+- Research roles verify material changing external facts against current primary sources; see
+  [web guidance](workflow/guidance/web-use.md).
 - After required approvals, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
-- Every change gets verification proportionate to its behavior and risk.
+- Every change gets verification proportionate to its behavior and risk. Evidence names the actual
+  check, result, and acceptance coverage; failed startup is blocked. Repeat or broaden checks only
+  for changes, failures, or unresolved risks after required checks pass.
 - Builders execute every implementation, test, and Docker action; the coordinator never substitutes for them. In multi-builder work, a final sequential integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
 - Archivists own documentation edits separately from builder implementation paths. They use
   read/search and edit/write tools only; executable documentation checks belong to builders.
-- Baseline checks are encouraged for complex or high-risk work, not mandatory. If a baseline fails, a builder repairs it before continuing and retains the evidence.
+- Use baseline checks when they clarify regression risk. Retain failures and route in-scope repairs;
+  unrelated failures or missing prerequisites remain explicit gaps.
 - Bug fixes add regression coverage only within an existing suitable test suite; otherwise they use and document the strongest existing verification.
 - Parallel writers require design-independent tasks and explicit disjoint ownership; overlapping dirty changes block dependent work.
 - Explorer and builder roles are reusable capability profiles rather than singletons:
@@ -402,7 +412,7 @@ the sections relevant to their assignments.
 
 The work ID is a stable, human-readable feature slug such as `guest-checkout`, independent of the branch name. Metadata records its title, status, branch, current checkout path, and external lifecycle owner when available. Legacy `route` metadata remains valid but is not written for new work. Existing records that lack checkout metadata remain valid. Recorded paths provide resume context; a mismatch with the current checkout requires user resolution before dependent work. The file contains only the applicable leadership brief, discovery map, approved definition, durable implementation brief, delivery state, verification, review, acceptance, and shipping state. Formal task graphs and commit plans appear only when required. The coordinator keeps this file canonical and sends each worker only a minimal projection containing its task and relevant references. Compact sections are rewritten rather than appended as a transcript.
 
-Multiple work items may coexist. Codavio resolves an explicit work ID first, then matching branch or worktree metadata, then a sole active item; ambiguous candidates require selection. Existing `.ai/work/<branch-slug>.md` files remain recognized as legacy state and are never silently overwritten or renamed.
+Multiple work items may coexist. Codavio resolves an explicit work ID first, then matching branch or worktree metadata among nonterminal items, then a sole nonterminal item; ambiguous candidates require selection. Terminal statuses are `completed` (requested endpoint without shipping), `shipped`, and `cancelled`; `paused` and `blocked` remain resumable. Finished items stay inspectable by ID but are not automatically selected as active. Existing `.ai/work/<branch-slug>.md` files remain recognized as legacy state and are never silently overwritten or renamed.
 
 The workflow creates feature-named `.ai/work/` state on demand inside the current checkout, independent of branch naming. Global installation never creates runtime project state.
 
@@ -418,6 +428,12 @@ adapter supplies role instructions and a resume/compaction recovery hook, not a 
 so it cannot mechanically
 prevent the main session from exploring or implementing. Passing repository checks validates
 generation and guard behavior; it does not prove a model follows every gate in a long conversation.
+
+For prompt changes, compare representative transcripts against the previous version: routing,
+unnecessary questions, scope growth, skipped checks, missing evidence, handoff count, and token
+usage. Include review/plan-only completion, missing prerequisites, and compaction/resume cases.
+Keep model and effort fixed for each comparison. These checks do not require an evaluation
+framework; Promptfoo remains deferred. Static validation is not evidence of a model-quality gain.
 
 ## Workspaces
 

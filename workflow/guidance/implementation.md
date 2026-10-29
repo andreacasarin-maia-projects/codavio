@@ -1,20 +1,10 @@
 ## Implementation guidance
 
-- Prefer built-in platform capabilities, official tools, and existing repository
-  utilities over bespoke implementations.
-- Inspect an analogous implementation before introducing a new pattern. Match the
-  repository's architecture, naming, control flow, style, formatter, linter, and type
-  conventions.
-- Keep responsibilities cohesive, dependencies explicit, and side effects visible.
-  Treat duplication, coupling, nesting, unclear ownership, and difficult testing as
-  signals to investigate rather than automatic reasons to refactor.
-- Refactor only inside the approved change boundary when it directly simplifies the
-  implementation or reduces its risk. Keep behavior-preserving refactors separate from
-  approved behavior changes.
-- Declare dependencies through the repository's established mechanism. Do not add a
-  dependency when the platform or repository already provides a suitable capability.
-- Never place credentials or secrets in source, generated artifacts, logs, tests, or
-  examples.
-- Remove imports, variables, functions, files, generated outputs, and debug artifacts
-  made obsolete by the assigned change. Preserve unrelated user or agent work and
-  report pre-existing problems instead of correcting them.
+- Prefer platform capabilities, official tools, and existing repository utilities. Inspect an
+  analogous implementation and match repository architecture, naming, style, and tooling.
+- Refactor only within the approved change boundary when it directly simplifies implementation or
+  reduces risk; separate behavior-preserving refactors from behavior changes.
+- Declare needed dependencies through the established mechanism; reuse suitable existing capabilities.
+- Never put credentials or secrets in source, artifacts, logs, tests, or examples.
+- Remove code, generated outputs, temporary helpers, and debug artifacts made obsolete by this
+  change. Preserve unrelated work and report pre-existing problems without correcting them.

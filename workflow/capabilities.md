@@ -96,6 +96,9 @@ delegation to exactly one matching file. Each brief contains the role kernel, de
 reasoning assignment, selected shared guidance, and the assignment and return-evidence contract.
 The worker then explicitly loads its assigned procedure skill. Normal generation removes stale
 aggregate references, while check mode rejects unexpected generated files.
+The generated Codex orchestration skill embeds the canonical coordinator kernel once at entry;
+its resume hook restores that same kernel. Pi embeds it in the entry prompt and OpenCode in the
+native coordinator agent. Activation rules stay in the kernel rather than adapter-specific prose.
 
 Constants applied uniformly (not per role): `constants.opencode` / `constants.pi`
 (`external_directory: deny`, Pi inherit flags). Each command in a set renders as both its
