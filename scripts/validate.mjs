@@ -158,7 +158,7 @@ for (const role of ROLES) assert.equal("worktreeLifecycle" in capabilities.roles
 for (const role of ALL_ROLES) assert.equal("unmanagedWorktreeFallback" in capabilities.roles[role], false,
   role + " must not own unmanaged worktree lifecycle");
 for (const [role, capability] of Object.entries(capabilities.roles)) {
-  assert.ok(["gpt-6-astra", "gpt-6-sol", "gpt-6-luna"].includes(capability.model),
+  assert.ok(["gpt-6-astra", "gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna"].includes(capability.model),
     role + " has an unsupported model");
   assert.ok(["low", "medium", "high"].includes(capability.reasoning),
     role + " has an unsupported reasoning level");
@@ -601,7 +601,7 @@ for (const relative of [generated("opencode/agents/orchestrator.md"),
     relative + " must embed the canonical coordinator kernel exactly once");
 }
 contains(codexSkillPath, [
-  "name: codavio-orchestrate", "# Codavio orchestration runtime", "`gpt-6-astra`", "`gpt-6-sol`",
+  "name: codavio-orchestrate", "# Codavio orchestration runtime", "`gpt-6-astra`", "`gpt-6.1-sol`", "`gpt-6.1-terra`",
   "`gpt-6-luna`", "`medium` reasoning", "`high` reasoning", "`low` reasoning",
   "`fork_turns: \"none\"`", "Load exactly one matching role brief for each delegation:",
 ]);

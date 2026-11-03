@@ -107,13 +107,13 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 
 | Role | Model | Reasoning |
 |---|---|---|
-| Orchestration | `openai/gpt-6-sol` | `medium` |
+| Orchestration | `openai/gpt-6.1-sol` | `medium` |
 | Product and domain design | `openai/gpt-6-astra` | `medium` |
-| Technical analysis | `openai/gpt-6-sol` | `medium` |
+| Technical analysis | `openai/gpt-6.1-sol` | `medium` |
 | Exploration | `openai/gpt-6-luna` | `low` |
 | Documentation | `openai/gpt-6-luna` | `medium` |
-| Implementation | `openai/gpt-6-luna` | `medium` |
-| Review | `openai/gpt-6-sol` | `high` |
+| Implementation | `openai/gpt-6.1-terra` | `medium` |
+| Review | `openai/gpt-6.1-sol` | `high` |
 | Shipping | `openai/gpt-6-luna` | `low` |
 
 ## Principles
@@ -228,7 +228,7 @@ direct workspace changes. It blocks shell exploration, tests, implementation com
 shipping; those actions require their bounded worker roles. This guard applies to the main session
 whenever the package is loaded. The global
 package applies only to repositories you trust: Pi permissions are a curated safe list,
-not an OS sandbox. Log in to OpenAI in Pi and choose `gpt-6-sol` with `medium` reasoning for the
+not an OS sandbox. Log in to OpenAI in Pi and choose `gpt-6.1-sol` with `medium` reasoning for the
 main coordinator when available. Each delegated role pins the model and reasoning shown in the
 role routing table; use
 `/subagents-models` after restarting Pi to inspect the live mapping.
@@ -278,7 +278,7 @@ Start a new Codex task after installation and invoke the workflow explicitly:
 $codavio-orchestrate <request>
 ```
 
-Implicit invocation is disabled. Select `gpt-6-sol` with `medium` reasoning for the main
+Implicit invocation is disabled. Select `gpt-6.1-sol` with `medium` reasoning for the main
 coordinator in Codex when available; Codavio does not override the main session selection.
 Subagents use the role model routing above. The same material-definition, technical-decision,
 outcome-acceptance, correction, and shipping approval rules apply. Codex's shipper then requests a scoped network sandbox escalation for its one
@@ -457,8 +457,9 @@ is a **local logging proxy** in front of every harness:
   (OpenCode/Pi/Codex all read the standard `OPENAI_BASE_URL` / provider base-URL
   setting).
 - Attribute each request to a role or paired role group. Model plus reasoning identifies most
-  lanes (`gpt-6-astra`/`medium` → designer, `gpt-6-sol`/`medium` → orchestrator/analyst,
-  `gpt-6-sol`/`high` → reviewer, `gpt-6-luna`/`medium` → archivist/builder, and
+  lanes (`gpt-6-astra`/`medium` → designer, `gpt-6.1-sol`/`medium` → orchestrator/analyst,
+  `gpt-6.1-sol`/`high` → reviewer, `gpt-6.1-terra`/`medium` → builder,
+  `gpt-6-luna`/`medium` → archivist, and
   `gpt-6-luna`/`low` → explorer/shipper), so grouping logged usage by both fields yields that
   breakdown without harness changes.
 
