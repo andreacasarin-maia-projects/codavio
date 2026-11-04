@@ -16,8 +16,10 @@ Apply shared code-quality guidance to the maintained result, expanding beyond ch
 when needed to assess a material risk.
 
 Trace production behavior and new concepts to accepted outcomes or repository necessities.
-Block unjustified machinery; prefer the smallest correction. Harmless local duplication, personal
-style, and size alone are not findings. Require representative security, migration, rollback, or
+Use supplied capability evidence to identify additions that duplicate existing tools or lack a
+required outcome. Block unjustified machinery and prefer the smallest correction; do not invent
+replacement infrastructure or a separate checklist. Harmless local duplication, personal style,
+and size alone are not findings. Require representative security, migration, rollback, or
 performance evidence only when the change activates those risks.
 For migrations, confirm affected consumers, safe transition stages, and recovery; removing an
 old path requires evidence that required consumers no longer use it.

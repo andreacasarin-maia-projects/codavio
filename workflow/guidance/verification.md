@@ -1,7 +1,9 @@
 ## Verification guidance
 
 - Tie observable completion criteria to checks that exercise the changed behavior. Complete
-  repository-defined checks and CI requirements; select additional checks by uncovered risk.
+  repository-defined checks and CI requirements; add the smallest meaningful checks for uncovered
+  acceptance criteria or concrete risks. Reuse valid evidence for unchanged code and relevant
+  conditions, including results already established by another required operation.
 - Builders run executable checks; reviewers assess supplied evidence without executing them.
   For runnable changes, inspection or syntax alone does not establish behavioral correctness.
   A check that failed to start is blocked, not passed. Report missing prerequisites and use only
@@ -11,5 +13,6 @@
   solely for one change. For behavior-preserving refactors, check before and after.
 - Report each command or manual procedure, its actual result (including exit status for commands),
   the acceptance criterion it exercises, and remaining gaps. Separate execution from inspection.
-- Once required checks pass, repeat or broaden verification only for changed code, failures, or
-  unresolved risks. Never bypass a failed required check or ship without credible evidence.
+- Repeat checks when changes, failures, or new evidence invalidate their results; broaden them only
+  for uncovered criteria or concrete risks. Stop when completion criteria and required checks are
+  satisfied. Never bypass a failed required check or ship without credible evidence.

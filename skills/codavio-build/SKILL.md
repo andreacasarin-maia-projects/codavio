@@ -11,6 +11,8 @@ For designed or analyzed work, require the saved work-item path and section or t
 relevant brief content. A conversation-only plan or document link alone is insufficient.
 Direct-builder work may use a self-contained file-free assignment. If a material decision,
 source reference, or required evidence is missing, return the exact gap before dependent edits.
+Route missing external capability evidence to the analyst through the coordinator; do not infer
+that a custom replacement is needed or perform web research yourself.
 Stop for scope conflict, unplanned overlap, or a change to an accepted material boundary.
 
 Implement using the supplied exemplar and repository conventions. Before returning, reread touched

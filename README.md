@@ -130,12 +130,15 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
   labels such as bug or feature do not determine the path.
 - An explicit, unambiguous request serves as approval for its stated behavior.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
-- Research roles verify material changing external facts against current primary sources; see
-  [web guidance](workflow/guidance/web-use.md).
+- Planning, implementation, and review prefer existing native capabilities and tools; custom logic
+  needs an evidenced gap. Research roles check existing solutions before proposing general-purpose
+  capabilities or dependencies, and verify changing external facts against current primary sources.
+  Research stops when the decision has sufficient evidence; see [web guidance](workflow/guidance/web-use.md).
 - After required approvals, routine high-confidence in-scope work proceeds without progress confirmation and interrupts only for material decisions, conflicts, worker failure, unexpected required-check failure, or mandatory gates.
 - Every change gets verification proportionate to its behavior and risk. Evidence names the actual
-  check, result, and acceptance coverage; failed startup is blocked. Repeat or broaden checks only
-  for changes, failures, or unresolved risks after required checks pass.
+  check, result, and acceptance coverage; failed startup is blocked. Reuse valid results for unchanged
+  code and conditions, repeat invalidated checks, and add coverage only for unmet criteria or concrete
+  risks. Stop when completion criteria and required checks are satisfied.
 - Builders execute every implementation, test, and Docker action; the coordinator never substitutes for them. In multi-builder work, a final sequential integration-verification pass may add approved cross-component tests only within an existing suitable suite and runs the combined verification. It returns compact evidence and does not silently fix or re-scope failures.
 - Archivists own documentation edits separately from builder implementation paths. They use
   read/search and edit/write tools only; executable documentation checks belong to builders.
