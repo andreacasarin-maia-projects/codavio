@@ -27,6 +27,11 @@ The designer and analyst own reasoning, the coordinator routes existing approval
 archivist retrieves relevant documented choices and maintains approved files. The reviewer
 checks consistency, and the shipper includes approved documentation. Keep
 README, usage, and maintenance documentation useful to humans and AI; ADRs do not replace it.
+The README is the default entry point for users and a shared introduction for everyone;
+ADRs preserve development decisions for developers and AI. Create a missing README and maintain
+its user guidance during closeout. Keep it concise and useful for getting started and recalling
+common operations; adapt presentation to the audience rather than imposing a fixed template.
+Detailed criteria live in `skills/codavio-archive/references/readme.md`.
 Before final review, explicitly assess both documentation and ADR impact and record completed
 required paths or a concrete reason each category needs no changes. Designed or analyzed work
 uses an archivist assessment; an obvious direct-builder change may record no impact directly.

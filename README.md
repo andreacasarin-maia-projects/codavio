@@ -337,10 +337,10 @@ permissions, Pi tools and permission policies, and Codex skill metadata without
 embedding skill procedures into generated roles.
 
 `templates/AGENTS.global.md` intentionally contains only universal behavioral
-guidelines: think before coding, prefer simplicity, make surgical changes, and work toward
-verifiable goals. Project decision discovery belongs to the workflow, not the global template.
-Workflow routing, architecture, permissions, implementation quality, and verification
-policy stay in canonical coordinator, role, guidance, or harness-specific files rather
+guidelines: start with the project README, think before coding, prefer simplicity, make surgical
+changes, and work toward verifiable goals. Project decision discovery belongs to the workflow,
+not the global template. Detailed workflow routing, architecture, permissions, implementation,
+and verification policy stay in canonical coordinator, role, guidance, or harness-specific files rather
 than leaking into every global session.
 
 Only definitions and source metadata are tracked. Generated harness artifacts are
@@ -392,9 +392,11 @@ memory entries now live under [.ai/adrs/](.ai/adrs/); its remaining memory file 
 migration pointer. Applicable `AGENTS.md` files govern instructions when present; projects need
 no `AGENTS.md` as a memory store. The global template contains only behavioral guidance.
 
-README, usage, API, and maintenance docs still explain the project to humans and AI. Update
-affected commands, examples, and behavior as part of delivery, linking decision rationale rather
-than duplicating it. The archivist loads
+The README is the default user-facing entry point and a shared project introduction. The
+archivist creates it when missing and maintains concise getting-started, usage, and common-command
+guidance using [README guidance](skills/codavio-archive/references/readme.md). Link deeper developer,
+API, and maintenance documentation and keep development rationale in ADRs. Update affected
+commands, examples, and behavior as part of delivery. The archivist loads
 [living-ADR guidance](skills/codavio-archive/references/adrs.md) only for ADR maintenance or migration;
 other workers receive relevant decisions instead of this procedure or the whole collection.
 When `.ai/` is ignored, include only `.ai/adrs/` in version control; keep `.ai/work/` runtime state

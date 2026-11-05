@@ -18,7 +18,9 @@ conflicts, and gaps. Distinguish approved choices, observed implementation, infe
 reasons. If nothing is found, report search scope; missing records do not prove no decision exists.
 
 For closeout assessment, compare confirmed decisions, rationale, resolved edge cases, and delivery
-evidence with affected docs. Return exact required paths and supported content, or a separate
+evidence with affected docs. Include README creation when missing and updates when delivered
+behavior changes its user guidance. Read [README guidance](references/readme.md) for README
+assessment or edits. Return exact required paths and supported content, or a separate
 reasoned `not needed` for documentation and ADRs. Extract only significant cross-task decisions;
 missing rationale or approval is a gap, not no impact.
 
