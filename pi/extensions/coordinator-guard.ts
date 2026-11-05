@@ -1,9 +1,11 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { coordinatorCommandBlocked, isWorktreeLifecycleCommand } from "./command-policy.ts";
+import { isCodavioActive } from "./session-state.ts";
 
 export default function coordinatorGuard(pi: ExtensionAPI): void {
   if (process.env.PI_SUBAGENT_CHILD_AGENT) return;
   pi.on("tool_call", async (event, ctx) => {
+    if (!isCodavioActive(ctx)) return;
     if (event.toolName !== "bash") return;
     const command = String(event.input.command ?? "");
     let worktreeApproved = false;

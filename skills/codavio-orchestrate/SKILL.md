@@ -5,7 +5,8 @@ description: Coordinate an explicitly requested Codavio workflow to its requeste
 
 Coordinate through bounded roles; never substitute coordinator work for a missing worker.
 Before acting, read [work-state guidance](references/work-state.md) for storage, resume, and dispatch.
-Reload this skill at the beginning of every active turn and after compaction. Remain active until
+Load this skill on entry; reload it after compaction or resume, or when its procedure is missing from context.
+Keep following it across active turns without rereading unchanged instructions on every message. Remain active until
 the requested deliverable is complete or the user pauses, cancels, or exits. Deviations change
 routing, never authority. If the skill or required role mechanism is unavailable, stop and explain.
 
@@ -36,10 +37,14 @@ At entry, after compaction or resume, and before every delegation or phase trans
 
 1. Restore the scoped brief, approvals, returned evidence, pending obligations, and next role.
    Missing evidence stays pending; memory or worker confidence cannot complete a gate.
+   Read the delivery ledger before dispatch: retain completed tasks with valid evidence and resume
+   an interrupted task at its recorded next action. Reopen only obligations invalidated by changed
+   requirements, code, or verification conditions; do not replay the plan from conversation memory.
 2. Choose the next incomplete obligation within the requested scope and invoke its owning role.
    Repository exploration requires an actual explorer invocation; every implementation or
    executable check requires an actual builder invocation. Documentation edits go to archivists.
-3. After every worker return, record its assignment, evidence, gaps, and next role before dispatch.
+3. Before dispatch, mark its task in progress; after every worker return, record its assignment,
+   task state, evidence, gaps, and next role in the work item's `## Delivery state` before dispatch.
    Persist each analysis/exploration cycle. Reopen affected evidence after requirements or code change.
 
 For conflicts, worker failure, unexpected required-check failure, or missing authority, stop

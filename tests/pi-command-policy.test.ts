@@ -93,17 +93,25 @@ test("Pi coordinator requires visible approval for each workspace mutation", asy
   let handler: ((event: unknown, context: unknown) => Promise<{ block: boolean } | undefined>) | undefined;
   coordinatorGuard({ on: (_event: string, callback: typeof handler) => { handler = callback; } } as never);
   assert.ok(handler);
+  const session = {
+    cwd: "/repo",
+    sessionManager: {
+      getSessionId: () => "main",
+      getBranch: () => [{ type: "custom", customType: "codavio-session", data: { sessionId: "main", cwd: "/repo", active: true } }],
+    },
+  };
   const command = "git worktree add -b feature/x /repo/x";
   for (const [hasUI, approved, blocked] of [[true, true, false], [true, false, true], [false, true, true]]) {
     const prompts: string[] = [];
     const result = await handler({ toolName: "bash", input: { command } }, {
+      ...session,
       hasUI,
       ui: { confirm: async (_title: string, message: string) => { prompts.push(message); return approved; } },
     });
     assert.equal(result?.block ?? false, blocked);
     assert.deepEqual(prompts, hasUI ? [command] : []);
   }
-  const noPrompt = { hasUI: true, ui: { confirm: () => { assert.fail("read or blocked wrapper must not prompt"); } } };
+  const noPrompt = { ...session, hasUI: true, ui: { confirm: () => { assert.fail("read or blocked wrapper must not prompt"); } } };
   assert.equal(await handler({ toolName: "bash", input: { command: "git worktree list" } }, noPrompt), undefined);
   assert.equal((await handler({ toolName: "bash", input: { command: "sh -c 'git worktree prune'" } }, noPrompt))?.block, true);
   for (const command of ["npm test", "cat package.json", "git commit -m fix", "sh -c 'npm test'"]) {

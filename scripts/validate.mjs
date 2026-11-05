@@ -209,6 +209,10 @@ contains("skills/codavio-orchestrate/references/work-state.md", [
   "legacy `.ai/work/<branch-slug>.md`",
   "## Selection and resume",
   "## Dispatch and delivery contract",
+  "## Delivery ledger",
+  "| Task | State | Last role / evidence | Next action |",
+  "Update its row immediately",
+  "Do not repeat completed tasks",
   "## Compact checkpoint",
   "`completed`",
   "`cancelled`",
@@ -302,6 +306,15 @@ assert.deepEqual(names(generated("opencode/agents")),
   [...ROLES, "orchestrator"].map((role) => role + ".md").sort());
 assert.deepEqual(names(generated("opencode/commands")), ["codavio.md"]);
 assert.deepEqual(names(generated("opencode/skills")), [...SKILLS].sort());
+assert.deepEqual(names(generated("opencode/plugins")), ["codavio"]);
+assert.deepEqual(names(generated("opencode/plugins/codavio")), ["index.js", "recovery.json"]);
+for (const relative of ["opencode/plugins/codavio/recovery.json", "pi/pi/recovery.json"]) {
+  const definition = json(generated(relative));
+  assert.equal(definition.name, "codavio_session");
+  assert.equal(definition.label, "Codavio-recovery");
+  assert.deepEqual(definition.parameters.properties.action.enum, ["activate", "deactivate"]);
+  assert.equal(definition.context, read("workflow/orchestrator.md").trim() + "\n\n" + read("workflow/recovery.md").trim());
+}
 assert.equal(fs.existsSync(path.join(BUILD, "opencode/references")), false,
   "OpenCode must use its native agent artifacts without duplicate references");
 assert.deepEqual(names(generated("pi/pi/agents")), ROLES.map((role) => role + ".md").sort());
@@ -463,22 +476,36 @@ run(process.execPath, ["--experimental-strip-types", "--input-type=module", "--e
 `]);
 const recoveryRoot = generated("codex/plugins/codavio/hooks");
 assert.equal(read(path.join(recoveryRoot, "orchestrator.md")).trim(), read("workflow/orchestrator.md").trim());
-assert.deepEqual(json(path.join(recoveryRoot, "hooks.json")),
-  json("adapters/codex/plugins/codavio/hooks/hooks.json"));
+assert.deepEqual(json(path.join(recoveryRoot, "codavio-recovery.json")),
+  json("adapters/codex/plugins/codavio/hooks/codavio-recovery.json"));
+assert.equal(read(path.join(recoveryRoot, "recovery.md")).trim(), read("workflow/recovery.md").trim());
+const recoveryHooks = json(path.join(recoveryRoot, "codavio-recovery.json")).hooks;
+assert.deepEqual(Object.keys(recoveryHooks), ["SessionStart"], "Codex must register only the recovery hook");
+assert.equal(recoveryHooks.SessionStart.length, 1);
+assert.equal(recoveryHooks.SessionStart[0].matcher, "resume|compact");
+assert.equal(recoveryHooks.SessionStart[0].hooks.length, 1);
+assert.equal(recoveryHooks.SessionStart[0].hooks[0].statusMessage, "Codavio-recovery");
 const recoveryData = fs.mkdtempSync(path.join(os.tmpdir(), "codavio-hook-validation-"));
 let recoveryOutput;
 try {
+  fs.mkdirSync(path.join(recoveryData, ".git"));
   const recoveryEvent = {
-    session_id: "validation", transcript_path: path.join(recoveryData, "root.jsonl"),
+    session_id: "validation", cwd: recoveryData,
     hook_event_name: "SessionStart", source: "compact",
   };
-  const invokeRecovery = (event) => run(process.execPath, [path.join(recoveryRoot, "recover.mjs")], {
-    input: JSON.stringify(event), env: { ...process.env, PLUGIN_DATA: recoveryData },
+  const recoveryScript = path.join(ROOT, recoveryRoot, "codavio-recovery.mjs");
+  const recoveryEnv = { ...process.env, CODEX_SESSION_ID: "validation", CODEX_THREAD_ID: "validation" };
+  const invokeRecovery = (event) => run(process.execPath, [recoveryScript], {
+    input: JSON.stringify(event), cwd: recoveryData, env: recoveryEnv,
   }).stdout;
   assert.equal(invokeRecovery(recoveryEvent), "", "inactive session must receive no context");
-  assert.equal(invokeRecovery({ ...recoveryEvent, hook_event_name: "UserPromptSubmit", prompt: "Use $codavio" }), "");
+  assert.equal(fs.existsSync(path.join(recoveryData, ".ai")), false, "inactive hook must create no state");
+  run(process.execPath, [recoveryScript, "activate"], { cwd: recoveryData, env: recoveryEnv });
   recoveryOutput = JSON.parse(invokeRecovery(recoveryEvent));
   assert.equal(invokeRecovery({ ...recoveryEvent, session_id: "unrelated" }), "");
+  assert.equal(invokeRecovery({ ...recoveryEvent, hook_event_name: "SubagentStart" }), "");
+  run(process.execPath, [recoveryScript, "deactivate"], { cwd: recoveryData, env: recoveryEnv });
+  assert.equal(invokeRecovery(recoveryEvent), "", "ended workflow must receive no context");
 } finally {
   fs.rmSync(recoveryData, { recursive: true, force: true });
 }
@@ -554,7 +581,7 @@ assert.equal(packageJson.scripts.generate, "node scripts/generate.mjs");
 assert.equal(packageJson.scripts.validate, "node scripts/validate.mjs");
 
 const plugin = json("codex/plugins/codavio/.codex-plugin/plugin.json");
-assert.equal(plugin.hooks, "./hooks/hooks.json");
+assert.equal(plugin.hooks, "./hooks/codavio-recovery.json");
 assert.equal(plugin.name, "codavio");
 assert.equal(plugin.skills, "./skills/");
 const marketplace = json("codex/.agents/plugins/marketplace.json");
@@ -574,6 +601,8 @@ contains(generated("pi/pi/prompts/codavio.md"), [
 ]);
 for (const coordinator of [
   "skills/codavio-orchestrate/references/work-state.md",
+  generated("opencode/skills/codavio-orchestrate/references/work-state.md"),
+  generated("pi/skills/codavio-orchestrate/references/work-state.md"),
   generated("codex/plugins/codavio/skills/codavio-orchestrate/references/work-state.md"),
 ]) {
   const text = read(coordinator).replace(/\s+/g, " ");
@@ -584,6 +613,7 @@ for (const coordinator of [
     "Always keep `.ai/work/` inside the current checkout",
     "Recorded checkout metadata is resume context", "stop before dependent work",
     "current blockers and the next task explicit",
+    "## Delivery ledger", "Do not repeat completed tasks", "recorded next action",
   ]) assert.ok(text.includes(marker), coordinator + " missing ownership policy " + marker);
   for (const obsolete of ["git worktree add", "request a fresh checkout", "normally uses one branch and isolated worktree"]) {
     assert.ok(!text.includes(obsolete), coordinator + " retains worktree lifecycle guidance " + obsolete);
@@ -607,6 +637,11 @@ contains(codexSkillPath, [
 ]);
 const codexSkillText = read(codexSkillPath);
 contains(codexSkillPath, ["Use Codex collaboration agents", "Spawn"]);
+contains(codexSkillPath, [
+  "## Session recovery registration", "hooks/codavio-recovery.mjs\" activate", "hooks/codavio-recovery.mjs\" deactivate",
+  "CODEX_SESSION_ID", "CODEX_THREAD_ID", "from the active project checkout", "on ordinary user",
+  "an absent marker requires explicit entry",
+]);
 const codexRoutes = [...codexSkillText.matchAll(/\[([a-z]+)\]\(references\/([a-z]+)\.md\)/g)];
 assert.equal(codexRoutes.length, ROLES.length, "Codex skill must have one role route per worker");
 assert.deepEqual(codexRoutes.map((match) => [match[1], match[2]]), ROLES.map((role) => [role, role]));
@@ -656,6 +691,8 @@ try {
   assert.throws(() => fs.lstatSync(retiredPlanner), { code: "ENOENT" },
     "OpenCode installation retained the managed retired planner link");
   const installed = path.join(temporary, "opencode");
+  assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "plugins/codavio-recovery.js"))),
+    path.join(BUILD, "opencode/plugins/codavio/index.js"));
   assert.equal(linkTarget(path.relative(ROOT, path.join(installed, "AGENTS.md"))),
     path.join(BUILD, "opencode/AGENTS.md"));
   for (const role of [...ROLES, "orchestrator"]) {
@@ -677,6 +714,10 @@ try {
   const unrelatedAgent = path.join(installed, "agents", "unrelated.md");
   fs.writeFileSync(unrelatedSource, "unrelated");
   fs.symlinkSync(unrelatedSource, unrelatedAgent);
+  const unrelatedPlugin = path.join(installed, "plugins", "unrelated.js");
+  fs.writeFileSync(unrelatedPlugin, "export default {};\n");
+  const obsoletePlugin = path.join(installed, "plugins", "old-codavio.js");
+  fs.symlinkSync(path.join(BUILD, "opencode/plugins/old-codavio.js"), obsoletePlugin);
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "opencode"], {
     env: { ...process.env, XDG_CONFIG_HOME: temporary },
   });
@@ -686,6 +727,9 @@ try {
     "OpenCode refresh retained an obsolete managed skill link");
   assert.equal(linkTarget(path.relative(ROOT, unrelatedAgent)), unrelatedSource,
     "OpenCode refresh removed an unrelated link");
+  assert.equal(fs.readFileSync(unrelatedPlugin, "utf8"), "export default {};\n");
+  assert.throws(() => fs.lstatSync(obsoletePlugin), { code: "ENOENT" },
+    "OpenCode refresh retained an obsolete managed recovery-plugin link");
 
   fs.rmSync(path.join(BUILD, "pi"), { recursive: true, force: true });
   run(process.execPath, [path.join(ROOT, "scripts/install.mjs"), "pi"], {
@@ -707,8 +751,8 @@ try {
   const installedPluginDefinition = JSON.parse(fs.readFileSync(
     path.join(installedPlugin, ".codex-plugin/plugin.json"), "utf8"));
   const installedHooks = path.resolve(installedPlugin, installedPluginDefinition.hooks);
-  assert.equal(installedHooks, path.join(installedPlugin, "hooks/hooks.json"));
-  assert.ok(fs.existsSync(path.join(installedPlugin, "hooks/recover.mjs")));
+  assert.equal(installedHooks, path.join(installedPlugin, "hooks/codavio-recovery.json"));
+  assert.ok(fs.existsSync(path.join(installedPlugin, "hooks/codavio-recovery.mjs")));
   assert.equal(fs.readFileSync(path.join(installedPlugin, "hooks/orchestrator.md"), "utf8").trim(),
     read("workflow/orchestrator.md").trim());
   const installedSkill = path.resolve(installedPlugin, installedPluginDefinition.skills,

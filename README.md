@@ -99,9 +99,20 @@ procedure skill:
 | `codavio-ship` | shipper |
 
 Workflow entry is explicit; Codex metadata also disables implicit skill invocation. Once started,
-orchestration remains active and reloads `codavio-orchestrate` on every subsequent turn until
-completion or an explicit pause, cancel, or exit. Corrections and deviations are routed back
+orchestration remains active until completion or an explicit pause, cancel, or exit. It reloads
+`codavio-orchestrate` after compaction or resume, or when the procedure is missing from context;
+ordinary messages do not require rereading unchanged instructions. Corrections and deviations are routed back
 through roles; they never authorize the orchestrator to perform role work itself.
+
+All three harnesses use the same delivery ledger and recovery instructions. Explicit entry
+registers recovery for the current main session; completion, pause, cancel, and exit clear it.
+OpenCode and Pi use their native `codavio_session` tool and request-context hooks; Codex uses
+its bundled helper and one resume/compaction hook. Native context hooks restore the registered
+workflow's instructions when earlier context is lost without appending reminder turns or
+requiring a skill reread on every message. Unrelated chats and workers receive no recovery context.
+Registration and cleanup are model-followed lifecycle steps; failures must be reported.
+The recovery integration uses the `codavio-recovery` name: OpenCode's plugin ID and entrypoint, Pi's extension
+filename, and Codex's hook files. Pi and Codex use `Codavio-recovery` as their display/status label.
 
 Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 
@@ -192,7 +203,7 @@ node scripts/install.mjs opencode
 ```
 
 The installer first generates ignored `build/opencode` artifacts, then symlinks its agents,
-skills, compatibility command, and minimal global behavioral baseline into
+skills, compatibility command, OpenCode 2.x recovery plugin, and minimal global behavioral baseline into
 `${XDG_CONFIG_HOME:-$HOME/.config}/opencode`. After changing definitions, rerun the installer and
 restart OpenCode.
 
@@ -203,6 +214,13 @@ Run OpenCode inside any Git project:
 ```text
 /codavio <request>
 ```
+
+The generated orchestrator registers the current root session through `codavio_session`.
+The recovery plugin uses native plugin storage keyed by session ID and checkout; it restores
+context only while that registration exists and the active agent is `orchestrator`. Switching
+to another agent, using another checkout, or running a child session does not receive recovery
+context. Completion, pause, cancel, and exit remove the registration. This integration uses the
+[OpenCode 2.x plugin API](https://dev.opencode.ai/v2/docs/build/plugins/server).
 
 ## Use with Pi
 
@@ -228,8 +246,8 @@ documentation lookup and search; the installer adds the
 (`pi install npm:pi-web-access`) automatically so those tools work. The coordinator guard
 allows the main Pi session only the exact canonical Git orientation commands and visibly approved
 direct workspace changes. It blocks shell exploration, tests, implementation commands, and Git
-shipping; those actions require their bounded worker roles. This guard applies to the main session
-whenever the package is loaded. The global
+shipping; those actions require their bounded worker roles. This guard applies only while the
+current main session has explicitly registered Codavio; unrelated sessions keep their own shell behavior. The global
 package applies only to repositories you trust: Pi permissions are a curated safe list,
 not an OS sandbox. Log in to OpenAI in Pi and choose `gpt-6.1-sol` with `medium` reasoning for the
 main coordinator when available. Each delegated role pins the model and reasoning shown in the
@@ -240,6 +258,13 @@ Pi must run in a trusted repository: its package extensions do not provide a san
 The native skill entry is `/skill:codavio-orchestrate <request>`; `/codavio` remains the
 compatibility prompt.
 
+Both Pi entry paths register recovery through `codavio_session`. Activation is stored as a native
+custom session entry, tied to the session ID and checkout, and reconstructed from the current
+session branch. It survives compaction and resume without activating a new or forked session
+from inherited history. Worker processes do not register the recovery tool or hook. Completion,
+pause, cancel, and exit append an inactive entry. The context hook adds only transient recovery
+context, preserving compaction summaries and leaving stored conversation messages unchanged.
+
 ## Install in Codex
 
 Install the generated local marketplace, plugin, and minimal global behavioral baseline:
@@ -248,19 +273,23 @@ Install the generated local marketplace, plugin, and minimal global behavioral b
 node scripts/install.mjs codex
 ```
 
-The generated plugin bundles a `SessionStart` recovery hook for resume and compaction. It
-emits context only after an explicit Codavio entry command activates that session. A silent
-`UserPromptSubmit` hook recognizes `$codavio`, `$codavio-orchestrate`, `/codavio`, or
-`/skill:codavio-orchestrate` at the start of a prompt, optionally preceded by `use`, `run`,
-`start`, `resume`, or `invoke` and `please`. `Use Codavio` is also supported. Mentions in
-questions or quoted examples do not activate recovery. Activation is stored under `PLUGIN_DATA`,
-keyed by session ID and transcript path, never inferred from repository work items. Explicit
-`pause Codavio`, `cancel Codavio`, `stop Codavio`, `exit Codavio`, or `do not use Codavio`
-clears it. Activation persists until an explicit exit; the recovered instructions still tell
-the model to ignore completed workflows. Existing sessions must invoke Codavio again after
-the update to activate recovery. Missing identity or plugin storage keeps the hook silent.
-Codex still dispatches the hook commands wherever the plugin is enabled; unrelated sessions
-receive no Codavio context. Review and trust the hook after
+The generated plugin bundles exactly one `SessionStart` recovery hook, for resume and compaction.
+Explicit entry through `$codavio` or `$codavio-orchestrate` tells the coordinator to register the
+main Codex session using the bundled helper; completion, pause, cancel, and exit clear that
+registration. The helper uses `CODEX_SESSION_ID` and `CODEX_THREAD_ID` and stores only a session
+marker under `.ai/work/.codavio-sessions/` in the current Git checkout. Subagents cannot register
+or clear their parent's session. No feature document is required just to register recovery.
+Registration failures are reported rather than silently disabling recovery. Entry and cleanup
+are model-followed lifecycle steps; the hook itself cannot detect an unrecorded completion.
+
+The recovery hook is read-only: only a matching active session marker permits it to load the
+coordinator kernel and request work-item recovery. It does not infer activation from work items,
+read transcript contents, or send reminders on every user message. Codex dispatches `SessionStart`
+for root sessions and uses `SubagentStart` for workers; only the former is registered here.
+Unrelated chats, other checkouts, missing identity, and missing or invalid markers receive no
+Codavio context and create no state. Codex still launches the guard wherever the plugin is enabled;
+it has no native matcher for an active skill. Existing sessions must explicitly invoke Codavio
+again after this update; old plugin-data markers are not migrated. Review and trust the hook after
 installing or updating the plugin (CLI: `/hooks`). Codex skips new or changed untrusted hooks.
 The hook requires `node` on the executable path. See the official
 [Codex hooks documentation](https://learn.chatgpt.com/docs/hooks#review-and-trust-hooks).
@@ -310,7 +339,7 @@ node scripts/install.mjs all
 The unified Node installer resolves all required executables, regenerates build outputs,
 and then changes the selected harness. It is also the refresh path: rerunning it replaces the Pi
 package and Codex plugin through their native installers, while OpenCode prunes obsolete agent,
-command, and skill links only when their targets are proven to belong to this checkout or its
+command, skill, and recovery-plugin links only when their targets are proven to belong to this checkout or its
 former `ai-dev-workflow` sibling. Unrelated files, backups, project `.ai/work/` state, and harness
 caches are preserved. Pass `--force` only to apply the existing conflict-backup behavior for
 current destinations.
@@ -420,6 +449,12 @@ The work ID is a stable, human-readable feature slug such as `guest-checkout`, i
 Multiple work items may coexist. Codavio resolves an explicit work ID first, then matching branch or worktree metadata among nonterminal items, then a sole nonterminal item; ambiguous candidates require selection. Terminal statuses are `completed` (requested endpoint without shipping), `shipped`, and `cancelled`; `paused` and `blocked` remain resumable. Finished items stay inspectable by ID but are not automatically selected as active. Existing `.ai/work/<branch-slug>.md` files remain recognized as legacy state and are never silently overwritten or renamed.
 
 The workflow creates feature-named `.ai/work/` state on demand inside the current checkout, independent of branch naming. Global installation never creates runtime project state.
+
+The work item's `## Delivery state` is also its progress ledger: one current row per task with
+state, actual role/check evidence, and the next action. Update it before dispatch and after every
+worker return or review/fix round. Recovery skips completed tasks whose evidence remains valid
+and continues interrupted rounds; only invalidated work and gates reopen. See the
+[delivery ledger contract](skills/codavio-orchestrate/references/work-state.md#delivery-ledger).
 
 Clear localized changes usually need no work file. Git, verification evidence, and the PR remain the durable history.
 If a bounded change grows into analysis or repeated uncertainty handoffs, persist its current

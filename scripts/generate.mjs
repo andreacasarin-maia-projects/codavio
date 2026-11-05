@@ -85,6 +85,7 @@ function openCodeFrontmatter(role) {
     "reasoningEffort: " + c.reasoning,
     "temperature: 0.1",
     "permission:",
+    "  codavio_session: " + (c.delegate ? "allow" : "deny"),
     "  read:",
     `    "*": allow`,
     "  glob: allow",
@@ -200,6 +201,29 @@ function orchestratorBody() {
   return read("workflow/orchestrator.md");
 }
 
+function recoveryDefinition() {
+  return JSON.stringify({
+    name: "codavio_session",
+    label: "Codavio-recovery",
+    description: "Register or clear recovery only for an explicitly invoked Codavio workflow in the current main session. Use activate on entry and deactivate on completion, pause, cancel, or exit.",
+    parameters: {
+      type: "object", properties: { action: { type: "string", enum: ["activate", "deactivate"] } },
+      required: ["action"], additionalProperties: false,
+    },
+    authority: orchestratorBody(),
+    reminder: read("workflow/recovery.md"),
+    context: orchestratorBody() + "\n\n" + read("workflow/recovery.md"),
+  }, null, 2) + "\n";
+}
+
+function nativeRecoveryInstructions() {
+  return "On explicit entry, call `codavio_session` with `action: \"activate\"` before workflow work. " +
+    "Before ending at any requested endpoint, or on pause, cancel, or exit, call it with " +
+    "`action: \"deactivate\"`. This is coordinator session bookkeeping. Never register from a worker, " +
+    "an unrelated request, or a work-item discovery. Do not register again on ordinary turns or " +
+    "recovery. If the tool is missing or registration fails, stop and report the error.";
+}
+
 function skillText(name) { return fs.readFileSync(absolute("skills/" + name + "/SKILL.md"), "utf8"); }
 function skillParts(name) {
   const text = skillText(name);
@@ -238,7 +262,7 @@ function piPrompt(roles) {
     "Do not delegate to any other role or allow nested delegation.",
     "For delegated command work, specify the narrowest direct repository command required.",
     "Keep compact state at " + CODE + ".ai/work/<work-id>.md" + CODE + " in the active worktree.",
-    "", orchestratorBody(),
+    "", nativeRecoveryInstructions(), "", orchestratorBody(),
   ].join("\n");
 }
 
@@ -267,6 +291,23 @@ function codexSkillBootstrap(roles) {
   return [
     "# Codavio orchestration runtime", "",
     "Use Codex collaboration agents; do not create user-owned threads for workflow roles.",
+    "",
+    "## Session recovery registration", "",
+    "On explicit entry or explicit re-entry after a pause, run " +
+      CODE + 'node "<absolute plugin root>/hooks/codavio-recovery.mjs" activate' + CODE +
+      " from the active project checkout before workflow work. Resolve the plugin root from this " +
+      "installed skill's directory (../..); [session helper](../../hooks/codavio-recovery.mjs). " +
+      "Never change directory into the plugin to run it.",
+    "The helper uses the main session's CODEX_SESSION_ID and CODEX_THREAD_ID; never invent or " +
+      "copy another session's identity. This registration is coordinator work-state bookkeeping. " +
+      "If registration fails, stop and report the error rather than claiming recovery is enabled.",
+    "Before ending the workflow at any requested endpoint, or on pause, cancel, or exit, run " +
+      CODE + 'node "<absolute plugin root>/hooks/codavio-recovery.mjs" deactivate' + CODE +
+      " from the same checkout. Report a cleanup failure. Do not activate again on ordinary user " +
+      "turns or hook recovery; an absent marker requires explicit entry. The helper creates only " +
+      "a session marker under .ai/work/.codavio-sessions/, not a feature document.",
+    "",
+    "## Delegation", "",
     "The main session model is selected in Codex and is not overridden by this workflow; use " +
       CODE + CAPABILITIES.roles.orchestrator.model + CODE + " at " +
       CODE + CAPABILITIES.roles.orchestrator.reasoning + CODE + " reasoning when selecting it.",
@@ -329,7 +370,9 @@ function outputs() {
       generatedFrom(openCodeFrontmatter(role), roleBody(role, "opencode")));
   }
   add(result, "build/opencode/agents/orchestrator.md",
-    generatedFrom(openCodeFrontmatter("orchestrator"), orchestratorBody()));
+    generatedFrom(openCodeFrontmatter("orchestrator"), nativeRecoveryInstructions() + "\n\n" + orchestratorBody()));
+  copyTree(result, "adapters/opencode/plugins", "build/opencode/plugins");
+  add(result, "build/opencode/plugins/codavio/recovery.json", recoveryDefinition());
   add(result, "build/opencode/commands/" + MANIFEST.command + ".md",
     generated("adapters/opencode/commands/" + MANIFEST.command + ".md", openCodeCommand()));
   for (const skill of Object.values(MANIFEST.roleSkills)) {
@@ -340,6 +383,7 @@ function outputs() {
   for (const relative of ["package.json", "package-lock.json", "workflow/capabilities.json"]) {
     add(result, "build/pi/" + relative, fs.readFileSync(absolute(relative), "utf8"));
   }
+  add(result, "build/pi/pi/recovery.json", recoveryDefinition());
   for (const name of fs.readdirSync(absolute("pi/extensions")).sort()) {
     add(result, "build/pi/pi/extensions/" + name,
       fs.readFileSync(absolute("pi/extensions/" + name), "utf8"));
@@ -353,6 +397,9 @@ function outputs() {
   for (const skill of Object.values(MANIFEST.roleSkills)) {
     copyTree(result, "skills/" + skill, "build/pi/skills/" + skill);
   }
+  const piOrchestrate = skillParts(skillFor("orchestrator"));
+  add(result, "build/pi/skills/codavio-orchestrate/SKILL.md",
+    generatedFrom(piOrchestrate.frontmatter, nativeRecoveryInstructions() + "\n\n" + piOrchestrate.body));
 
   add(result, "build/codex/AGENTS.md", read("templates/AGENTS.global.md") + "\n");
   for (const relative of [
@@ -365,6 +412,7 @@ function outputs() {
     generated("adapters/codex/plugins/codavio/skills/codavio/SKILL.md", codexAliasSkill()));
   copyTree(result, "adapters/codex/plugins/codavio/hooks", "build/codex/plugins/codavio/hooks");
   add(result, "build/codex/plugins/codavio/hooks/orchestrator.md", orchestratorBody() + "\n");
+  add(result, "build/codex/plugins/codavio/hooks/recovery.md", read("workflow/recovery.md") + "\n");
   add(result, "build/codex/plugins/codavio/skills/codavio/agents/openai.yaml",
     fs.readFileSync(absolute("codex/plugins/codavio/skills/codavio/agents/openai.yaml"), "utf8"));
   for (const skill of Object.values(MANIFEST.roleSkills)) {

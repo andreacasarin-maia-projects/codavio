@@ -22,6 +22,9 @@ overlapping dirty changes block dependent work. Select the item in this order:
 
 After compaction, reload the skill and selected item before acting. Restore approvals rather
 than repeating them; follow the skill's recovery checkpoint for missing evidence and dispatch.
+Read its delivery ledger before assigning work. Do not repeat completed tasks whose evidence is
+still valid. Resume an interrupted task or review/fix round at its recorded next action. Reopen
+only tasks and downstream gates affected by changed requirements, code, or verification conditions.
 An explicit request may inspect a terminal item; reopen it only for requested follow-up work.
 
 ```yaml
@@ -81,6 +84,34 @@ Shippers receive approved scope, commit groups, branch, remote, and gate evidenc
 Every worker return updates `## Delivery state` before the next dispatch. After each task or
 parallel group, check fresh short status and worker reports for scope and completion; the
 reviewer owns diff inspection. Keep writer paths disjoint and serialize shared-document edits.
+
+## Delivery ledger
+
+Use `## Delivery state` in the existing work item as the progress ledger; do not create a separate
+progress file. Keep one current row per task, including a single task for bounded planned work:
+
+| Task | State | Last role / evidence | Next action |
+|---|---|---|---|
+| T1 — session guard | completed | builder: tests passed; reviewer: no blockers; report paths | None |
+| T2 — recovery | in-progress | reviewer: R1 blocker; builder correction pending | Builder: address R1, then reverify |
+| T3 — closeout | pending | Depends on T2 | Archivist: assess documentation and ADRs |
+
+Task states are `pending`, `in-progress`, `blocked`, `verified`, and `completed`. Mark a task
+`in-progress` before delegation. Update its row immediately after each worker return, verification,
+or review/fix round, before further dispatch; never defer bookkeeping until several tasks finish.
+Record the actual role invocation or report path and relevant check command, result, and scope.
+Keep a failed check or missing result visible. `verified` records successful applicable checks;
+`completed` requires the task's applicable review and approval obligations as well. A worker's
+confidence or an intended check is not evidence. Never infer approval from a ledger entry.
+
+For an interrupted correction, retain the finding ID, current round, returned evidence, and next
+owning role so resume continues that round rather than restarting implementation or review.
+Record approved decisions or deviations in `## Decisions and assumptions`, link them from the
+row when relevant, and keep unresolved material decisions behind their existing approval gate.
+Keep the global blockers, unfinished gates, and next role beside the rows. Rewrite current state
+compactly; this is a recovery map, not an append-only conversation log. Small file-free work uses
+the same task state, evidence, and next action in its handoff summary; no feature document is
+required solely for a Codex recovery-registration marker.
 
 ## Compact checkpoint
 

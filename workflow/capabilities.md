@@ -85,7 +85,7 @@ without an AI classifier don't prompt on every common test command. It is expect
 | `edit: none` | `edit: deny` | omit `edit,write` | prose ("read-only") |
 | `shell: verify[...]` | `bash` base `ask` + `builderShell` allows | `bash` in `tools:` + builder guard | prose ("edits + verification") |
 | `hardDeny` (`sudo`) | `"sudo": deny`, `"sudo *": deny` | builder/coordinator guard | prose |
-| `delegate: true` | `task:` allowlist of the worker roles | (main session invokes subagents) | prose |
+| `delegate: true` | `task:` allowlist of the worker roles; `codavio_session: allow` (deny for workers) | main session invokes subagents and session recovery tool | prose |
 | `roleSkills` mapping | native `skill` permission allows only the assigned skill | `skills` + `skillPath` select only the assigned skill | plugin ships all skills with implicit invocation disabled |
 | `guard: <name>` | n/a | register `<name>-guard` extension | n/a |
 | guidance (derived) | append docs to body | append docs to body | append docs to each per-role brief |
@@ -97,8 +97,20 @@ reasoning assignment, selected shared guidance, and the assignment and return-ev
 The worker then explicitly loads its assigned procedure skill. Normal generation removes stale
 aggregate references, while check mode rejects unexpected generated files.
 The generated Codex orchestration skill embeds the canonical coordinator kernel once at entry;
-its resume hook restores that same kernel. Pi embeds it in the entry prompt and OpenCode in the
-native coordinator agent. Activation rules stay in the kernel rather than adapter-specific prose.
+its resume hook restores that same kernel. The Codex bootstrap adds explicit main-session
+registration and cleanup for that one recovery hook. Pi embeds the kernel in the entry prompt
+and OpenCode in the native coordinator agent. Workflow entry and persistence rules stay in the kernel.
+
+`workflow/recovery.md` is the common recovery reminder. The generator combines it with the
+canonical kernel for OpenCode and Pi's native recovery metadata and copies it into the Codex
+hook bundle. OpenCode's 2.x plugin and Pi's extension expose `codavio_session` for explicit
+registration and cleanup and attach request-local context only to the registered main session.
+OpenCode uses plugin storage keyed by session ID and checkout, requires the `orchestrator`
+agent, and excludes child sessions. Pi uses custom entries from the current session branch,
+checks session ID and checkout, and skips worker processes. Pi's coordinator shell guard uses
+that same activation state. These hooks do not append reminder turns or infer activation from
+work-item discovery. Registration and cleanup remain model-followed; the native state lookup
+and worker/session isolation are runtime checks.
 
 Constants applied uniformly (not per role): `constants.opencode` / `constants.pi`
 (`external_directory: deny`, Pi inherit flags). Each command in a set renders as both its

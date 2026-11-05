@@ -126,6 +126,7 @@ function openCodePaths(target) {
   }
   pairs.push([path.join(BUILD, "opencode/AGENTS.md"), path.join(target, "AGENTS.md"),
     path.join(ROOT, "templates/AGENTS.global.md")]);
+  pairs.push([path.join(BUILD, "opencode/plugins/codavio/index.js"), path.join(target, "plugins/codavio-recovery.js")]);
   return pairs;
 }
 
@@ -140,6 +141,7 @@ function pruneObsoleteOpenCodeLinks(target) {
     agents: new Set([...definition.harnesses.opencode.roles, "orchestrator"].map((role) => role + ".md")),
     commands: new Set([definition.command + ".md"]),
     skills: new Set(Object.values(definition.roleSkills)),
+    plugins: new Set(["codavio-recovery.js"]),
   };
   const managedRoots = [ROOT, path.join(path.dirname(ROOT), "ai-dev-workflow")];
   const removed = [];
