@@ -44,9 +44,11 @@ Designer or analyst involvement requires one evolving feature document in the ca
 item, regardless of perceived difficulty or task size, combining the user's intent,
 designer definition, analyst implementation brief, decisions, resolved edge cases, and delivery
 evidence. Designer and analyst skills define their contributions; the coordinator saves them and
-projects minimal role-specific envelopes rather than sending workers the whole document or
-decision collection. Storage and resume guidance is internal support, not a separate deliverable
-or document-approval ceremony. Material questions return to the user and update the same document.
+projects minimal role-specific envelopes from the relevant sections and decisions. Material
+questions return to the user and update the same document. For delivery based on analysis,
+obtain explicit approval of the current analyst plan before implementation. This gives the user
+a chance to correct the approach while changes are still confined to the plan. Store the
+approval in the work item so it survives resume.
 
 Use the existing work item's `## Delivery state` as a per-task progress ledger, with state, actual
 role/check evidence, and the next action. Update it before dispatch and immediately after every

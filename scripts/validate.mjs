@@ -250,7 +250,7 @@ contains("skills/codavio-design/SKILL.md", [
   "Never treat a recommendation as approval",
 ]);
 contains("skills/codavio-analyze/SKILL.md", [
-  "smallest repository-native implementation brief",
+  "repository-grounded implementation plan for builders",
   "### Minimum change",
   "### Verification",
   "Default to one focused commit",
@@ -655,7 +655,7 @@ contains(generated("codex/plugins/codavio/skills/codavio-orchestrate/SKILL.md"),
   "main session model is selected in Codex", "explorer and shipper",
   "shipper with " + CODE + "gpt-6-luna" + CODE, "shipping approval", "designer",
   "Start: Builder", "Start: Analyst", "Start: Designer", "actual builder invocation",
-  "high-confidence proposed definition", "smallest implementation brief",
+  "high-confidence proposed definition", "repository-grounded implementation plan",
   "Prefer one builder", "ADR and documentation closeout",
 ]);
 contains(generated("codex/plugins/codavio/skills/codavio/SKILL.md"), [

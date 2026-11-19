@@ -15,7 +15,7 @@
       "description": "Collaboratively defines product and domain behavior when material choices remain unresolved"
     },
     "analyst": {
-      "description": "Turns defined behavior and focused repository evidence into the smallest executable implementation brief"
+      "description": "Turns defined behavior and repository evidence into a concrete implementation plan for builders"
     },
     "explorer": {
       "description": "Answers focused discovery, planning, or bugfix questions with repository evidence"

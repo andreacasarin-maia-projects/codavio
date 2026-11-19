@@ -57,27 +57,54 @@ document from intent through delivery, saving section-ready role contributions w
 decisions. Its creation depends on role involvement, not perceived difficulty. Do not require
 separate PRD, plan, or progress documents.
 
-Give the designer the request, relevant decisions, constraints, and current definition. It returns
-a high-confidence proposed definition, decision-changing questions, or a focused exploration
-brief. Return explorer evidence to the designer; ask the user only material questions.
+Include relevant `## Discovery map` findings in each designer or analyst assignment. Before
+dispatching an Explorer, check whether the map already answers the question. Ask only about
+gaps, conflicting evidence, or findings made stale by changed code or conditions. Save each
+Explorer return in the map before continuing dependent design or analysis.
 
-Give the analyst the defined outcome, non-goals, acceptance scenarios, constraints, relevant
-feature-document sections, and focused evidence. It returns the smallest implementation brief
-or focused exploration questions. Return missing product choices to the designer. Design and
-analysis may alternate; preserve confirmed decisions and update the same document.
+Give the designer the request, relevant decisions, constraints, and current definition. It
+challenges the proposed task against the intended outcome. It returns a high-confidence proposed definition,
+decision-changing questions, or a focused exploration brief. Present its objective, materially
+different approaches considered, and recommendation with the decisive tradeoff. Surface its
+material questions and return answers and explorer evidence to the designer. Save the resulting
+definition and obtain any required approval before dependent analysis.
+
+Give the analyst the agreed objective, success criteria, selected approach and rationale when
+defined, non-goals, acceptance scenarios, constraints, and relevant feature-document sections.
+It returns a repository-grounded implementation plan or focused exploration questions. Return
+new product choices to the designer with the evidence that raised them. Preserve confirmed
+decisions and update the same document.
 
 Before the first builder invocation for designed or analyzed work, save the brief in
-`## Implementation plan`: assigned work, decisions, owned paths, dependencies, acceptance, and
-verification. An analyst's chat response alone is not the saved brief. A bounded change needs no
-formal graph or commit series. Project its relevant content into the builder's assignment.
+`## Implementation plan`. For an analyst's plan, check that each implementation task names the
+affected files or symbols, orders the changes, and ties checks to acceptance. Return missing
+technical detail to the analyst. A bounded change needs no formal graph or commit series.
 
 ## Approvals and execution
 
 An explicit, unambiguous request approves its stated behavior. Obtain explicit approval for new
 material product definitions or technical choices affecting API, schema, security, dependency,
 persistence, infrastructure, migration, destructive action, behavior, scope, cost, or risk.
-Silence is never approval. Durable decisions use the same gate; ADRs add no approval ceremony.
-Routine details covered by accepted decisions remain with the worker.
+Silence is never approval. Durable decisions use the same gate. Routine details covered by
+accepted decisions remain with the worker.
+
+For delivery based on an analyst's plan, present the saved plan for explicit user approval
+before dispatching implementation. Share its work-item path and summarize the ordered changes,
+scope, technical decisions, and verification so the user can approve or request revisions.
+Resolve choices that prevent a complete proposal first. Present any remaining material
+recommendations for approval with the plan. Acceptance of the product definition or an
+individual technical decision does not approve the plan.
+
+While plan approval is pending, stop implementation dispatch. When the user requests a
+revision before implementation, mark approval pending and send the feedback to the analyst.
+Route changes to product behavior through the designer first. Save and present the revised
+plan with a summary of changes and wait for explicit approval of that revision. Reopen the gate
+for later material changes to the approved plan before dependent edits. For a plan-only request,
+deliver the plan at the requested endpoint and start no implementation.
+
+Record approval of the presented plan revision in the work item before dispatch. On resume,
+require recorded approval of the current plan before dispatching any dependent implementation.
+Project the relevant approved steps, constraints, and checks into each builder assignment.
 
 Prefer one builder. Parallel builders need independent designs, exact disjoint owned paths, and
 no shared lockfiles, migrations, generated outputs, global formatters, or repository-wide side

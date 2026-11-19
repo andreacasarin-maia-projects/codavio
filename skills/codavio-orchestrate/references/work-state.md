@@ -48,6 +48,14 @@ Use the current gate as status: `design`, `definition-approved`, `analysis`, `an
 Legacy `discovery`, `planning`, and `plan-approved` remain valid. A missing check or approval
 never qualifies as completion.
 
+For delivery based on an analyst's plan, keep status `analysis` while plan approval is pending.
+Record the current plan revision and the user's explicit approval evidence in
+`## Decisions and assumptions`, and record the pending gate or next action in
+`## Delivery state`. Use `analysis-approved` when the current revision is approved and ready for
+dispatch. Restore approval from recorded evidence on resume. Status alone, including a legacy
+`plan-approved` status, is insufficient. Reuse valid approval after compaction and mark approval
+pending again when the plan requires renewed approval.
+
 ## Checkout ownership
 
 Work in the current checkout by default. Never create, switch, attach, or clean up worktrees
@@ -73,8 +81,10 @@ format. Insufficient authority or a missing decision returns to the coordinator;
 needed to carry out the assignment remain allowed within role authority.
 
 A builder envelope for designed or analyzed work identifies the saved work-item path and section
-or task ID and includes the relevant task text, decisions, acceptance scenarios, dependency
-outputs, exemplar when known, and verification contract. A link alone is insufficient.
+or task ID and includes the relevant task text, including its ordered implementation steps and
+source references when provided, decisions, acceptance scenarios, dependency outputs, exemplar
+when known, and verification contract. For analyzed implementation, include the current plan
+revision and its recorded approval. A link alone is insufficient.
 Direct-builder bounded work may use a self-contained file-free assignment.
 
 Reviewers receive the target diff, accepted intent, relevant constraints, and available evidence;
@@ -121,6 +131,11 @@ Keep only applicable sections: `## Leadership brief` (deliverable and stopping p
 `## Acceptance and shipping`. Save role contributions in place, not as a transcript. Proposed
 choices, approvals, and unknowns stay distinct. Use stable decision/task/acceptance/commit IDs
 only when later sections reference them. A bounded change may contain one task and its checks.
+
+In `## Discovery map`, capture each material repository question, the Explorer's findings
+with source paths and line or symbol references, and any relevant inference or unresolved gap.
+Update the affected entry when follow-up evidence resolves a conflict or replaces a stale
+finding. Design and planning sections can refer to these entries where the findings matter.
 
 Keep current blockers and the next task explicit. For example:
 

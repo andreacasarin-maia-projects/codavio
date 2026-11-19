@@ -35,15 +35,15 @@ Repository tooling and installation require Node.js 22.6 or newer.
 
 ## How it works
 
-Whenever a designer or analyst is involved, your initial intent develops into one shared feature document. The
-designer refines behavior and acceptance scenarios; the analyst adds repository evidence,
-technical decisions, tasks, and verification. They can revisit affected sections as questions
-are resolved. The orchestrator saves their contributions and gives each builder the relevant
-passages, rather than the full conversation. Material edge cases come back to you, and their
-answers update the same document. At completion, the archivist extracts significant decisions
-and rationale into living ADRs and updates affected documentation before review and approved
-shipping. There is no separate PRD-to-plan document handover or document-approval ceremony.
-This requirement follows the roles invoked, regardless of perceived difficulty or task size.
+Whenever a designer or analyst is involved, your initial intent develops into one shared feature
+document. The designer tests the proposed scope, assumptions, and edge cases against your goal and
+brings you decisions with recommendations and tradeoffs. The analyst traces the affected code paths
+and plans the implementation in prose, with ordered changes to named files and symbols and checks
+mapped to acceptance scenarios. The orchestrator presents the saved analyst plan for your approval
+before implementation. You can ask for revisions, which update the same document and come back to
+you for approval. Each builder receives the approved steps, decisions, and checks for its task.
+At completion, the archivist extracts significant decisions and rationale into living ADRs and
+updates affected documentation before review and approved shipping.
 Reviews, research, and plans stop at their requested deliverable without starting implementation.
 Explicitly bounded implementation can finish after verification, documentation closeout, and review;
 ordinary delivery proceeds to shipping approval. Applicable material-outcome acceptance still applies.
@@ -55,12 +55,13 @@ codavio-orchestrate
   → coordinator selects the requested endpoint and announces its entry role
   → standalone evidence, plan, or review requests stop after that deliverable
   → Archivist supplies relevant prior decisions when needed, before dependent work
-  → Designer resolves material product or domain choices only when needed
+  → Designer challenges assumptions and resolves material product or domain choices when needed
   → approve a material product definition
   → Analyst finds the repository-native minimum change only when technical analysis is needed
-  → Designer or Analyst may request focused internal Explorer evidence
-  → approve only material unresolved technical decisions
-  → save the shared definition and implementation plan, then project worker assignments
+  → reuse Explorer findings from the Discovery map and investigate only remaining gaps
+  → resolve any remaining choices needed to complete the analyst plan
+  → save and present the analyst plan for approval, revising it on request before implementation
+  → project approved worker assignments
   → delegate every implementation, test, and Docker action to a builder
   → builder performs a final simplification pass
   → Archivist maintains relevant living ADRs and human-facing documentation
@@ -72,10 +73,16 @@ codavio-orchestrate
 
 Role behavior:
 
-- Designer resolves material product and domain uncertainty: it evaluates definition confidence, asks only decision-changing questions with recommendations, uses Event Storming and flow analysis when useful, and proposes the definition.
-- Analyst turns defined behavior and focused repository evidence into the smallest executable implementation brief, naming the closest exemplar and justifying every new concept.
+- Designer clarifies the problem, why it matters, and how to judge success. It compares
+  materially different product approaches against that objective, tests consequential edge
+  cases, and recommends an approach with the decisive tradeoff.
+- Analyst plans the smallest repository-native change in enough detail for a builder to implement
+  and verify it. The analyst names the closest exemplar and resolves technical design before dispatch.
 - Explorer answers focused internal evidence questions with source locations, inference, and unknowns;
   it never chooses product behavior or technical design.
+- The coordinator saves Explorer findings in the work document's `Discovery map` and shares
+  relevant entries with the designer and analyst. Follow-up exploration targets gaps,
+  conflicting findings, or evidence that has gone stale.
 - Archivist retrieves relevant documented decisions and maintains approved ADRs, README files,
   and technical documentation. Discovery assignments are read-only; writing assignments own
   exact documentation paths. It does not choose architecture or execute commands.
@@ -142,7 +149,8 @@ OpenCode model catalogs may require an update before running these definitions.
   non-trivial work starts with Analyst, and only material product or domain uncertainty starts
   with Designer. Documentation-only discovery or maintenance starts with Archivist. Request
   labels such as bug or feature do not determine the path.
-- An explicit, unambiguous request serves as approval for its stated behavior.
+- An explicit, unambiguous request serves as approval for its stated behavior. Delivery based on
+  an analyst plan requires explicit approval of the current plan before implementation.
 - The user owns material architecture, API, schema, security, infrastructure, migration, and destructive decisions.
 - Planning, implementation, and review prefer existing native capabilities and tools; custom logic
   needs an evidenced gap. Research roles check existing solutions before proposing general-purpose
@@ -316,7 +324,8 @@ $codavio-orchestrate <request>
 Implicit invocation is disabled. Select `gpt-6.2-sol` with `medium` reasoning for the main
 coordinator in Codex when available; Codavio does not override the main session selection.
 Subagents use the role model routing above. The same material-definition, technical-decision,
-outcome-acceptance, correction, and shipping approval rules apply. Codex's shipper then requests a scoped network sandbox escalation for its one
+implementation plan, outcome-acceptance, correction, and shipping approval rules apply.
+Codex's shipper then requests a scoped network sandbox escalation for its one
 direct `git push`; the role brief supplies a clear approval question. A successful
 approval authorizes the sandbox escalation, but Git authentication and remote branch
 rules remain independent checks.

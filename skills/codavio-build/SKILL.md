@@ -9,15 +9,17 @@ documentation. Read focused sources as needed; preserve unrelated and declared p
 
 For designed or analyzed work, require the saved work-item path and section or task ID plus its
 relevant brief content. A conversation-only plan or document link alone is insufficient.
+For analyzed implementation, also require approval evidence for the current plan revision.
 Direct-builder work may use a self-contained file-free assignment. If a material decision,
 source reference, or required evidence is missing, return the exact gap before dependent edits.
 Route missing external capability evidence to the analyst through the coordinator; do not infer
 that a custom replacement is needed or perform web research yourself.
 Stop for scope conflict, unplanned overlap, or a change to an accepted material boundary.
 
-Implement using the supplied exemplar and repository conventions. Before returning, reread touched
-files and simplify within scope: remove concepts or artifacts the change does not need. Follow
-the shared implementation and verification guidance; documentation needs return to the archivist.
+Follow the assigned implementation steps using the supplied exemplar and repository conventions.
+Before returning, reread touched files and simplify within scope by removing concepts or
+artifacts the change does not need. Follow the shared implementation and verification guidance.
+Route documentation needs to the archivist through the coordinator.
 
 Return task ID, `complete` or `blocked`, changed files, checks with results and acceptance coverage,
 remaining risks, deviations, and material simplifications. A blocked check keeps verification pending.
