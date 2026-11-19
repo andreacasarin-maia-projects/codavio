@@ -118,14 +118,17 @@ Role model routing (OpenCode pins all roles; Pi and Codex pin subagents):
 
 | Role | Model | Reasoning |
 |---|---|---|
-| Orchestration | `openai/gpt-6.1-sol` | `medium` |
-| Product and domain design | `openai/gpt-6-astra` | `medium` |
-| Technical analysis | `openai/gpt-6.1-sol` | `medium` |
+| Orchestration | `openai/gpt-6.2-sol` | `medium` |
+| Product and domain design | `openai/gpt-6.2-astra` | `medium` |
+| Technical analysis | `openai/gpt-6.2-astra` | `medium` |
 | Exploration | `openai/gpt-6-luna` | `low` |
 | Documentation | `openai/gpt-6-luna` | `medium` |
 | Implementation | `openai/gpt-6.1-terra` | `medium` |
-| Review | `openai/gpt-6.1-sol` | `high` |
+| Review | `openai/gpt-6.2-sol` | `high` |
 | Shipping | `openai/gpt-6-luna` | `low` |
+
+Use a harness and OpenAI provider catalog that expose the pinned model IDs. Older Pi or
+OpenCode model catalogs may require an update before running these definitions.
 
 ## Principles
 
@@ -249,7 +252,7 @@ direct workspace changes. It blocks shell exploration, tests, implementation com
 shipping; those actions require their bounded worker roles. This guard applies only while the
 current main session has explicitly registered Codavio; unrelated sessions keep their own shell behavior. The global
 package applies only to repositories you trust: Pi permissions are a curated safe list,
-not an OS sandbox. Log in to OpenAI in Pi and choose `gpt-6.1-sol` with `medium` reasoning for the
+not an OS sandbox. Log in to OpenAI in Pi and choose `gpt-6.2-sol` with `medium` reasoning for the
 main coordinator when available. Each delegated role pins the model and reasoning shown in the
 role routing table; use
 `/subagents-models` after restarting Pi to inspect the live mapping.
@@ -310,7 +313,7 @@ Start a new Codex task after installation and invoke the workflow explicitly:
 $codavio-orchestrate <request>
 ```
 
-Implicit invocation is disabled. Select `gpt-6.1-sol` with `medium` reasoning for the main
+Implicit invocation is disabled. Select `gpt-6.2-sol` with `medium` reasoning for the main
 coordinator in Codex when available; Codavio does not override the main session selection.
 Subagents use the role model routing above. The same material-definition, technical-decision,
 outcome-acceptance, correction, and shipping approval rules apply. Codex's shipper then requests a scoped network sandbox escalation for its one
@@ -485,10 +488,10 @@ framework; Promptfoo remains deferred. Static validation is not evidence of a mo
 
 ## Measuring token usage
 
-There is no built-in cross-harness token meter: OpenCode, Pi, and Codex each track usage
-their own way, and none exposes a unified per-role figure. Because all three drive the
-same `openai/...` models over the OpenAI API, the portable way to measure per-role cost
-is a **local logging proxy** in front of every harness:
+OpenCode, Pi, and Codex track usage separately. For sessions billed through an API key,
+a **local logging proxy** can measure token usage and API cost across harnesses.
+For Codex sessions signed in with ChatGPT, use the account's usage dashboard to check
+the included allowance.
 
 - Run an OpenAI-compatible proxy locally (for example LiteLLM's proxy, or a minimal Node
   reverse proxy that forwards to the real API) and record `usage.prompt_tokens` and
@@ -496,12 +499,12 @@ is a **local logging proxy** in front of every harness:
 - Point each harness at the proxy by setting its OpenAI base URL to the proxy address
   (OpenCode/Pi/Codex all read the standard `OPENAI_BASE_URL` / provider base-URL
   setting).
-- Attribute each request to a role or paired role group. Model plus reasoning identifies most
-  lanes (`gpt-6-astra`/`medium` → designer, `gpt-6.1-sol`/`medium` → orchestrator/analyst,
-  `gpt-6.1-sol`/`high` → reviewer, `gpt-6.1-terra`/`medium` → builder,
+- Attribute each request to a role or paired role group. Model plus reasoning identifies these
+  groups (`gpt-6.2-astra`/`medium` → designer/analyst, `gpt-6.2-sol`/`medium` → orchestrator,
+  `gpt-6.2-sol`/`high` → reviewer, `gpt-6.1-terra`/`medium` → builder,
   `gpt-6-luna`/`medium` → archivist, and
-  `gpt-6-luna`/`low` → explorer/shipper), so grouping logged usage by both fields yields that
-  breakdown without harness changes.
+  `gpt-6-luna`/`low` → explorer/shipper). To compare analyst runs separately from designer
+  runs, also record the role for each request.
 
 This is intentionally out of the generated package: it is host configuration, not
 workflow source. Use the breakdown to see whether cost concentrates in the reasoning
