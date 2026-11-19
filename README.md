@@ -181,7 +181,7 @@ OpenCode model catalogs may require an update before running these definitions.
 - The work file is the single durable planning artifact. Coordinators project minimal role-specific
   task envelopes from it instead of sending lower-capability workers the whole plan or history.
 - Analyzed work uses the smallest applicable implementation brief. Task graphs and commit plans
-  appear only when the change needs them; one focused commit remains the default.
+  appear when the change needs them.
 - Living ADRs hold current approved project decisions and relevant rationale. Update existing
   topic records, use Git for revision history, and load only task-relevant records. Legacy memory
   is a migration source; new decisions go to ADRs. README and usage docs remain part of delivery.
@@ -492,8 +492,21 @@ framework; Promptfoo remains deferred. Static validation is not evidence of a mo
 - Use the current checkout regardless of task size, risk, or session duration.
 - Never create, switch, attach, or clean up worktrees automatically. Workspace changes require an explicit user request.
 - For a requested change, use the harness or workspace manager when available. Without a manager, the coordinator may use direct Git worktree commands with visible approval; forced mutations remain blocked.
+- For a requested new branch, use `type/short-description` by default, such as
+  `feature/plan-approval` or `fix/resume-approval`. Reserve `hotfix/` for urgent production fixes.
 - Parallel writers require design-independent tasks, explicit disjoint paths, and no repository-wide side effects; otherwise run them sequentially.
 - Preserve unrelated user changes. Stop and report overlapping changes before dependent work.
+
+## Commit messages
+
+Use one focused commit per separately reviewable theme, in dependency order. Keep supporting
+tests and docs with their change. The reviewer checks the grouping against the final diff.
+The coordinator presents the ordered groups and exact subjects for shipping approval, and the
+shipper uses the approved messages.
+
+Commit subjects default to `type: summary`, with a short imperative summary and an optional
+component such as `fix(recovery): restore approval state`. The default types are `feat`, `fix`,
+`refactor`, `docs`, and `chore`. An urgent production fix uses `fix:` for the commit subject.
 
 ## Measuring token usage
 

@@ -37,7 +37,10 @@ Maintainability blocks only for material correctness, security, operability, ver
 future-change risk within scope, or unapproved production machinery. Report uncertainty rather
 than asserting an unconfirmed defect.
 
-State remaining blockers and review limits. When a commit plan exists, verify that every change
-belongs to exactly one coherent group. An inseparable or misleading split blocks that series,
-not automatically the implementation; recommend regrouping, defaulting to one focused commit.
+State remaining blockers and review limits. For change delivery, check the commit grouping
+against the final diff. When changes span distinct, separable themes, confirm or recommend
+ordered groups with a short description and exact files or hunks for each. Keep supporting
+tests and docs with their theme. Check that every in-scope change belongs to exactly one group
+and that the order respects dependencies. Flag an inseparable or misleading split and recommend
+regrouping before shipping. A single coherent theme needs one focused commit.
 Return findings to the coordinator; review never approves corrections or shipping.

@@ -138,9 +138,19 @@ and review again. Escalate new material decisions through the approval gate.
 
 For a materially changed product outcome, obtain explicit acceptance after presenting behavior,
 acceptance results, evidence, deviations, residual risks, and deferred work. Bounded changes may
-proceed directly to shipping approval. Confirm branch, short status, approved files, ordered
-commit groups and messages, and remote. Default to one focused commit. Require explicit shipping
-approval, then invoke the Git-only shipper; never deploy production.
+proceed directly to shipping approval.
+
+Use the reviewer's evidence and commit grouping to propose an exact subject for each commit.
+Follow the user's instructions and repository conventions. Default to `type: summary` with a
+short imperative summary, such as `feat: require plan approval`. Use `feat` for features,
+`fix` for bug fixes including urgent production fixes, `refactor` for refactors, `docs` for
+documentation, and `chore` for maintenance. Add an optional component when it improves clarity,
+as in `fix(recovery): restore approval state`.
+
+Confirm the branch, short status, remote, and the ordered commits with exact messages and
+approved files or hunks. Present one focused commit for a single theme or a reviewed series
+for distinct themes. Require explicit shipping approval, then invoke the Git-only shipper
+with the approved groups and messages. Never deploy production.
 
 When the requested endpoint and its applicable gates are satisfied, record completion and report
 the deliverable, evidence, and remaining limits. Stop without extra reviews, hardening, or new

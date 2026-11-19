@@ -37,8 +37,9 @@ new choices needing approval. Include only applicable subsections:
 - `### Verification`: map each acceptance scenario and relevant failure or regression case to a
   concrete check and expected result. Name existing test locations, commands where known,
   prerequisites, and required integration coverage. Stop planning checks when they cover the outcome.
-- `### Commit plan`: only when a series improves comprehension, verification, or reversibility.
-  Default to one focused commit.
+- `### Commit plan`: when the work spans distinct themes that can be reviewed separately,
+  propose one coherent commit per theme in dependency order. Keep related tests and docs with
+  the change they support. Default to one focused commit for a single theme.
 
 Parallel builders require design-independent work and disjoint paths without shared side effects.
 Trace changes to accepted outcomes or repository constraints and omit preparatory refactors.

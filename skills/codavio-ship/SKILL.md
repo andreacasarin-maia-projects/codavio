@@ -11,7 +11,7 @@ branch, remote, and evidence of verification, clean review, and required accepta
 complete status and diff. Stop on scope changes, unexpected files, secrets, generated/debug
 artifacts, missing preconditions, or inseparable commit boundaries.
 
-Stage only the approved files or hunks, commit each group in order, then push the approved branch
-to the approved remote without force. Default to one focused commit when no series is approved.
+Stage only the approved files or hunks, commit each group in order using its approved message,
+then push the approved branch to the approved remote without force.
 Include approved documentation with its behavior unless a separate coherent group is approved.
 Report every commit and the actual branch, remote, and push result; stop on failure.

@@ -67,6 +67,12 @@ For an authorized workspace change, use the harness lifecycle when available. Wi
 direct non-forced Git worktree commands require visible approval. Workers have no lifecycle
 authority. Record the actual new path and manager after an approved change.
 
+When the user requests a new branch, follow their supplied name and any applicable repository
+naming requirements. Otherwise use `type/short-description` with a short, lowercase, hyphenated
+description of the work. Use `feature/` for features, `fix/` for bug fixes, `hotfix/` only for
+urgent production fixes, `refactor/` for refactors, `docs/` for documentation, and `chore/` for
+maintenance. Apply the name through the authorized workspace mechanism.
+
 Recorded checkout metadata is resume context, not a workspace-switch instruction. If the stored
 path differs, stop before dependent work and ask the user to resolve the mismatch or explicitly
 request a workspace change. There is no automatic creation fallback.
