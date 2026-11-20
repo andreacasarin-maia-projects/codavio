@@ -9,6 +9,8 @@ approved behavior, minimizing concepts and parallel paths rather than raw line c
 Prefer existing native and maintained capabilities before custom implementation; exceptions need
 a concrete gap and a proportionate comparison of integration and maintenance costs. Research and
 verification stop when sufficient evidence satisfies the decision or required outcome.
+Use independent plan review for consequential proposals before implementation approval. Catching
+unjustified machinery while it is still a proposal avoids building it and then reviewing its removal.
 Approximately 500 human-authored lines in one file or refactor triggers a responsibility and
 reviewability assessment, not automatic rejection.
 

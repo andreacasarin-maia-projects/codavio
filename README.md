@@ -39,9 +39,11 @@ Whenever a designer or analyst is involved, your initial intent develops into on
 document. The designer tests the proposed scope, assumptions, and edge cases against your goal and
 brings you decisions with recommendations and tradeoffs. The analyst traces the affected code paths
 and plans the implementation in prose, with ordered changes to named files and symbols and checks
-mapped to acceptance scenarios. The orchestrator presents the saved analyst plan for your approval
-before implementation. You can ask for revisions, which update the same document and come back to
-you for approval. Each builder receives the approved steps, decisions, and checks for its task.
+mapped to acceptance scenarios. The orchestrator checks that the plan is ready to build and sends
+consequential plans for independent review before presenting a brief summary for your approval.
+Revisions replace the affected parts of the current plan in the same document. Each builder
+receives the approved steps, decisions, and checks for its task. The work item holds detailed
+verification evidence, and the delivery summary highlights the outcome and anything needing your attention.
 At completion, the archivist extracts significant decisions and rationale into living ADRs and
 updates affected documentation before review and approved shipping.
 Reviews, research, and plans stop at their requested deliverable without starting implementation.
@@ -60,7 +62,7 @@ codavio-orchestrate
   → Analyst finds the repository-native minimum change only when technical analysis is needed
   → reuse Explorer findings from the Discovery map and investigate only remaining gaps
   → resolve any remaining choices needed to complete the analyst plan
-  → save and present the analyst plan for approval, revising it on request before implementation
+  → check the analyst plan, get independent review when warranted, and present it for approval
   → project approved worker assignments
   → delegate every implementation, test, and Docker action to a builder
   → builder performs a final simplification pass
@@ -108,8 +110,9 @@ procedure skill:
 Workflow entry is explicit; Codex metadata also disables implicit skill invocation. Once started,
 orchestration remains active until completion or an explicit pause, cancel, or exit. It reloads
 `codavio-orchestrate` after compaction or resume, or when the procedure is missing from context;
-ordinary messages do not require rereading unchanged instructions. Corrections and deviations are routed back
-through roles; they never authorize the orchestrator to perform role work itself.
+ordinary messages do not require rereading unchanged instructions. A request in the same chat to
+fix a clearly identified completed Codavio change reopens that work and routes the repairs through
+the existing roles.
 
 All three harnesses use the same delivery ledger and recovery instructions. Explicit entry
 registers recovery for the current main session; completion, pause, cancel, and exit clear it.

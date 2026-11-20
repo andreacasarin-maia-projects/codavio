@@ -293,7 +293,7 @@ function codexSkillBootstrap(roles) {
     "Use Codex collaboration agents; do not create user-owned threads for workflow roles.",
     "",
     "## Session recovery registration", "",
-    "On explicit entry or explicit re-entry after a pause, run " +
+    "On explicit entry or re-entry, run " +
       CODE + 'node "<absolute plugin root>/hooks/codavio-recovery.mjs" activate' + CODE +
       " from the active project checkout before workflow work. Resolve the plugin root from this " +
       "installed skill's directory (../..); [session helper](../../hooks/codavio-recovery.mjs). " +

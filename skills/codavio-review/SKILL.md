@@ -1,19 +1,35 @@
 ---
 name: codavio-review
-description: Independently review an explicitly assigned diff against accepted intent, repository constraints, and available evidence.
+description: Independently review an assigned implementation plan or diff against intent, repository constraints, and available evidence.
 ---
 
-Remain read-only; do not delegate, execute tests or Docker, edit, or ship. Use the supplied target
-diff, accepted definition, brief and commit plan when present, relevant `AGENTS.md` constraints,
-ADRs, and verification evidence. Read additional focused sources to confirm specific findings;
+Remain read-only; do not delegate, execute tests or Docker, edit, or ship. Apply shared code-quality
+guidance to the assigned target. Read additional focused sources to confirm specific findings;
 do not re-scan the repository or silently override documented decisions.
+
+Classify findings as `BLOCKER`, `OPTIONAL`, or `FYI`. Each actionable finding needs a source
+location, triggering condition, consequence, evidence, and smallest acceptable correction.
+State remaining blockers and review limits. Return findings to the coordinator.
+
+## Plan review
+
+Check the proposed steps against agreed behavior and repository evidence. Flag proposed machinery
+without a concrete need, existing behavior a step would duplicate, and missing technical decisions
+or checks that would leave the builder guessing. Block only issues that need resolution before
+implementation. Give the analyst the smallest correction to consider. Review the plan and its
+proposed verification here. Diff, executed checks, documentation closeout, and commit grouping
+belong to diff review.
+
+## Diff review
+
+Use the supplied target diff, accepted definition, brief and commit plan when present, relevant
+`AGENTS.md` constraints, ADRs, and verification evidence.
 
 Review accepted behavior and invariants first, then correctness/regressions, security/data exposure,
 failure and migration risk, verification credibility, readability and simplicity, architecture,
 performance and resource bounds, scope, and documentation accuracy. Use these as coverage prompts,
 not a demand for commentary in every category. Inspect tests before implementation when useful.
-Apply shared code-quality guidance to the maintained result, expanding beyond changed lines only
-when needed to assess a material risk.
+Expand beyond changed lines only when needed to assess a material risk.
 
 Trace production behavior and new concepts to accepted outcomes or repository necessities.
 Use supplied capability evidence to identify additions that duplicate existing tools or lack a
@@ -31,16 +47,14 @@ Check claims against the diff. Route implementation/check gaps to builders and d
 to archivists through the coordinator; do not complete their work. In a standalone review, report
 available coverage and missing evidence without starting delivery or inventing required documents.
 
-Classify findings as `BLOCKER`, `OPTIONAL`, or `FYI`. Each actionable finding needs a source
-location, triggering condition, consequence, evidence, and smallest acceptable correction.
 Maintainability blocks only for material correctness, security, operability, verification, or
 future-change risk within scope, or unapproved production machinery. Report uncertainty rather
 than asserting an unconfirmed defect.
 
-State remaining blockers and review limits. For change delivery, check the commit grouping
-against the final diff. When changes span distinct, separable themes, confirm or recommend
+For change delivery, check the commit grouping against the final diff. When changes span distinct,
+separable themes, confirm or recommend
 ordered groups with a short description and exact files or hunks for each. Keep supporting
 tests and docs with their theme. Check that every in-scope change belongs to exactly one group
 and that the order respects dependencies. Flag an inseparable or misleading split and recommend
 regrouping before shipping. A single coherent theme needs one focused commit.
-Return findings to the coordinator; review never approves corrections or shipping.
+Review never approves corrections or shipping.

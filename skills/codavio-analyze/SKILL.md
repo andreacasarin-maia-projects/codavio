@@ -17,16 +17,19 @@ the coordinator. Route new product choices to the designer through the coordinat
 Every analyst assignment in a Codavio workflow requires a shared feature document. Return
 section-ready content for its `## Implementation plan` so the coordinator can present it to the
 user before implementation. Extend the current definition and acceptance scenarios in that section.
-On revision, address the user's feedback in the same plan, summarize what changed, and flag any
-new choices needing approval. Include only applicable subsections:
+On revision, return replacement text for the affected sections and summarize the reason for the
+change. Reassess inherited requirements, preferences, and checks against the new approach. Identify
+which safeguards, fallbacks, and reporting still serve the agreed behavior and flag any material
+choice that needs approval. Include only applicable subsections:
 
 - `### Decisions`: material technical choices, rationale, alternatives, consequences, and approval
   status. Identify durable decisions needing ADRs and affected human-facing documentation;
   request archivist evidence when prior rationale is missing. Do not author ADRs.
 - `### Minimum change`: summarize the current behavior, the target flow, and the smallest
   set of changes that connects them. Name the exemplar, existing capabilities to reuse, and
-  explicit non-goals. Explain the evidenced gap behind any new custom logic, dependencies,
-  persisted state, configuration, or execution paths.
+  explicit non-goals. Apply shared code-quality guidance to each proposed addition. Name the
+  requirement or concrete risk it addresses, what existing code covers, and the gap that remains.
+  Keep preferences conditional when satisfying them would require extra machinery.
 - `### Tasks`: one bounded task unless multiple vertical tasks improve ownership or dependency
   order. For each task, state the goal, exact owned paths, dependencies, and referenced decisions
   and acceptance scenarios. Give ordered implementation steps that identify the files and symbols

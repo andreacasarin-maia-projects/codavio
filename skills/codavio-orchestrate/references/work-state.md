@@ -25,7 +25,9 @@ than repeating them; follow the skill's recovery checkpoint for missing evidence
 Read its delivery ledger before assigning work. Do not repeat completed tasks whose evidence is
 still valid. Resume an interrupted task or review/fix round at its recorded next action. Reopen
 only tasks and downstream gates affected by changed requirements, code, or verification conditions.
-An explicit request may inspect a terminal item; reopen it only for requested follow-up work.
+An explicit request may inspect a terminal item. For a clearly identified correction, restore
+that item's approvals and reopen affected tasks and gates, including any shipping affected by
+the new changes.
 
 ```yaml
 ---
@@ -55,6 +57,11 @@ Record the current plan revision and the user's explicit approval evidence in
 dispatch. Restore approval from recorded evidence on resume. Status alone, including a legacy
 `plan-approved` status, is insufficient. Reuse valid approval after compaction and mark approval
 pending again when the plan requires renewed approval.
+
+Keep one current `## Implementation plan`. Replace affected text in place and update related
+decisions, acceptance criteria, and checks when the agreed approach changes. Record a brief reason
+for the revision and retain completed work as delivery evidence. Give any required rework an explicit
+task in the current plan.
 
 ## Checkout ownership
 
@@ -87,14 +94,14 @@ format. Insufficient authority or a missing decision returns to the coordinator;
 needed to carry out the assignment remain allowed within role authority.
 
 A builder envelope for designed or analyzed work identifies the saved work-item path and section
-or task ID and includes the relevant task text, including its ordered implementation steps and
+or task ID and includes the relevant current task text, including its ordered implementation steps and
 source references when provided, decisions, acceptance scenarios, dependency outputs, exemplar
 when known, and verification contract. For analyzed implementation, include the current plan
 revision and its recorded approval. A link alone is insufficient.
 Direct-builder bounded work may use a self-contained file-free assignment.
 
-Reviewers receive the target diff, accepted intent, relevant constraints, and available evidence;
-change-delivery review also requires the documentation/ADR assessment and closeout evidence.
+Diff reviewers receive the target diff, accepted intent, relevant constraints, and available
+evidence. Change-delivery review also requires the documentation/ADR assessment and closeout evidence.
 Shippers receive approved scope, commit groups, branch, remote, and gate evidence.
 
 Every worker return updates `## Delivery state` before the next dispatch. After each task or
